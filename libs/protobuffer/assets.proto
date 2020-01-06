@@ -1,0 +1,78 @@
+syntax="proto3";
+
+package protobuffer;
+//import "github.com/mwitkow/go-proto-validators/validator.proto";
+
+
+message AssetDeclaration {
+	AssetType Type  = 1;            //Type of Asset
+	bytes ID        = 2;                       //unique ID of asset
+	bytes Owner     = 3;                    //IDDoc of owner            
+    oneof assetDefinition {          //Definiton of the asset
+        Wallet Wallet = 4;
+        TrusteeGroup TrusteeGroup = 5;
+        IDDoc Iddoc = 6;
+    }
+	repeated Update update    = 7;    //List of Transfer rules for subsequent updates
+	bytes signature                = 8; //Signature of Owner
+}
+
+
+//A subsequent message to update the status of an asset.
+message AssetUpdate {
+ 	AssetType Type                  = 1;    //Type of Asset (Maybe not required)
+    bytes ID                        = 2;    //ID of original Asset to be updated
+ 	bytes NewOwner                  = 3;    //New Owner
+ 	 oneof assetDefinition{                 //Definiton of the asset
+        Wallet Wallet               = 4;
+        TrusteeGroup TrusteeGroup   = 5;
+        IDDoc Iddoc                 = 6;
+    }  
+ 	repeated Update Transfers     = 7;    //List of Transfer rules for subsequent updates
+	repeated bytes Signers          = 8;    //List of Signers who authorized Update
+ 	bytes AggregatedSignature       = 9;    //Aggregated sig of All Signers & Previous Owner.
+}
+
+
+enum AssetType {
+	wallet      = 0;
+	trustee     = 1;
+	iddoc       = 2;
+}                              
+enum TransferType {
+    settlePush          = 0;
+    settlePull          = 1;
+    transferPush        = 2;
+    tranferPull         = 3;
+    swap                = 4;
+    load                = 5;
+}
+
+message Update {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
+    TransferType type   = 1;	
+    string expression   = 2;              //Boolean expression eg. (SigTrustee1 + SigTrustee2 + SigTrustee3) >=2 & Owner   
+                                    //2 out of 3 trustees + owner must sign to return true.
+}
+
+//Asset Definitons
+message Wallet {
+    bytes principal         = 1;
+	bytes creditor          = 2;
+	bytes initiator         = 3;
+	bytes address           = 4;
+	bytes counterparty      = 5;
+}
+
+
+message TrusteeGroup {
+    repeated bytes TrusteeID    = 1; //List of Trustee DocIDs
+    int64 threshold             = 2; //Threshold required
+}
+
+message IDDoc {
+    string AuthenticationReference = 1;
+    bytes BeneficiaryECPublicKey   = 2;
+    bytes SikePublicKey            = 3;
+    bytes BLSPublicKey             = 4;
+    int64 Timestamp                = 5;
+}
