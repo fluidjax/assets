@@ -11,24 +11,24 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type IDDoc struct {
+type IDDocDeclaration struct {
 	Asset
 }
 
 //AuthenticatorInterface Implementations
-func (i *IDDoc) Serialize() (s []byte, err error) {
+func (i *IDDocDeclaration) Serialize() (s []byte, err error) {
 	//Use Asset parent method
 	return i.Asset.Serialize(i.Asset)
 
 }
 
-func (i *IDDoc) AssetPayload() *protobuffer.IDDoc {
+func (i *IDDocDeclaration) AssetPayload() *protobuffer.IDDoc {
 	signatureAsset := i.Signature.GetDeclaration()
 	iddoc := signatureAsset.GetIddoc()
 	return iddoc
 }
 
-func (i *IDDoc) Verify() (bool, error) {
+func (i *IDDocDeclaration) Verify() (bool, error) {
 
 	//Signature
 	signature := i.Signature.Signature
@@ -58,7 +58,7 @@ func (i *IDDoc) Verify() (bool, error) {
 
 }
 
-func (i *IDDoc) Sign(iddoc *IDDoc) error {
+func (i *IDDocDeclaration) Sign(iddoc *IDDocDeclaration) error {
 	res := bytes.Compare(iddoc.key, i.key)
 	if res != 0 {
 		return errors.New("Only Self Sign a IDDoc")
@@ -66,7 +66,7 @@ func (i *IDDoc) Sign(iddoc *IDDoc) error {
 	return i.SelfSign()
 }
 
-func (i *IDDoc) SelfSign() (err error) {
+func (i *IDDocDeclaration) SelfSign() (err error) {
 	data, err := i.Serialize()
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (i *IDDoc) SelfSign() (err error) {
 }
 
 //Setup a new IDDoc
-func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
+func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
 	//generate crypto random seed
 	seed, err := cryptowallet.RandomBytes(48)
 	if err != nil {
@@ -115,7 +115,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	}
 
 	//Main returned Object
-	i = &IDDoc{}
+	i = &IDDocDeclaration{}
 	i.seed = seed
 
 	// build ID Doc AssetDefinition
@@ -139,7 +139,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 }
 
 //For testing only
-func (i *IDDoc) SetTestKey() (err error) {
+func (i *IDDocDeclaration) SetTestKey() (err error) {
 	data, err := i.Serialize()
 	if err != nil {
 		return err

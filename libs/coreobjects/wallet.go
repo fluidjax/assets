@@ -9,24 +9,24 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type Wallet struct {
+type WalletDeclaration struct {
 	Asset
 }
 
 //AuthenticatorInterface Implementations
-func (w *Wallet) Serialize() (s []byte, err error) {
+func (w *WalletDeclaration) Serialize() (s []byte, err error) {
 	//Use Asset parent method
 	return w.Asset.Serialize(w.Asset)
 
 }
 
-func (w *Wallet) assetPayload() *protobuffer.Wallet {
+func (w *WalletDeclaration) assetPayload() *protobuffer.Wallet {
 	signatureAsset := w.Signature.GetDeclaration()
 	wallet := signatureAsset.GetWallet()
 	return wallet
 }
 
-func (w *Wallet) Verify(i *IDDoc) (bool, error) {
+func (w *WalletDeclaration) Verify(i *IDDocDeclaration) (bool, error) {
 
 	//Signature
 	signature := w.Signature.Signature
@@ -56,7 +56,7 @@ func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 
 }
 
-func (w *Wallet) Sign(i *IDDoc) (err error) {
+func (w *WalletDeclaration) Sign(i *IDDocDeclaration) (err error) {
 	data, err := w.Serialize()
 
 	if err != nil {
@@ -82,11 +82,11 @@ func (w *Wallet) Sign(i *IDDoc) (err error) {
 }
 
 //Setup a new IDDoc
-func NewWallet(idkey []byte) (w *Wallet, err error) {
+func NewWallet(idkey []byte) (w *WalletDeclaration, err error) {
 	//generate crypto random seed
 
 	//Main returned Object
-	w = &Wallet{}
+	w = &WalletDeclaration{}
 
 	// build ID Doc AssetDefinition
 	assetDeclaration := &protobuffer.AssetDeclaration{}
@@ -103,7 +103,7 @@ func NewWallet(idkey []byte) (w *Wallet, err error) {
 }
 
 //For testing only
-func (i *Wallet) SetTestKey() (err error) {
+func (i *WalletDeclaration) SetTestKey() (err error) {
 	data, err := i.Serialize()
 	if err != nil {
 		return err
