@@ -1,141 +1,114 @@
 package coreobjects
 
-// import (
-// 	"crypto/sha256"
+import (
+	"crypto/sha256"
 
-// 	"github.com/pkg/errors"
-// 	"github.com/qredo/assets/libs/crypto"
-// 	"github.com/qredo/assets/libs/cryptowallet"
-// 	"github.com/qredo/assets/libs/keystore"
-// 	"github.com/qredo/assets/libs/protobuffer"
-// )
+	"github.com/pkg/errors"
+	"github.com/qredo/assets/libs/crypto"
+	"github.com/qredo/assets/libs/keystore"
+	"github.com/qredo/assets/libs/protobuffer"
+)
 
-// type Wallet struct {
-// 	Asset
-// }
+type Wallet struct {
+	Asset
+}
 
-// //AuthenticatorInterface Implementations
-// func (w *Wallet) Serialize() (s []byte, err error) {
-// 	//Use Asset parent method
-// 	return w.Asset.Serialize(w.Asset)
+//AuthenticatorInterface Implementations
+func (w *Wallet) Serialize() (s []byte, err error) {
+	//Use Asset parent method
+	return w.Asset.Serialize(w.Asset)
 
-// }
+}
 
-// func (w *Wallet) assetPayload() *protobuffer.Wallet {
-// 	signatureAsset := w.Signature.GetDeclaration()
-// 	wallet := signatureAsset.GetWallet()
-// 	return wallet
-// }
+func (w *Wallet) assetPayload() *protobuffer.Wallet {
+	signatureAsset := w.Signature.GetDeclaration()
+	wallet := signatureAsset.GetWallet()
+	return wallet
+}
 
-// func (w *Wallet) Verify() (bool, error) {
+func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 
-// 	//Signature
-// 	signature := w.Signature.Signature
-// 	if signature == nil {
-// 		return false, errors.New("No Signature")
-// 	}
-// 	if len(signature) == 0 {
-// 		return false, errors.New("Invalid Signature")
-// 	}
+	//Signature
+	signature := w.Signature.Signature
+	if signature == nil {
+		return false, errors.New("No Signature")
+	}
+	if len(signature) == 0 {
+		return false, errors.New("Invalid Signature")
+	}
 
-// 	//Message
-// 	data, err := w.Serialize()
-// 	if err != nil {
-// 		return false, err
-// 	}
+	//Message
+	data, err := w.Serialize()
+	if err != nil {
+		return false, err
+	}
 
-// 	//Public Key
-// 	payload := w.assetPayload()
-// 	blsPK := payload.GetBLSPublicKey()
+	//Public Key
+	payload := i.AssetPayload()
+	blsPK := payload.GetBLSPublicKey()
 
-// 	rc := crypto.BLSVerify(data, blsPK, signature)
+	rc := crypto.BLSVerify(data, blsPK, signature)
 
-// 	if rc != 0 {
-// 		return false, nil
-// 	}
-// 	return true, nil
+	if rc == 0 {
+		return true, nil
+	}
+	return false, nil
 
-// }
+}
 
-// func (i *Wallet) Sign() (err error) {
-// 	data, err := i.Serialize()
-// 	if err != nil {
-// 		return err
-// 	}
+func (w *Wallet) Sign(i *IDDoc) (err error) {
+	data, err := w.Serialize()
 
-// 	if i.seed == nil {
-// 		return errors.New("No Seed")
-// 	}
-// 	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	rc, signature := crypto.BLSSign(data, blsSK)
+	if err != nil {
+		return err
+	}
 
-// 	if rc != 0 {
-// 		return errors.New("Failed to sign IDDoc")
-// 	}
+	if i.seed == nil {
+		return errors.New("No Seed in Supplied IDDoc")
+	}
+	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
+	if err != nil {
+		return err
+	}
+	rc, signature := crypto.BLSSign(data, blsSK)
 
-// 	i.Signature.Signature = signature
-// 	i.Signature.Signers = append(i.Signature.Signers, i.key)
-// 	return nil
-// }
+	if rc != 0 {
+		return errors.New("Failed to sign IDDoc")
+	}
 
-// //Setup a new IDDoc
-// func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
-// 	//generate crypto random seed
-// 	seed, err := cryptowallet.RandomBytes(48)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "Failed to generate random seed")
-// 		return nil, err
-// 	}
+	w.Signature.Signature = signature
+	w.Signature.Signers = append(w.Signature.Signers, i.key)
+	return nil
+}
 
-// 	sikePublicKey, _, err := keystore.GenerateSIKEKeys(seed)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+//Setup a new IDDoc
+func NewWallet(idkey []byte) (w *Wallet, err error) {
+	//generate crypto random seed
 
-// 	blsPublicKey, _, err := keystore.GenerateBLSKeys(seed)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	//Main returned Object
+	w = &Wallet{}
 
-// 	ecPublicKey, err := keystore.GenerateECPublicKey(seed)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	// build ID Doc AssetDefinition
+	assetDeclaration := &protobuffer.AssetDeclaration{}
+	assetDefinition := &protobuffer.AssetDeclaration_Wallet{}
+	assetDefinition.Wallet = &protobuffer.Wallet{}
+	assetDeclaration.AssetDefinition = assetDefinition
 
-// 	//Main returned Object
-// 	i = &IDDoc{}
-// 	i.seed = seed
+	//Assign the signature wrapper
+	signature := &protobuffer.Signature_Declaration{}
+	signature.Declaration = assetDeclaration
 
-// 	// build ID Doc AssetDefinition
-// 	idDocument := &protobuffer.AssetDeclaration{}
+	w.Signature.SignatureAsset = signature
+	return w, nil
+}
 
-// 	assetDefinition := &protobuffer.AssetDeclaration_Iddoc{}
-// 	assetDefinition.Iddoc = &protobuffer.IDDoc{}
-// 	assetDefinition.Iddoc.AuthenticationReference = authenticationReference
-// 	assetDefinition.Iddoc.BeneficiaryECPublicKey = ecPublicKey
-// 	assetDefinition.Iddoc.SikePublicKey = sikePublicKey
-// 	assetDefinition.Iddoc.BLSPublicKey = blsPublicKey
-// 	idDocument.AssetDefinition = assetDefinition
-
-// 	//Assign the signature wrapper
-// 	signature := &protobuffer.Signature_Declaration{}
-// 	signature.Declaration = idDocument
-
-// 	i.Signature.SignatureAsset = signature
-
-// 	return i, nil
-// }
-
-// //For testing only
-// func (i *IDDoc) SetTestKey() (err error) {
-// 	data, err := i.Serialize()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	res := sha256.Sum256(data)
-// 	i.key = res[:]
-// 	return nil
-// }
+//For testing only
+func (i *Wallet) SetTestKey() (err error) {
+	data, err := i.Serialize()
+	if err != nil {
+		return err
+	}
+	res := sha256.Sum256(data)
+	i.key = res[:]
+	return nil
+}

@@ -24,7 +24,6 @@ message AssetDeclaration {
         IDDoc Iddoc = 6;
     }
 	repeated Update update    = 7;    //List of Transfer rules for subsequent updates
-	bytes signature                = 8; //Signature of Owner
 }
 
 
@@ -38,9 +37,7 @@ message AssetUpdate {
         TrusteeGroup TrusteeGroup   = 5;
         IDDoc Iddoc                 = 6;
     }
- 	repeated Update Transfers     = 7;    //List of Transfer rules for subsequent updates
-	repeated bytes Signers          = 8;    //List of Signers who authorized Update
- 	bytes AggregatedSignature       = 9;    //Aggregated sig of All Signers & Previous Owner.
+ 	repeated Update Transfers       = 7;    //List of Transfer rules for subsequent updates
 }
 
 

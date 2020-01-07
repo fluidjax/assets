@@ -1,6 +1,7 @@
 package coreobjects
 
 import (
+	"bytes"
 	"crypto/sha256"
 
 	"github.com/pkg/errors"
@@ -57,7 +58,15 @@ func (i *IDDoc) Verify() (bool, error) {
 
 }
 
-func (i *IDDoc) Sign() (err error) {
+func (i *IDDoc) Sign(iddoc *IDDoc) error {
+	res := bytes.Compare(iddoc.key, i.key)
+	if res != 0 {
+		return errors.New("Only Self Sign a IDDoc")
+	}
+	return i.SelfSign()
+}
+
+func (i *IDDoc) SelfSign() (err error) {
 	data, err := i.Serialize()
 	if err != nil {
 		return err

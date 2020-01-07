@@ -21,7 +21,8 @@ type Authenticator struct {
 
 type AuthenticatorInterface interface {
 	Serialize(as interface{}) ([]byte, error)
-	Sign() error
+	Sign(iddoc IDDoc) error
+	SelfSign() error
 	Verify() (bool, error)
 }
 
@@ -62,13 +63,10 @@ func (a Asset) Load(key []byte) (*protobuffer.Signature, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	msg := &protobuffer.Signature{}
-
 	err = proto.Unmarshal(val, msg)
 	if err != nil {
 		return nil, err
 	}
 	return msg, nil
-
 }

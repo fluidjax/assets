@@ -25,7 +25,6 @@ func (m *Mapstore) Load(key []byte) ([]byte, error) {
 }
 
 func (m *Mapstore) Save(key []byte, data []byte) error {
-
 	m.store[hex.EncodeToString(key)] = data
 	return nil
 
