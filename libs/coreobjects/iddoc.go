@@ -3,7 +3,6 @@ package coreobjects
 import (
 	"crypto/sha256"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/cryptowallet"
@@ -12,48 +11,26 @@ import (
 )
 
 type IDDoc struct {
-	protobuffer.Signature
-	MapDataStore
-	Description
-	Authenticator
-	seed []byte
-	key  []byte
-}
-
-//MapDataStore
-type MapDataStore struct {
-}
-
-//Description
-type Description struct {
-}
-
-//Verify
-type Authenticator struct {
-}
-
-type AuthenticatorInterface interface {
-	Serialize() ([]byte, error)
-	Sign() error
-	Verify() (bool, error)
+	Asset
 }
 
 //AuthenticatorInterface Implementations
 func (i *IDDoc) Serialize() (s []byte, err error) {
-	switch i.Signature.GetSignatureAsset().(type) {
-	case *protobuffer.Signature_Declaration:
-		s, err = proto.Marshal(i.Signature.GetDeclaration())
-	case *protobuffer.Signature_Update:
-		s, err = proto.Marshal(i.Signature.GetUpdate())
-	default:
-		err = errors.New("Fail to Serialize Asset")
-	}
+	return i.Asset.Serialize(i.Asset)
+	// switch i.Signature.GetSignatureAsset().(type) {
+	// case *protobuffer.Signature_Declaration:
+	// 	s, err = proto.Marshal(i.Signature.GetDeclaration())
+	// case *protobuffer.Signature_Update:
+	// 	s, err = proto.Marshal(i.Signature.GetUpdate())
+	// default:
+	// 	err = errors.New("Fail to Serialize Asset")
+	// }
 
-	if err != nil {
-		s = nil
-	}
+	// if err != nil {
+	// 	s = nil
+	// }
 
-	return s, err
+	// return s, err
 }
 
 func (i *IDDoc) assetPayload() *protobuffer.IDDoc {
