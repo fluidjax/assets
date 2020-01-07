@@ -1,9 +1,6 @@
 package coreobjects
 
 import (
-	"bytes"
-	"crypto/sha256"
-
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/cryptowallet"
@@ -16,9 +13,9 @@ type IDDocDeclaration struct {
 }
 
 //AuthenticatorInterface Implementations
-func (i *IDDocDeclaration) Serialize() (s []byte, err error) {
+func (i *IDDocDeclaration) PayloadSerialize() (s []byte, err error) {
 	//Use Asset parent method
-	return i.Asset.Serialize(i.Asset)
+	return i.Asset.PayloadSerialize()
 
 }
 
@@ -40,7 +37,7 @@ func (i *IDDocDeclaration) Verify() (bool, error) {
 	}
 
 	//Message
-	data, err := i.Serialize()
+	data, err := i.PayloadSerialize()
 	if err != nil {
 		return false, err
 	}
@@ -55,19 +52,10 @@ func (i *IDDocDeclaration) Verify() (bool, error) {
 		return false, nil
 	}
 	return true, nil
-
 }
 
-func (i *IDDocDeclaration) Sign(iddoc *IDDocDeclaration) error {
-	res := bytes.Compare(iddoc.key, i.key)
-	if res != 0 {
-		return errors.New("Only Self Sign a IDDoc")
-	}
-	return i.SelfSign()
-}
-
-func (i *IDDocDeclaration) SelfSign() (err error) {
-	data, err := i.Serialize()
+func (i *IDDocDeclaration) Sign() (err error) {
+	data, err := i.PayloadSerialize()
 	if err != nil {
 		return err
 	}
@@ -90,7 +78,7 @@ func (i *IDDocDeclaration) SelfSign() (err error) {
 	return nil
 }
 
-//Setup a new IDDoc
+//Create a new IDDoc
 func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
 	//generate crypto random seed
 	seed, err := cryptowallet.RandomBytes(48)
@@ -98,7 +86,6 @@ func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
 		err = errors.Wrap(err, "Failed to generate random seed")
 		return nil, err
 	}
-
 	sikePublicKey, _, err := keystore.GenerateSIKEKeys(seed)
 	if err != nil {
 		return nil, err
@@ -136,15 +123,13 @@ func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
 	i.Signature.SignatureAsset = signature
 
 	return i, nil
+
 }
 
-//For testing only
-func (i *IDDocDeclaration) SetTestKey() (err error) {
-	data, err := i.Serialize()
-	if err != nil {
-		return err
-	}
-	res := sha256.Sum256(data)
-	i.key = res[:]
-	return nil
+//Rebuild an existing Signed IDDoc into IDDocDeclaration object
+//Seed can be manually set if known (ie. Is a local ID)
+func ReBuildIDDoc(sig *protobuffer.Signature) (i *IDDocDeclaration, err error) {
+	i = &IDDocDeclaration{}
+	i.Signature = *sig
+	return i, nil
 }

@@ -1,6 +1,8 @@
 package coreobjects
 
 import (
+	"crypto/sha256"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -8,37 +10,19 @@ import (
 
 type Asset struct {
 	protobuffer.Signature
-	Description
-	Authenticator
 	store *Mapstore
 	seed  []byte
 	key   []byte
 }
 
-//Authenticator
-type Authenticator struct {
-}
-
-type AuthenticatorInterface interface {
-	Serialize(as interface{}) ([]byte, error)
-	Sign(iddoc IDDoc) error
-	SelfSign() error
-	Verify() (bool, error)
-}
-
-//Description
-type Description struct {
-}
-
-func (a *Authenticator) Serialize(as interface{}) (s []byte, err error) {
-	i := as.(Asset)
-	switch i.Signature.GetSignatureAsset().(type) {
+func (a *Asset) PayloadSerialize() (s []byte, err error) {
+	switch a.Signature.GetSignatureAsset().(type) {
 	case *protobuffer.Signature_Declaration:
-		s, err = proto.Marshal(i.Signature.GetDeclaration())
+		s, err = proto.Marshal(a.Signature.GetDeclaration())
 	case *protobuffer.Signature_Update:
-		s, err = proto.Marshal(i.Signature.GetUpdate())
+		s, err = proto.Marshal(a.Signature.GetUpdate())
 	default:
-		err = errors.New("Fail to Serialize Asset")
+		err = errors.New("Fail to PayloadSerialize Asset")
 	}
 	if err != nil {
 		s = nil
@@ -69,4 +53,15 @@ func (a Asset) Load(key []byte) (*protobuffer.Signature, error) {
 		return nil, err
 	}
 	return msg, nil
+}
+
+//For testing only
+func (a *Asset) SetTestKey() (err error) {
+	data, err := a.PayloadSerialize()
+	if err != nil {
+		return err
+	}
+	res := sha256.Sum256(data)
+	a.key = res[:]
+	return nil
 }

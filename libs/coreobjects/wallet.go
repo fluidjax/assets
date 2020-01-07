@@ -16,7 +16,7 @@ type WalletDeclaration struct {
 //AuthenticatorInterface Implementations
 func (w *WalletDeclaration) Serialize() (s []byte, err error) {
 	//Use Asset parent method
-	return w.Asset.Serialize(w.Asset)
+	return w.Asset.PayloadSerialize()
 
 }
 
