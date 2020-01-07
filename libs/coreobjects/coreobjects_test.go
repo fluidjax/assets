@@ -43,7 +43,7 @@ func Test_Save_Load(t *testing.T) {
 	i.store = NewMapstore()
 	key := i.key
 	i.Save()
-	retrieved, err := i.Load(key)
+	retrieved, err := Load(i.store, key)
 
 	//i2 = MakeIDDoc(retrieved)
 
@@ -57,21 +57,28 @@ func Test_Save_Load(t *testing.T) {
 
 func Test_Wallet(t *testing.T) {
 	testName := "ABC!23"
+	testDescription := "ZXC#@!"
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.SetTestKey()
 	i.Sign()
 	i.store = NewMapstore()
-	key := i.key
 	i.Save()
 
-	w, err := NewWallet(key)
+	w, err := NewWallet(i)
+	walletContents := w.AssetPayload()
+	walletContents.Description = testDescription
+	w.SetTestKey()
 	w.Sign(i)
-
 	assert.NotNil(t, w.Signature.Signature, "Signature is empty")
-
 	res, err := w.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
+	w.Save()
 
+	retrieved, err := Load(i.store, w.key)
+	assdec := retrieved.GetDeclaration()
+	retrievedWallet := assdec.GetWallet()
+
+	assert.Equal(t, testDescription, retrievedWallet.Description, "Load/Save failed")
 }

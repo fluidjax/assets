@@ -63,11 +63,12 @@ message Update {                  //Defined for each Transfer type an expression
 
 //Asset Definitons
 message Wallet {
-    bytes principal         = 1;
-	bytes creditor          = 2;
-	bytes initiator         = 3;
-	bytes address           = 4;
-	bytes counterparty      = 5;
+    string Description      = 1;
+    bytes principal         = 2;
+	bytes creditor          = 3;
+	bytes initiator         = 4;
+	bytes address           = 5;
+	bytes counterparty      = 6;
 }
 
 

@@ -20,7 +20,7 @@ func (w *WalletDeclaration) Serialize() (s []byte, err error) {
 
 }
 
-func (w *WalletDeclaration) assetPayload() *protobuffer.Wallet {
+func (w *WalletDeclaration) AssetPayload() *protobuffer.Wallet {
 	signatureAsset := w.Signature.GetDeclaration()
 	wallet := signatureAsset.GetWallet()
 	return wallet
@@ -82,7 +82,7 @@ func (w *WalletDeclaration) Sign(i *IDDocDeclaration) (err error) {
 }
 
 //Setup a new IDDoc
-func NewWallet(idkey []byte) (w *WalletDeclaration, err error) {
+func NewWallet(iddoc *IDDocDeclaration) (w *WalletDeclaration, err error) {
 	//generate crypto random seed
 
 	//Main returned Object
@@ -99,6 +99,14 @@ func NewWallet(idkey []byte) (w *WalletDeclaration, err error) {
 	signature.Declaration = assetDeclaration
 
 	w.Signature.SignatureAsset = signature
+	w.store = iddoc.store
+	return w, nil
+}
+
+//Rebuild an existing Signed Wallet into WalletDeclaration object
+func ReBuildWallet(sig *protobuffer.Signature) (w *WalletDeclaration, err error) {
+	w = &WalletDeclaration{}
+	w.Signature = *sig
 	return w, nil
 }
 

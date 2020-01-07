@@ -41,8 +41,7 @@ func (a *Asset) Save() error {
 	return nil
 }
 
-func (a Asset) Load(key []byte) (*protobuffer.Signature, error) {
-	store := a.store
+func Load(store *Mapstore, key []byte) (*protobuffer.Signature, error) {
 	val, err := store.Load(key)
 	if err != nil {
 		return nil, err
