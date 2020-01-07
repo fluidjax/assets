@@ -16,24 +16,12 @@ type IDDoc struct {
 
 //AuthenticatorInterface Implementations
 func (i *IDDoc) Serialize() (s []byte, err error) {
+	//Use Asset parent method
 	return i.Asset.Serialize(i.Asset)
-	// switch i.Signature.GetSignatureAsset().(type) {
-	// case *protobuffer.Signature_Declaration:
-	// 	s, err = proto.Marshal(i.Signature.GetDeclaration())
-	// case *protobuffer.Signature_Update:
-	// 	s, err = proto.Marshal(i.Signature.GetUpdate())
-	// default:
-	// 	err = errors.New("Fail to Serialize Asset")
-	// }
 
-	// if err != nil {
-	// 	s = nil
-	// }
-
-	// return s, err
 }
 
-func (i *IDDoc) assetPayload() *protobuffer.IDDoc {
+func (i *IDDoc) AssetPayload() *protobuffer.IDDoc {
 	signatureAsset := i.Signature.GetDeclaration()
 	iddoc := signatureAsset.GetIddoc()
 	return iddoc
@@ -57,7 +45,7 @@ func (i *IDDoc) Verify() (bool, error) {
 	}
 
 	//Public Key
-	payload := i.assetPayload()
+	payload := i.AssetPayload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)

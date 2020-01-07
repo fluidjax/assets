@@ -8,11 +8,11 @@ import (
 
 type Asset struct {
 	protobuffer.Signature
-	MapDataStore
 	Description
 	Authenticator
-	seed []byte
-	key  []byte
+	store *Mapstore
+	seed  []byte
+	key   []byte
 }
 
 //Authenticator
@@ -23,10 +23,6 @@ type AuthenticatorInterface interface {
 	Serialize(as interface{}) ([]byte, error)
 	Sign() error
 	Verify() (bool, error)
-}
-
-//MapDataStore
-type MapDataStore struct {
 }
 
 //Description
@@ -43,10 +39,36 @@ func (a *Authenticator) Serialize(as interface{}) (s []byte, err error) {
 	default:
 		err = errors.New("Fail to Serialize Asset")
 	}
-
 	if err != nil {
 		s = nil
 	}
-
 	return s, err
+}
+
+func (a *Asset) Save() error {
+	store := a.store
+	msg := a.Signature
+	data, err := proto.Marshal(&msg)
+	if err != nil {
+		return err
+	}
+	store.Save(a.key, data)
+	return nil
+}
+
+func (a Asset) Load(key []byte) (*protobuffer.Signature, error) {
+	store := a.store
+	val, err := store.Load(key)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &protobuffer.Signature{}
+
+	err = proto.Unmarshal(val, msg)
+	if err != nil {
+		return nil, err
+	}
+	return msg, nil
+
 }
