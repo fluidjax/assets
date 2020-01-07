@@ -1,0 +1,10 @@
+test_aescbc 1 2.59367
+test_aesgcm 1 0.306127
+test_bls 1 0.260562
+test_bls_add 1 0.31086
+test_bls_sss 1 0.281857
+test_encap_decap 1 2.75471
+test_pqnist 1 0.614399
+test_aes_encrypt_CBC_256 1 0.389973
+test_aes_decrypt_CBC_256 1 0.316386
+---

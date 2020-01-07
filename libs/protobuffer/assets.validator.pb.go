@@ -15,6 +15,23 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *Signature) Validate() error {
+	if oneOfNester, ok := this.GetSignatureAsset().(*Signature_Declaration); ok {
+		if oneOfNester.Declaration != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Declaration); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Declaration", err)
+			}
+		}
+	}
+	if oneOfNester, ok := this.GetSignatureAsset().(*Signature_Update); ok {
+		if oneOfNester.Update != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Update); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Update", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *AssetDeclaration) Validate() error {
 	if oneOfNester, ok := this.GetAssetDefinition().(*AssetDeclaration_Wallet); ok {
 		if oneOfNester.Wallet != nil {
@@ -37,10 +54,10 @@ func (this *AssetDeclaration) Validate() error {
 			}
 		}
 	}
-	for _, item := range this.Transfers {
+	for _, item := range this.Update {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Transfers", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("Update", err)
 			}
 		}
 	}
@@ -77,7 +94,7 @@ func (this *AssetUpdate) Validate() error {
 	}
 	return nil
 }
-func (this *Transfer) Validate() error {
+func (this *Update) Validate() error {
 	return nil
 }
 func (this *Wallet) Validate() error {

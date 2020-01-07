@@ -1,0 +1,4 @@
+/usr/local/include/amcl/pqnist.h
+/usr/local/lib/libpqnist.2.0.0.dylib
+/usr/local/lib/libpqnist.2.dylib
+/usr/local/lib/libpqnist.dylib

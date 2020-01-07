@@ -1,16 +1,32 @@
 package main
 
 import (
-	"time"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/hokaccha/go-prettyjson"
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/cryptowallet"
-	"github.com/qredo/assets/keystore"
-	"github.com/qredo/assets/protobuffer"
+	"github.com/qredo/assets/libs/cryptowallet"
+	"github.com/qredo/assets/libs/keystore"
+	"github.com/qredo/assets/libs/protobuffer"
 )
 
+var store = make(map[string]proto.Message)
+
 func main() {
-	CreateID()
+
+	//Create an IDDoc	
+	iddoc1, _, _ := CreateID("Chris")
+	iddoc1Key := Store(iddoc1)
+
+
+	//Create an WalletDeclaration
+	wallet1, _,_ := CreateWallet(iddoc1Key)
+
+
+	DumpStore()
 	//Create an IDDoc for Principal & 3 trustees
 	//Create an Wallet
 
@@ -41,64 +57,89 @@ func main() {
 	// 	signature = sig of entire message
 
 	// //Create Trustee Group
+	print("DONE")
+}
 
+func DumpStore() {
+	for key, value := range store {
+		pp, _ := prettyjson.Marshal(value)
+		fmt.Printf("%v - %v", key, string(pp))
+	}
+}
+
+func Store(msg proto.Message) string {
+	key := makeKeyString(msg)
+	store[key] = msg
+	return key
+}
+
+//This is design to create a unique key for each object for testing purposes
+//It emulates the TX id when placed in a blockchain
+func makeKeyString(msg proto.Message) string {
+	key, _ := proto.Marshal(msg)
+	res := sha256.Sum256(key)
+	return hex.EncodeToString(res[:])
 }
 
 //CreateID - Create a new DocID along with keys
-func CreateID() (IDDocDeclaration *protobuffer.AssetDeclaration, IDDoc []byte, seed []byte, err error) {
+func CreateID(authenticationReference string) (IDDocDeclaration *protobuffer.AssetDeclaration, seed []byte, err error) {
 
 	//generate crypto random seed
 	seed, err = cryptowallet.RandomBytes(48)
 	if err != nil {
 		err = errors.Wrap(err, "Failed to generate random seed")
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	sikePublicKey, _, err := keystore.GenerateSIKEKeys(seed)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
-	blsPublicKey, blsSecretKey, err := keystore.GenerateBLSKeys(seed)
+	blsPublicKey, _, err := keystore.GenerateBLSKeys(seed)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	ecPublicKey, err := keystore.GenerateECPublicKey(seed)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	// build ID Doc
-	//idDocument := protobuffer.AssetDeclaration{}
-	// idDocument.AuthenticationReference = name
-	// idDocument.BeneficiaryECPublicKey = ecPublicKey
-	// idDocument.SikePublicKey = sikePublicKey
-	// idDocument.BLSPublicKey = blsPublicKey
-	// idDocument.Timestamp = time.Now().Unix()
-
-	// // encode ID Doc
-	// rawIDDoc, err = documents.EncodeIDDocument(idDocument, blsSecretKey)
-	// if err != nil {
-	// 	err = errors.Wrap(err, "Failed to encode IDDocument")
-	// 	return
-	// }
-
-	return nil, nil, nil, nil
+	idDocument := &protobuffer.AssetDeclaration{}
+	asset := &protobuffer.AssetDeclaration_Iddoc{}
+	asset.Iddoc = &protobuffer.IDDoc{}
+	asset.Iddoc.AuthenticationReference = authenticationReference
+	asset.Iddoc.BeneficiaryECPublicKey = ecPublicKey
+	asset.Iddoc.SikePublicKey = sikePublicKey
+	asset.Iddoc.BLSPublicKey = blsPublicKey
+	idDocument.AssetDefinition = asset
+	return idDocument, seed, nil
 }
 
-func DeclareWallet() (*protobuffer.AssetDeclaration, error) {
-	return nil, nil
+func CreateWallet(iddoc string) (*protobuffer.AssetDeclaration, error) {
+	wallet := &protobuffer.AssetDeclaration{}
+	asset := &protobuffer.AssetDeclaration_Wallet{}
+	asset.Wallet = &protobuffer.Wallet{}
+	wallet.AssetDefinition = asset
+ 	
+	return wallet, nil
 }
 
-func updateWallet() {
+// func UpdateWallet() {
+// }
 
-}
+// func DeclareTrusteeGroup() {
+// }
 
-func declareTrusteeGroup() {
+// func UpdateTrusteeGroup() {
+// }
 
-}
+// func RetrieveIDDoc(key string) {}
+// func RetrieveWallet(key string) {}
+// func RetrieveTrusteeGroup(key string){}
 
-func updateTrusteeGroup() {
+// func VerifyTransaction(key string) (bool, error){}
+// func VerifyIDDoc(key string) (bool, error){}
 
-}

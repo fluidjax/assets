@@ -4,11 +4,21 @@ package protobuffer;
 //import "github.com/mwitkow/go-proto-validators/validator.proto";
 
 
+
+message Signature {
+    bytes Signature         = 1;
+    repeated bytes Signers  = 2;
+    oneof SignatureAsset {
+        AssetDeclaration declaration = 3;
+        AssetUpdate update           = 4;
+    }
+}
+
 message AssetDeclaration {
 	AssetType Type  = 1;            //Type of Asset
 	bytes ID        = 2;                       //unique ID of asset
 	bytes Owner     = 3;                    //IDDoc of owner            
-    oneof assetDefinition {          //Definiton of the asset
+    oneof AssetDefinition {          //Definiton of the asset
         Wallet Wallet = 4;
         TrusteeGroup TrusteeGroup = 5;
         IDDoc Iddoc = 6;
@@ -23,11 +33,11 @@ message AssetUpdate {
  	AssetType Type                  = 1;    //Type of Asset (Maybe not required)
     bytes ID                        = 2;    //ID of original Asset to be updated
  	bytes NewOwner                  = 3;    //New Owner
- 	 oneof assetDefinition{                 //Definiton of the asset
+ 	 oneof AssetDefinition{                 //Definiton of the asset
         Wallet Wallet               = 4;
         TrusteeGroup TrusteeGroup   = 5;
         IDDoc Iddoc                 = 6;
-    }  
+    }
  	repeated Update Transfers     = 7;    //List of Transfer rules for subsequent updates
 	repeated bytes Signers          = 8;    //List of Signers who authorized Update
  	bytes AggregatedSignature       = 9;    //Aggregated sig of All Signers & Previous Owner.
