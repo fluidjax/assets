@@ -11,6 +11,7 @@ import (
 
 type WalletDeclaration struct {
 	Asset
+	previousState Asset
 }
 
 //AuthenticatorInterface Implementations

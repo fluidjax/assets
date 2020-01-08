@@ -23,7 +23,7 @@ message AssetDeclaration {
         TrusteeGroup TrusteeGroup = 5;
         IDDoc Iddoc = 6;
     }
-	repeated Update update    = 7;    //List of Transfer rules for subsequent updates
+	repeated Transfer Transferlist    = 7;    //List of Transfer rules for subsequent updates
 }
 
 
@@ -37,7 +37,7 @@ message AssetUpdate {
         TrusteeGroup TrusteeGroup   = 5;
         IDDoc Iddoc                 = 6;
     }
- 	repeated Update Transfers       = 7;    //List of Transfer rules for subsequent updates
+ 	repeated Transfer Transferlist       = 7;    //List of Transfer rules for subsequent updates
 }
 
 
@@ -47,18 +47,19 @@ enum AssetType {
 	iddoc       = 2;
 }                              
 enum TransferType {
-    settlePush          = 0;
-    settlePull          = 1;
-    transferPush        = 2;
-    tranferPull         = 3;
-    swap                = 4;
-    load                = 5;
+    unspecified         = 0;
+    settlePush          = 1;
+    settlePull          = 2;
+    transferPush        = 3;
+    tranferPull         = 4;
+    swap                = 5;
+    load                = 6;
 }
 
-message Update {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
-    TransferType type   = 1;	
-    string expression   = 2;              //Boolean expression eg. (SigTrustee1 + SigTrustee2 + SigTrustee3) >=2 & Owner   
-                                    //2 out of 3 trustees + owner must sign to return true.
+message Transfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
+    TransferType Type               = 1;	
+    string Expression               = 2;              //Boolean expression eg. (SigTrustee1 + SigTrustee2 + SigTrustee3) >=2 & Owner   
+    map<string, bytes> Participants = 3;
 }
 
 //Asset Definitons

@@ -54,10 +54,10 @@ func (this *AssetDeclaration) Validate() error {
 			}
 		}
 	}
-	for _, item := range this.Update {
+	for _, item := range this.Transferlist {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Update", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("Transferlist", err)
 			}
 		}
 	}
@@ -85,16 +85,17 @@ func (this *AssetUpdate) Validate() error {
 			}
 		}
 	}
-	for _, item := range this.Transfers {
+	for _, item := range this.Transferlist {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Transfers", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("Transferlist", err)
 			}
 		}
 	}
 	return nil
 }
-func (this *Update) Validate() error {
+func (this *Transfer) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
 func (this *Wallet) Validate() error {

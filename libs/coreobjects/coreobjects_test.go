@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,6 +17,7 @@ func Test_IDDoc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	i.SetTestKey()
 	i.Sign()
+	i.Description()
 	res, err := i.Verify()
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
@@ -81,4 +83,41 @@ func Test_Wallet(t *testing.T) {
 	retrievedWallet := assdec.GetWallet()
 
 	assert.Equal(t, testDescription, retrievedWallet.Description, "Load/Save failed")
+}
+
+func Test_RuleAdd(t *testing.T) {
+	idP, _ := NewIDDoc("Primary")
+	idT1, _ := NewIDDoc("trustee1")
+	idT2, _ := NewIDDoc("trustee2")
+	idT3, _ := NewIDDoc("trustee3")
+
+	idNewOwner, _ := NewIDDoc("NewOwner")
+
+	expression := "t1 + t2 + t3 > 1 & p"
+	participants := map[string][]byte{
+		"p":  idP.key,
+		"t1": idT1.key,
+		"t2": idT2.key,
+		"t3": idT3.key,
+	}
+
+	wDec, _ := NewWallet(idP)
+	wDec.AddTransfer(protobuffer.TransferType_settlePush, expression, participants)
+	wDec.Dump()
+
+	//Create an Update
+	wUpdate, _ := NewUpdateWallet(idP, wDec)
+
+	//Generate Signatures for each Participant
+
+	//Verify Signature for Each Particpiant
+
+	transferSignatures := []SignatureID{
+		SignatureID{IDDocID: idP.key, Signature: nil},
+		SignatureID{IDDocID: idT1.key, Signature: nil},
+		SignatureID{IDDocID: idT2.key, Signature: nil},
+		SignatureID{IDDocID: idT3.key, Signature: nil},
+		SignatureID{IDDocID: idT4.key, Signature: nil},
+	}
+
 }

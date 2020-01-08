@@ -121,6 +121,7 @@ func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
 	signature.Declaration = idDocument
 
 	i.Signature.SignatureAsset = signature
+	i.SetTestKey()
 
 	return i, nil
 
