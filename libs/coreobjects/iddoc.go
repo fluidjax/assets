@@ -8,24 +8,22 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type IDDocDeclaration struct {
+type IDDoc struct {
 	Asset
 }
 
 //AuthenticatorInterface Implementations
-func (i *IDDocDeclaration) PayloadSerialize() (s []byte, err error) {
+func (i *IDDoc) PayloadSerialize() (s []byte, err error) {
 	//Use Asset parent method
 	return i.Asset.PayloadSerialize()
 
 }
 
-func (i *IDDocDeclaration) AssetPayload() *protobuffer.IDDoc {
-	signatureAsset := i.Signature.GetDeclaration()
-	iddoc := signatureAsset.GetIddoc()
-	return iddoc
+func (i *IDDoc) AssetPayload() *protobuffer.IDDoc {
+	return i.Signature.Asset.GetIddoc()
 }
 
-func (i *IDDocDeclaration) Verify() (bool, error) {
+func (i *IDDoc) Verify() (bool, error) {
 
 	//Signature
 	signature := i.Signature.Signature
@@ -54,7 +52,7 @@ func (i *IDDocDeclaration) Verify() (bool, error) {
 	return true, nil
 }
 
-func (i *IDDocDeclaration) Sign() (err error) {
+func (i *IDDoc) Sign() (err error) {
 	data, err := i.PayloadSerialize()
 	if err != nil {
 		return err
@@ -79,7 +77,7 @@ func (i *IDDocDeclaration) Sign() (err error) {
 }
 
 //Create a new IDDoc
-func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
+func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	//generate crypto random seed
 	seed, err := cryptowallet.RandomBytes(48)
 	if err != nil {
@@ -102,35 +100,32 @@ func NewIDDoc(authenticationReference string) (i *IDDocDeclaration, err error) {
 	}
 
 	//Main returned Object
-	i = &IDDocDeclaration{}
+	i = &IDDoc{}
 	i.seed = seed
 
-	// build ID Doc AssetDefinition
-	idDocument := &protobuffer.AssetDeclaration{}
+	//Asset
+	asset := &protobuffer.Asset{}
 
-	assetDefinition := &protobuffer.AssetDeclaration_Iddoc{}
-	assetDefinition.Iddoc = &protobuffer.IDDoc{}
-	assetDefinition.Iddoc.AuthenticationReference = authenticationReference
-	assetDefinition.Iddoc.BeneficiaryECPublicKey = ecPublicKey
-	assetDefinition.Iddoc.SikePublicKey = sikePublicKey
-	assetDefinition.Iddoc.BLSPublicKey = blsPublicKey
-	idDocument.AssetDefinition = assetDefinition
+	//IDDoc
+	iddoc := &protobuffer.IDDoc{}
+	iddoc.AuthenticationReference = authenticationReference
+	iddoc.BeneficiaryECPublicKey = ecPublicKey
+	iddoc.SikePublicKey = sikePublicKey
+	iddoc.BLSPublicKey = blsPublicKey
 
-	//Assign the signature wrapper
-	signature := &protobuffer.Signature_Declaration{}
-	signature.Declaration = idDocument
-
-	i.Signature.SignatureAsset = signature
+	//Compose
+	i.Signature.Asset = asset
+	assetDefinition := &protobuffer.Asset_Iddoc{}
+	assetDefinition.Iddoc = iddoc
+	i.Signature.Asset.AssetDefinition = assetDefinition
 	i.SetTestKey()
-
 	return i, nil
-
 }
 
 //Rebuild an existing Signed IDDoc into IDDocDeclaration object
 //Seed can be manually set if known (ie. Is a local ID)
-func ReBuildIDDoc(sig *protobuffer.Signature) (i *IDDocDeclaration, err error) {
-	i = &IDDocDeclaration{}
+func ReBuildIDDoc(sig *protobuffer.Signature) (i *IDDoc, err error) {
+	i = &IDDoc{}
 	i.Signature = *sig
 	return i, nil
 }

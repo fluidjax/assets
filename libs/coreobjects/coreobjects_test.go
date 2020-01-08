@@ -21,6 +21,7 @@ func Test_IDDoc(t *testing.T) {
 	res, err := i.Verify()
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
+	i.Dump()
 }
 
 func Test_Serialize_IDDoc(t *testing.T) {
@@ -31,7 +32,7 @@ func Test_Serialize_IDDoc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, data, "Result should not be nil")
 
-	i.Signature.SignatureAsset = nil
+	i.Signature.Asset = nil
 	data, err = i.PayloadSerialize()
 	assert.NotNil(t, err, "Error should not be nil")
 }
@@ -46,14 +47,9 @@ func Test_Save_Load(t *testing.T) {
 	key := i.key
 	i.Save()
 	retrieved, err := Load(i.store, key)
-
-	//i2 = MakeIDDoc(retrieved)
-
 	assert.Nil(t, err, "Error should be nil")
 	print(retrieved)
-	assdec := retrieved.GetDeclaration()
-	iddoc := assdec.GetIddoc()
-
+	iddoc := retrieved.Asset.GetIddoc()
 	assert.Equal(t, testName, iddoc.AuthenticationReference, "Load/Save failed")
 }
 
@@ -79,8 +75,7 @@ func Test_Wallet(t *testing.T) {
 	w.Save()
 
 	retrieved, err := Load(i.store, w.key)
-	assdec := retrieved.GetDeclaration()
-	retrievedWallet := assdec.GetWallet()
+	retrievedWallet := retrieved.Asset.GetWallet()
 
 	assert.Equal(t, testDescription, retrievedWallet.Description, "Load/Save failed")
 }
@@ -91,7 +86,7 @@ func Test_RuleAdd(t *testing.T) {
 	idT2, _ := NewIDDoc("trustee2")
 	idT3, _ := NewIDDoc("trustee3")
 
-	idNewOwner, _ := NewIDDoc("NewOwner")
+	//idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := map[string][]byte{
@@ -106,18 +101,18 @@ func Test_RuleAdd(t *testing.T) {
 	wDec.Dump()
 
 	//Create an Update
-	wUpdate, _ := NewUpdateWallet(idP, wDec)
+	// wUpdate, _ := NewUpdateWallet(idP, wDec)
 
-	//Generate Signatures for each Participant
+	// //Generate Signatures for each Participant
 
-	//Verify Signature for Each Particpiant
+	// //Verify Signature for Each Particpiant
 
-	transferSignatures := []SignatureID{
-		SignatureID{IDDocID: idP.key, Signature: nil},
-		SignatureID{IDDocID: idT1.key, Signature: nil},
-		SignatureID{IDDocID: idT2.key, Signature: nil},
-		SignatureID{IDDocID: idT3.key, Signature: nil},
-		SignatureID{IDDocID: idT4.key, Signature: nil},
-	}
+	// transferSignatures := []SignatureID{
+	// 	SignatureID{IDDocID: idP.key, Signature: nil},
+	// 	SignatureID{IDDocID: idT1.key, Signature: nil},
+	// 	SignatureID{IDDocID: idT2.key, Signature: nil},
+	// 	SignatureID{IDDocID: idT3.key, Signature: nil},
+	// 	SignatureID{IDDocID: idT4.key, Signature: nil},
+	// }
 
 }

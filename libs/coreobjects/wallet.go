@@ -9,25 +9,25 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type WalletDeclaration struct {
+type Wallet struct {
 	Asset
 	previousState Asset
 }
 
 //AuthenticatorInterface Implementations
-func (w *WalletDeclaration) Serialize() (s []byte, err error) {
+func (w *Wallet) Serialize() (s []byte, err error) {
 	//Use Asset parent method
 	return w.Asset.PayloadSerialize()
 
 }
 
-func (w *WalletDeclaration) AssetPayload() *protobuffer.Wallet {
-	signatureAsset := w.Signature.GetDeclaration()
+func (w *Wallet) AssetPayload() *protobuffer.Wallet {
+	signatureAsset := w.Signature.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet
 }
 
-func (w *WalletDeclaration) Verify(i *IDDocDeclaration) (bool, error) {
+func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 
 	//Signature
 	signature := w.Signature.Signature
@@ -57,7 +57,7 @@ func (w *WalletDeclaration) Verify(i *IDDocDeclaration) (bool, error) {
 
 }
 
-func (w *WalletDeclaration) Sign(i *IDDocDeclaration) (err error) {
+func (w *Wallet) Sign(i *IDDoc) (err error) {
 	data, err := w.Serialize()
 
 	if err != nil {
@@ -83,36 +83,42 @@ func (w *WalletDeclaration) Sign(i *IDDocDeclaration) (err error) {
 }
 
 //Setup a new IDDoc
-func NewWallet(iddoc *IDDocDeclaration) (w *WalletDeclaration, err error) {
-	//generate crypto random seed
+func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
+	w = &Wallet{}
 
-	//Main returned Object
-	w = &WalletDeclaration{}
+	//Asset
+	asset := &protobuffer.Asset{}
+	asset.Type = protobuffer.AssetType_wallet
 
-	// build ID Doc AssetDefinition
-	assetDeclaration := &protobuffer.AssetDeclaration{}
-	assetDefinition := &protobuffer.AssetDeclaration_Wallet{}
-	assetDefinition.Wallet = &protobuffer.Wallet{}
-	assetDeclaration.AssetDefinition = assetDefinition
+	walletKey, err := RandomBytes(32)
+	if err != nil {
+		return nil, errors.New("Fail to generate random key")
+	}
+	asset.ID = walletKey
+	asset.Owner = iddoc.key
 
-	//Assign the signature wrapper
-	signature := &protobuffer.Signature_Declaration{}
-	signature.Declaration = assetDeclaration
+	//Wallet
+	wallet := &protobuffer.Wallet{}
 
-	w.Signature.SignatureAsset = signature
+	//Compose
+	w.Signature.Asset = asset
+	assetDefinition := &protobuffer.Asset_Wallet{}
+	assetDefinition.Wallet = wallet
+	w.Signature.Asset.AssetDefinition = assetDefinition
+	w.SetTestKey()
 	w.store = iddoc.store
 	return w, nil
 }
 
 //Rebuild an existing Signed Wallet into WalletDeclaration object
-func ReBuildWallet(sig *protobuffer.Signature) (w *WalletDeclaration, err error) {
-	w = &WalletDeclaration{}
+func ReBuildWallet(sig *protobuffer.Signature) (w *Wallet, err error) {
+	w = &Wallet{}
 	w.Signature = *sig
 	return w, nil
 }
 
 //For testing only
-func (i *WalletDeclaration) SetTestKey() (err error) {
+func (i *Wallet) SetTestKey() (err error) {
 	data, err := i.Serialize()
 	if err != nil {
 		return err

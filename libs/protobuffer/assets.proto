@@ -8,13 +8,10 @@ package protobuffer;
 message Signature {
     bytes Signature         = 1;
     repeated bytes Signers  = 2;
-    oneof SignatureAsset {
-        AssetDeclaration declaration = 3;
-        AssetUpdate update           = 4;
-    }
+    Asset Asset             = 3;
 }
 
-message AssetDeclaration {
+message Asset {
 	AssetType Type  = 1;            //Type of Asset
 	bytes ID        = 2;                       //unique ID of asset
 	bytes Owner     = 3;                    //IDDoc of owner            
@@ -25,21 +22,6 @@ message AssetDeclaration {
     }
 	repeated Transfer Transferlist    = 7;    //List of Transfer rules for subsequent updates
 }
-
-
-//A subsequent message to update the status of an asset.
-message AssetUpdate {
- 	AssetType Type                  = 1;    //Type of Asset (Maybe not required)
-    bytes ID                        = 2;    //ID of original Asset to be updated
- 	bytes NewOwner                  = 3;    //New Owner
- 	 oneof AssetDefinition{                 //Definiton of the asset
-        Wallet Wallet               = 4;
-        TrusteeGroup TrusteeGroup   = 5;
-        IDDoc Iddoc                 = 6;
-    }
- 	repeated Transfer Transferlist       = 7;    //List of Transfer rules for subsequent updates
-}
-
 
 enum AssetType {
 	wallet      = 0;

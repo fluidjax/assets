@@ -16,69 +16,29 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *Signature) Validate() error {
-	if oneOfNester, ok := this.GetSignatureAsset().(*Signature_Declaration); ok {
-		if oneOfNester.Declaration != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Declaration); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Declaration", err)
-			}
-		}
-	}
-	if oneOfNester, ok := this.GetSignatureAsset().(*Signature_Update); ok {
-		if oneOfNester.Update != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Update); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Update", err)
-			}
+	if this.Asset != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Asset); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Asset", err)
 		}
 	}
 	return nil
 }
-func (this *AssetDeclaration) Validate() error {
-	if oneOfNester, ok := this.GetAssetDefinition().(*AssetDeclaration_Wallet); ok {
+func (this *Asset) Validate() error {
+	if oneOfNester, ok := this.GetAssetDefinition().(*Asset_Wallet); ok {
 		if oneOfNester.Wallet != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Wallet); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Wallet", err)
 			}
 		}
 	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*AssetDeclaration_TrusteeGroup); ok {
+	if oneOfNester, ok := this.GetAssetDefinition().(*Asset_TrusteeGroup); ok {
 		if oneOfNester.TrusteeGroup != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.TrusteeGroup); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("TrusteeGroup", err)
 			}
 		}
 	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*AssetDeclaration_Iddoc); ok {
-		if oneOfNester.Iddoc != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Iddoc); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Iddoc", err)
-			}
-		}
-	}
-	for _, item := range this.Transferlist {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Transferlist", err)
-			}
-		}
-	}
-	return nil
-}
-func (this *AssetUpdate) Validate() error {
-	if oneOfNester, ok := this.GetAssetDefinition().(*AssetUpdate_Wallet); ok {
-		if oneOfNester.Wallet != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Wallet); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Wallet", err)
-			}
-		}
-	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*AssetUpdate_TrusteeGroup); ok {
-		if oneOfNester.TrusteeGroup != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.TrusteeGroup); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("TrusteeGroup", err)
-			}
-		}
-	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*AssetUpdate_Iddoc); ok {
+	if oneOfNester, ok := this.GetAssetDefinition().(*Asset_Iddoc); ok {
 		if oneOfNester.Iddoc != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Iddoc); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Iddoc", err)

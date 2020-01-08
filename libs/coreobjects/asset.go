@@ -6,7 +6,6 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hokaccha/go-prettyjson"
-	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
@@ -24,14 +23,7 @@ type Asset struct {
 }
 
 func (a *Asset) PayloadSerialize() (s []byte, err error) {
-	switch a.Signature.GetSignatureAsset().(type) {
-	case *protobuffer.Signature_Declaration:
-		s, err = proto.Marshal(a.Signature.GetDeclaration())
-	case *protobuffer.Signature_Update:
-		s, err = proto.Marshal(a.Signature.GetUpdate())
-	default:
-		err = errors.New("Fail to PayloadSerialize Asset")
-	}
+	s, err = proto.Marshal(a.Signature.Asset)
 	if err != nil {
 		s = nil
 	}
@@ -91,23 +83,10 @@ func (a *Asset) AddTransfer(transferType protobuffer.TransferType, expression st
 	for abbreviation, iddocID := range participants {
 		transferRule.Participants[abbreviation] = iddocID
 	}
+	ob := a.Signature.Asset
+	ob.Transferlist = append(ob.Transferlist, transferRule)
 
-	switch a.Signature.GetSignatureAsset().(type) {
-	case *protobuffer.Signature_Declaration:
-		ob := a.Signature.GetDeclaration()
-		ob.Transferlist = append(ob.Transferlist, transferRule)
-	case *protobuffer.Signature_Update:
-		ob := a.Signature.GetUpdate()
-		ob.Transferlist = append(ob.Transferlist, transferRule)
-
-	default:
-		return errors.New("Unknown Asset Type in Add Transfer")
-	}
 	return nil
-}
-
-func (a *Asset) ResolveExpression(transferType protobuffer.TransferType, signatures SigIDs) {
-
 }
 
 //Pretty print the Asset for debugging
