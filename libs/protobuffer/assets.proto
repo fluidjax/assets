@@ -20,8 +20,10 @@ message Asset {
         TrusteeGroup TrusteeGroup = 5;
         IDDoc Iddoc = 6;
     }
-	repeated Transfer Transferlist    = 7;    //List of Transfer rules for subsequent updates
+    map<string, Transfer> Transferlist = 8;
+	//repeated Transfer Transferlist    = 7;    //List of Transfer rules for subsequent updates
 }
+
 
 enum AssetType {
 	wallet      = 0;
@@ -33,7 +35,7 @@ enum TransferType {
     settlePush          = 1;
     settlePull          = 2;
     transferPush        = 3;
-    tranferPull         = 4;
+    transferPull         = 4;
     swap                = 5;
     load                = 6;
 }

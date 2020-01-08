@@ -5,19 +5,17 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/crypto"
-	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
 type Wallet struct {
-	Asset
-	previousState Asset
+	BaseAsset
 }
 
 //AuthenticatorInterface Implementations
 func (w *Wallet) Serialize() (s []byte, err error) {
 	//Use Asset parent method
-	return w.Asset.PayloadSerialize()
+	return w.BaseAsset.PayloadSerialize()
 
 }
 
@@ -58,24 +56,29 @@ func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 }
 
 func (w *Wallet) Sign(i *IDDoc) (err error) {
-	data, err := w.Serialize()
 
+	signature, err := w.BaseAsset.SignPayload(i)
 	if err != nil {
 		return err
 	}
+	// data, err := w.Serialize()
 
-	if i.seed == nil {
-		return errors.New("No Seed in Supplied IDDoc")
-	}
-	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
-	if err != nil {
-		return err
-	}
-	rc, signature := crypto.BLSSign(data, blsSK)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if rc != 0 {
-		return errors.New("Failed to sign IDDoc")
-	}
+	// if i.seed == nil {
+	// 	return errors.New("No Seed in Supplied IDDoc")
+	// }
+	// _, blsSK, err := keystore.GenerateBLSKeys(i.seed)
+	// if err != nil {
+	// 	return err
+	// }
+	// rc, signature := crypto.BLSSign(data, blsSK)
+
+	// if rc != 0 {
+	// 	return errors.New("Failed to sign IDDoc")
+	// }
 
 	w.Signature.Signature = signature
 	w.Signature.Signers = append(w.Signature.Signers, i.key)
@@ -84,30 +87,64 @@ func (w *Wallet) Sign(i *IDDoc) (err error) {
 
 //Setup a new IDDoc
 func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
-	w = &Wallet{}
-
-	//Asset
-	asset := &protobuffer.Asset{}
-	asset.Type = protobuffer.AssetType_wallet
+	w = EmptyWallet()
+	w.store = iddoc.store
 
 	walletKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	asset.ID = walletKey
-	asset.Owner = iddoc.key
+	w.Signature.Asset.ID = walletKey
+	w.Signature.Asset.Type = protobuffer.AssetType_wallet
+	w.Signature.Asset.Owner = iddoc.key
+	return w, nil
 
+	// //Asset
+	// asset := &protobuffer.Asset{}
+	// asset.Type = protobuffer.AssetType_wallet
+
+	// walletKey, err := RandomBytes(32)
+	// if err != nil {
+	// 	return nil, errors.New("Fail to generate random key")
+	// }
+	// asset.ID = walletKey
+	// asset.Owner = iddoc.key
+
+	// //Wallet
+	// wallet := &protobuffer.Wallet{}
+
+	// //Compose
+	// w.Signature.Asset = asset
+	// assetDefinition := &protobuffer.Asset_Wallet{}
+	// assetDefinition.Wallet = wallet
+	// w.Signature.Asset.AssetDefinition = assetDefinition
+	// w.store = iddoc.store
+	// return w, nil
+
+}
+
+func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
+	w = EmptyWallet()
+	w.Signature.Asset.ID = previousWallet.Signature.Asset.ID
+	w.Signature.Asset.Type = protobuffer.AssetType_wallet
+	w.Signature.Asset.Owner = iddoc.key //new owner
+	w.previousAsset = &previousWallet.BaseAsset
+	return w, nil
+}
+
+func EmptyWallet() (w *Wallet) {
+	w = &Wallet{}
+	//Asset
+	asset := &protobuffer.Asset{}
+	asset.Type = protobuffer.AssetType_wallet
 	//Wallet
 	wallet := &protobuffer.Wallet{}
-
 	//Compose
 	w.Signature.Asset = asset
 	assetDefinition := &protobuffer.Asset_Wallet{}
 	assetDefinition.Wallet = wallet
 	w.Signature.Asset.AssetDefinition = assetDefinition
-	w.SetTestKey()
-	w.store = iddoc.store
-	return w, nil
+	return w
 }
 
 //Rebuild an existing Signed Wallet into WalletDeclaration object

@@ -86,7 +86,7 @@ func Test_RuleAdd(t *testing.T) {
 	idT2, _ := NewIDDoc("trustee2")
 	idT3, _ := NewIDDoc("trustee3")
 
-	//idNewOwner, _ := NewIDDoc("NewOwner")
+	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := map[string][]byte{
@@ -96,23 +96,68 @@ func Test_RuleAdd(t *testing.T) {
 		"t3": idT3.key,
 	}
 
-	wDec, _ := NewWallet(idP)
-	wDec.AddTransfer(protobuffer.TransferType_settlePush, expression, participants)
-	wDec.Dump()
+	w1, _ := NewWallet(idP)
+	w1.SetTestKey()
+	w1.AddTransfer(protobuffer.TransferType_settlePush, expression, participants)
+	//w1.Dump()
 
-	//Create an Update
-	// wUpdate, _ := NewUpdateWallet(idP, wDec)
+	//Create another based on previous, ie. AnUpdateWallet
+	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
-	// //Generate Signatures for each Participant
+	//Generate Signatures for each Participant
 
-	// //Verify Signature for Each Particpiant
+	sigP, _ := w2.SignPayload(idP)
+	sigT1, _ := w2.SignPayload(idT1)
+	sigT2, _ := w2.SignPayload(idT2)
+	sigT3, _ := w2.SignPayload(idT3)
 
-	// transferSignatures := []SignatureID{
-	// 	SignatureID{IDDocID: idP.key, Signature: nil},
-	// 	SignatureID{IDDocID: idT1.key, Signature: nil},
-	// 	SignatureID{IDDocID: idT2.key, Signature: nil},
-	// 	SignatureID{IDDocID: idT3.key, Signature: nil},
-	// 	SignatureID{IDDocID: idT4.key, Signature: nil},
-	// }
+	res1, _ := w2.VerifyPayload(sigT1, idT1)
+	assert.True(t, res1, "Sig fails to verify")
+	res2, _ := w2.VerifyPayload(sigT2, idT2)
+	assert.True(t, res2, "Sig fails to verify")
+	res3, _ := w2.VerifyPayload(sigT3, idT3)
+	assert.True(t, res3, "Sig fails to verify")
+
+	//We should have 3 valid sigs.
+
+	//Pass correct
+	transferSignatures1 := []SignatureID{
+		SignatureID{IDDoc: idP, Signature: sigP},
+		SignatureID{IDDoc: idT1, Signature: sigT1},
+		SignatureID{IDDoc: idT2, Signature: sigT2},
+		SignatureID{IDDoc: idT3, Signature: nil},
+	}
+	validTransfer1, _ := w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	assert.True(t, validTransfer1, "Transfer should be valid")
+
+	//Pass too many correct
+	transferSignatures1 = []SignatureID{
+		SignatureID{IDDoc: idP, Signature: sigP},
+		SignatureID{IDDoc: idT1, Signature: sigT1},
+		SignatureID{IDDoc: idT2, Signature: sigT2},
+		SignatureID{IDDoc: idT3, Signature: sigT3},
+	}
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	assert.True(t, validTransfer1, "Transfer should be valid")
+
+	//Fail not enough threshold
+	transferSignatures1 = []SignatureID{
+		SignatureID{IDDoc: idP, Signature: sigP},
+		SignatureID{IDDoc: idT1, Signature: nil},
+		SignatureID{IDDoc: idT2, Signature: nil},
+		SignatureID{IDDoc: idT3, Signature: sigT3},
+	}
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	assert.False(t, validTransfer1, "Transfer should be invalid")
+
+	//Fail no principal
+	transferSignatures1 = []SignatureID{
+		SignatureID{IDDoc: idP, Signature: nil},
+		SignatureID{IDDoc: idT1, Signature: sigT1},
+		SignatureID{IDDoc: idT2, Signature: sigT2},
+		SignatureID{IDDoc: idT3, Signature: sigT3},
+	}
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	assert.False(t, validTransfer1, "Transfer should be invalid")
 
 }

@@ -9,13 +9,13 @@ import (
 )
 
 type IDDoc struct {
-	Asset
+	BaseAsset
 }
 
 //AuthenticatorInterface Implementations
 func (i *IDDoc) PayloadSerialize() (s []byte, err error) {
 	//Use Asset parent method
-	return i.Asset.PayloadSerialize()
+	return i.BaseAsset.PayloadSerialize()
 
 }
 
