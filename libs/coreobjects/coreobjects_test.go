@@ -1,6 +1,8 @@
 package coreobjects
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
@@ -196,8 +198,10 @@ func Test_TruthTable(t *testing.T) {
 
 	//Create another based on previous, ie. AnUpdateWallet
 
-	tt, err := w1.TruthTable(protobuffer.TransferType_settlePush)
+	res, err := w1.TruthTable(protobuffer.TransferType_settlePush)
 	assert.Nil(t, err, "Truth table return should be nil")
 
-	print(tt)
+	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
+	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
+
 }
