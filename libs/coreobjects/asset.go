@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
@@ -19,6 +20,11 @@ import (
 type SignatureID struct {
 	IDDoc     *IDDoc
 	Signature []byte
+}
+
+type TransferParticipant struct {
+	IDDoc        *IDDoc
+	Abbreviation string
 }
 
 type BaseAsset struct {
@@ -89,11 +95,16 @@ func Load(store *Mapstore, key []byte) (*protobuffer.Signature, error) {
 	if err != nil {
 		return nil, err
 	}
+	if val == nil {
+		return nil, errors.New("Key not found")
+	}
+
 	msg := &protobuffer.Signature{}
 	err = proto.Unmarshal(val, msg)
 	if err != nil {
 		return nil, err
 	}
+
 	return msg, nil
 }
 
@@ -114,7 +125,7 @@ func (a *BaseAsset) Description() {
 
 //Add a new Transfer/Update rule
 //Specify the boolean expression & add list of participants
-func (a *BaseAsset) AddTransfer(transferType protobuffer.TransferType, expression string, participants map[string][]byte) error {
+func (a *BaseAsset) AddTransfer(transferType protobuffer.TransferType, expression string, participants *map[string][]byte) error {
 	transferRule := &protobuffer.Transfer{}
 	transferRule.Type = transferType
 	transferRule.Expression = expression
@@ -123,16 +134,16 @@ func (a *BaseAsset) AddTransfer(transferType protobuffer.TransferType, expressio
 		transferRule.Participants = make(map[string][]byte)
 	}
 
-	for abbreviation, iddocID := range participants {
+	for abbreviation, iddocID := range *participants {
 		transferRule.Participants[abbreviation] = iddocID
 	}
-	ob := a.Signature.Asset
 	//Cant use enum as map key, so convert to a string
 	transferListMapString := transferType.String()
-	if ob.Transferlist == nil {
-		ob.Transferlist = make(map[string]*protobuffer.Transfer)
+	if a.Signature.Asset.Transferlist == nil {
+		a.Signature.Asset.Transferlist = make(map[string]*protobuffer.Transfer)
 	}
-	ob.Transferlist[transferListMapString] = transferRule
+	a.Signature.Asset.Transferlist[transferListMapString] = transferRule
+
 	return nil
 }
 
@@ -156,11 +167,17 @@ func (a *BaseAsset) IsValidTransfer(transferType protobuffer.TransferType, trans
 	if transfer == nil {
 		return false, errors.New("No Transfer Found")
 	}
-
 	expression := transfer.Expression
+	expression = ResolveExpression(expression, transfer.Participants, transferSignatures)
+	result := boolparser.BoolSolve(expression)
+	fmt.Printf("%v %s \n", result, expression)
+	return result, nil
 
-	//Loop All Participants
-	for abbreviation, id := range transfer.Participants {
+}
+
+//Using the Specified participants change the abbreviations (t1, p etc) into boolean/int values
+func ResolveExpression(expression string, participants map[string][]byte, transferSignatures []SignatureID) string {
+	for abbreviation, id := range participants {
 		//Loop through transfer Signatures
 		found := false
 		for _, sigID := range transferSignatures {
@@ -180,11 +197,75 @@ func (a *BaseAsset) IsValidTransfer(transferType protobuffer.TransferType, trans
 			expression = strings.ReplaceAll(expression, abbreviation, "0")
 		}
 	}
+	return expression
+}
 
-	result := boolparser.BoolSolve(expression)
+func (a *BaseAsset) TruthTable(transferType protobuffer.TransferType) (bool, error) {
+	transferListMapString := transferType.String()
+	transfer := a.Asset.Transferlist[transferListMapString]
+	if transfer == nil {
+		return false, errors.New("No Transfer Found")
+	}
+	expression := transfer.Expression
 
-	fmt.Printf("%v %s \n", result, expression)
+	totalParticipants := len(transfer.Participants)
+	var participantArray []TransferParticipant
+	for key, idkey := range transfer.Participants {
+		idsig, err := Load(a.store, idkey)
+		if err != nil {
+			return false, errors.New("Failed to load iddoc")
+		}
+		iddoc, err := ReBuildIDDoc(idsig, idkey)
+		if err != nil {
+			return false, errors.New("Failed to Rebuild iddoc")
+		}
+		p := TransferParticipant{
+			IDDoc:        iddoc,
+			Abbreviation: key,
+		}
+		participantArray = append(participantArray, p)
+	}
 
-	return result, nil
+	var j int64
+	for j = 0; j < int64(math.Pow(2, float64(totalParticipants))); j++ {
+		fmt.Printf("%v:", j)
+		var transferSignatures []SignatureID
+		for i := 0; i < totalParticipants; i++ {
+			pos := int64(math.Pow(2, float64(i)))
+			val := j & pos
+			fmt.Printf("%v", val)
+			iddoc := participantArray[i].IDDoc
 
+			if val == 0 {
+				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: nil})
+			} else {
+				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
+			}
+
+		}
+		resolvedExpression := ResolveExpression(expression, transfer.Participants, transferSignatures)
+		result := boolparser.BoolSolve(resolvedExpression)
+		fmt.Printf(" %v    [%s] [%s] \n", result, expression, resolvedExpression)
+	}
+
+	// 	for _, idkey := range transfer.Participants {
+
+	// 		counter++
+
+	// 		if err != nil {
+	// 			return false, errors.New("Failed to retrieve iddoc")
+	// 		}
+
+	// 		if i^2 && tot
+
+	// 		sig := SignatureID{IDDoc: iddoc, Signature: nil}
+	// 		transferSignatures = append(transferSignatures, sig)
+	// 	}
+	// 	expression = ResolveExpression(expression, transfer.Participants, transferSignatures)
+	// 	result := boolparser.BoolSolve(expression)
+	// 	fmt.Printf("%v %s \n", result, expression)
+
+	// }
+
+	return true, nil
 }

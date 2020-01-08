@@ -124,8 +124,9 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 
 //Rebuild an existing Signed IDDoc into IDDocDeclaration object
 //Seed can be manually set if known (ie. Is a local ID)
-func ReBuildIDDoc(sig *protobuffer.Signature) (i *IDDoc, err error) {
+func ReBuildIDDoc(sig *protobuffer.Signature, key []byte) (i *IDDoc, err error) {
 	i = &IDDoc{}
+	i.key = key
 	i.Signature = *sig
 	return i, nil
 }

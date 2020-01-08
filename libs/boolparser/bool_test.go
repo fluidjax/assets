@@ -13,6 +13,9 @@ func Test_Unary_Bool(t *testing.T) {
 	assert.False(t, BoolSolve("0 & 0"), "Bool operation fails")
 	assert.False(t, BoolSolve("!1 & 1"), "Bool operation fails")
 	assert.True(t, BoolSolve("1 & 1"), "Bool operation fails")
+	assert.True(t, BoolSolve("!0 & !0"), "Bool operation fails")
+	assert.True(t, BoolSolve("(!0) & (!0)"), "Bool operation fails")
+	assert.False(t, BoolSolve("(!1) & (!0)"), "Bool operation fails")
 
 	assert.True(t, BoolSolve("0 + 1 + 1 > 1 & 1"), "Bool operation fails")
 	assert.True(t, BoolSolve("!0"), "Bool operation fails")

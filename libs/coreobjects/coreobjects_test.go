@@ -89,7 +89,7 @@ func Test_RuleAdd(t *testing.T) {
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "t1 + t2 + t3 > 1 & p"
-	participants := map[string][]byte{
+	participants := &map[string][]byte{
 		"p":  idP.key,
 		"t1": idT1.key,
 		"t2": idT2.key,
@@ -159,5 +159,45 @@ func Test_RuleAdd(t *testing.T) {
 	}
 	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid")
+}
 
+func Test_TruthTable(t *testing.T) {
+
+	store := NewMapstore()
+
+	idP, _ := NewIDDoc("Primary")
+	idP.store = store
+	idP.Save()
+
+	idT1, _ := NewIDDoc("trustee1")
+	idT1.store = store
+	idT1.Save()
+
+	idT2, _ := NewIDDoc("trustee2")
+	idT2.store = store
+	idT2.Save()
+
+	idT3, _ := NewIDDoc("trustee3")
+	idT3.store = store
+	idT3.Save()
+
+	expression := "t1 + t2 + t3 > 1 & p"
+	participants := &map[string][]byte{
+		"p":  idP.key,
+		"t1": idT1.key,
+		"t2": idT2.key,
+		"t3": idT3.key,
+	}
+
+	w1, _ := NewWallet(idP)
+	w1.SetTestKey()
+	w1.AddTransfer(protobuffer.TransferType_settlePush, expression, participants)
+	//w1.Dump()
+
+	//Create another based on previous, ie. AnUpdateWallet
+
+	tt, err := w1.TruthTable(protobuffer.TransferType_settlePush)
+	assert.Nil(t, err, "Truth table return should be nil")
+
+	print(tt)
 }
