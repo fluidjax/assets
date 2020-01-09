@@ -26,7 +26,7 @@ func (w *TrusteeGroup) Verify(i *IDDoc) (bool, error) {
 		return false, errors.New("Invalid Signature")
 	}
 	//Message
-	data, err := w.SerializePayload()
+	data, err := w.serializePayload()
 	if err != nil {
 		return false, err
 	}
@@ -72,6 +72,8 @@ func NewTrusteeGroup(iddoc *IDDoc) (w *TrusteeGroup, err error) {
 	w.PBSignedAsset.Asset.ID = trusteeGroupKey
 	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_trusteeGroup
 	w.PBSignedAsset.Asset.Owner = iddoc.Key()
+	w.assetKeyFromPayloadHash()
+
 	return w, nil
 }
 

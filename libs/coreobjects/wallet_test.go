@@ -11,7 +11,6 @@ func Test_Wallet(t *testing.T) {
 	testDescription := "ZXC#@!"
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
-	i.AssetKeyFromPayloadHash()
 	i.Sign()
 	i.store = NewMapstore()
 	i.Save()
@@ -19,7 +18,7 @@ func Test_Wallet(t *testing.T) {
 	w, err := NewWallet(i)
 	walletContents := w.Payload()
 	walletContents.Description = testDescription
-	w.AssetKeyFromPayloadHash()
+	
 	w.Sign(i)
 	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)

@@ -9,7 +9,6 @@ import (
 func Test_IDDoc(t *testing.T) {
 	i, err := NewIDDoc("chris")
 	assert.Nil(t, err, "Error should be nil")
-	i.AssetKeyFromPayloadHash()
 	i.Sign()
 	res, err := i.Verify()
 	assert.Nil(t, err, "Error should be nil")
@@ -21,12 +20,12 @@ func Test_Serialize_IDDoc(t *testing.T) {
 	i, err := NewIDDoc("chris")
 	assert.Nil(t, err, "Error should be nil")
 
-	data, err := i.SerializePayload()
+	data, err := i.serializePayload()
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, data, "Result should not be nil")
 
 	i.PBSignedAsset.Asset = nil
-	data, err = i.SerializePayload()
+	data, err = i.serializePayload()
 	assert.NotNil(t, err, "Error should not be nil")
 }
 
@@ -34,7 +33,6 @@ func Test_Save_Load(t *testing.T) {
 	testName := "ABC!23"
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
-	i.AssetKeyFromPayloadHash()
 	i.Sign()
 	i.store = NewMapstore()
 	key := i.Key()

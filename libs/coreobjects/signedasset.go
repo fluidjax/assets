@@ -17,17 +17,6 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//AssetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
-func (a *SignedAsset) AssetKeyFromPayloadHash() (err error) {
-	data, err := a.SerializePayload()
-	if err != nil {
-		return err
-	}
-	res := sha256.Sum256(data)
-	a.SetKey(res[:])
-	return nil
-}
-
 func Description() string {
 	return "hello"
 }
@@ -35,11 +24,6 @@ func Description() string {
 //Key Return the AssetKey
 func (a *SignedAsset) Key() []byte {
 	return a.Asset.GetID()
-}
-
-//SetKey - set the asset Key
-func (a *SignedAsset) SetKey(key []byte) {
-	a.Asset.ID = key
 }
 
 //Save - write the entire Signed Asset to the store
@@ -219,7 +203,7 @@ returns the BLS signature of the serialize payload, signed with the BLS Private 
 note the IDDoc must contain the seed
 */
 func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
-	data, err := a.SerializePayload()
+	data, err := a.serializePayload()
 	if err != nil {
 		return nil, errors.New("Failed to serialize payload")
 	}
@@ -244,7 +228,7 @@ note the IDDoc seed is NOT required
 */
 func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err error) {
 	//Message
-	data, err := a.SerializePayload()
+	data, err := a.serializePayload()
 	if err != nil {
 		return false, errors.New("Failed to serialize payload")
 	}
@@ -257,18 +241,6 @@ func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, er
 		return true, nil
 	}
 	return false, nil
-}
-
-/*
-SerializePayload
-serialize the Assets payload (oneof) into a byte
-*/
-func (a *SignedAsset) SerializePayload() (s []byte, err error) {
-	s, err = proto.Marshal(a.PBSignedAsset.Asset)
-	if err != nil {
-		s = nil
-	}
-	return s, err
 }
 
 /*
@@ -310,7 +282,7 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	a.PublicKey = aggregatedPublicKey
 	a.Signature = aggregatedSig
 	a.Signers = signers
-	data, err := a.SerializePayload()
+	data, err := a.serializePayload()
 	if err != nil {
 		return errors.Wrap(err, "Fail to Aggregated Signatures")
 	}
@@ -369,7 +341,7 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	}
 
 	//Get Message
-	data, err := a.SerializePayload()
+	data, err := a.serializePayload()
 	if err != nil {
 		return false, errors.New("Failed to serialize payload")
 	}
@@ -395,4 +367,32 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	}
 
 	return true, nil
+}
+
+//assetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
+func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
+	data, err := a.serializePayload()
+	if err != nil {
+		return err
+	}
+	res := sha256.Sum256(data)
+	a.setKey(res[:])
+	return nil
+}
+
+//SetKey - set the asset Key
+func (a *SignedAsset) setKey(key []byte) {
+	a.Asset.ID = key
+}
+
+/*
+serializePayload
+serialize the Assets payload (oneof) into a byte
+*/
+func (a *SignedAsset) serializePayload() (s []byte, err error) {
+	s, err = proto.Marshal(a.PBSignedAsset.Asset)
+	if err != nil {
+		s = nil
+	}
+	return s, err
 }

@@ -32,7 +32,7 @@ func (i *IDDoc) Verify() (bool, error) {
 	}
 
 	//Message
-	data, err := i.SerializePayload()
+	data, err := i.serializePayload()
 	if err != nil {
 		return false, err
 	}
@@ -51,7 +51,7 @@ func (i *IDDoc) Verify() (bool, error) {
 
 //Sign an IDDoc with its own BLS Private Key, signer is set to self
 func (i *IDDoc) Sign() (err error) {
-	data, err := i.SerializePayload()
+	data, err := i.serializePayload()
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	Payload := &protobuffer.PBAsset_Iddoc{}
 	Payload.Iddoc = iddoc
 	i.PBSignedAsset.Asset.Payload = Payload
-	i.AssetKeyFromPayloadHash()
+	i.assetKeyFromPayloadHash()
 	return i, nil
 }
 
@@ -125,7 +125,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err error) {
 	i = &IDDoc{}
 	i.PBSignedAsset = *sig
-	i.SetKey(key)
+	i.setKey(key)
 
 	return i, nil
 }

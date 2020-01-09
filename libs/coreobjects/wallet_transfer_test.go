@@ -25,7 +25,6 @@ func Test_TruthTable(t *testing.T) {
 	}
 
 	w1, _ := NewWallet(idP)
-	w1.AssetKeyFromPayloadHash()
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another based on previous, ie. AnUpdateWallet
@@ -73,7 +72,6 @@ func Test_RuleAdd(t *testing.T) {
 
 	w1, _ := NewWallet(idP)
 	w1.store = idP.store
-	w1.AssetKeyFromPayloadHash()
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
@@ -147,7 +145,6 @@ func Test_AggregationAndVerify(t *testing.T) {
 
 	w1, _ := NewWallet(idP)
 	w1.store = idP.store
-	w1.AssetKeyFromPayloadHash()
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
@@ -202,7 +199,6 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 
 	w1, _ := NewWallet(idP)
 	w1.store = idP.store
-	w1.AssetKeyFromPayloadHash()
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet

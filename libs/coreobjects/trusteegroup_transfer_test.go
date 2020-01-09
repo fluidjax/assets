@@ -18,7 +18,6 @@ func Test_TrusteeGroupTruthTable(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 	t1, _ := NewTrusteeGroup(idInitiator)
-	t1.AssetKeyFromPayloadHash()
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another based on previous, ie. AnUpdateTrusteeGroup
@@ -43,7 +42,6 @@ func Test_TrusteeGroupRuleAdd(t *testing.T) {
 
 	t1, _ := NewTrusteeGroup(idInitiator)
 	t1.store = idInitiator.store
-	t1.AssetKeyFromPayloadHash()
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another TrusteeGroup based on previous, ie. AnUpdateTrusteeGroup
@@ -102,7 +100,6 @@ func Test_TrusteeGroupAggregationAndVerify(t *testing.T) {
 
 	t1, _ := NewTrusteeGroup(idP)
 	t1.store = idP.store
-	t1.AssetKeyFromPayloadHash()
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another TrusteeGroup based on previous, ie. AnUpdateTrusteeGroup
@@ -154,7 +151,6 @@ func Test_TrusteeGroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 
 	t1, _ := NewTrusteeGroup(idP)
 	t1.store = idP.store
-	t1.AssetKeyFromPayloadHash()
 	t1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another TrusteeGroup based on previous, ie. AnUpdateTrusteeGroup
