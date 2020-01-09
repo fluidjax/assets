@@ -8,18 +8,19 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//AuthenticatorInterface Implementations
-func (i *IDDoc) PayloadSerialize() (s []byte, err error) {
-	//Use Asset parent method
-	return i.SerializePayload()
-
-}
-
-func (i *IDDoc) AssetPayload() *protobuffer.PBIDDoc {
+func (i *IDDoc) IDDocPayload() *protobuffer.PBIDDoc {
 	return i.PBSignedAsset.Asset.GetIddoc()
 }
 
+//Verify - verify IDDoc with its own BLSPublicKey
 func (i *IDDoc) Verify() (bool, error) {
+
+	if len(i.Signers) != 1 {
+		return false, errors.New("Signer not specified")
+	}
+	if i.Signers[0] != "self" {
+		return false, errors.New("IDDocs can only be self signed")
+	}
 
 	//Signature
 	signature := i.PBSignedAsset.Signature
@@ -31,13 +32,13 @@ func (i *IDDoc) Verify() (bool, error) {
 	}
 
 	//Message
-	data, err := i.PayloadSerialize()
+	data, err := i.SerializePayload()
 	if err != nil {
 		return false, err
 	}
 
 	//Public Key
-	payload := i.AssetPayload()
+	payload := i.IDDocPayload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)
@@ -48,6 +49,7 @@ func (i *IDDoc) Verify() (bool, error) {
 	return true, nil
 }
 
+//Sign an IDDoc with its own BLS Private Key, signer is set to self
 func (i *IDDoc) Sign() (err error) {
 	data, err := i.SerializePayload()
 	if err != nil {
@@ -55,7 +57,7 @@ func (i *IDDoc) Sign() (err error) {
 	}
 
 	if i.seed == nil {
-		return errors.New("No Seed")
+		return errors.New("Unable to Sign IDDoc - No Seed")
 	}
 	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
 	if err != nil {
@@ -72,7 +74,7 @@ func (i *IDDoc) Sign() (err error) {
 	return nil
 }
 
-//Create a new IDDoc
+//NewIDDoc create a new IDDoc
 func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	//generate crypto random seed
 	seed, err := cryptowallet.RandomBytes(48)
@@ -114,7 +116,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	Payload := &protobuffer.PBAsset_Iddoc{}
 	Payload.Iddoc = iddoc
 	i.PBSignedAsset.Asset.Payload = Payload
-	i.SetTestKey()
+	i.AssetKeyFromPayloadHash()
 	return i, nil
 }
 

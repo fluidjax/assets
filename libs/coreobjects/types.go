@@ -23,6 +23,7 @@ type SignedAsset struct {
 type SignatureID struct {
 	IDDoc        *IDDoc
 	Abbreviation string
+	HaveSig      bool
 	Signature    []byte
 }
 

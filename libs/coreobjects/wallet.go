@@ -2,28 +2,21 @@ package coreobjects
 
 import (
 	"bytes"
-	"crypto/sha256"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//AuthenticatorInterface Implementations
-func (w *Wallet) Serialize() (s []byte, err error) {
-	//Use Asset parent method
-	return w.SerializePayload()
-
-}
-
-func (w *Wallet) AssetPayload() *protobuffer.PBWallet {
+//WalletPayload - return the wallet Payload object
+func (w *Wallet) WalletPayload() *protobuffer.PBWallet {
 	signatureAsset := w.PBSignedAsset.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet
 }
 
+//Verify - Verify a Wallet signature with supplied ID
 func (w *Wallet) Verify(i *IDDoc) (bool, error) {
-
 	//Signature
 	signature := w.PBSignedAsset.Signature
 	if signature == nil {
@@ -32,28 +25,24 @@ func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 	if len(signature) == 0 {
 		return false, errors.New("Invalid Signature")
 	}
-
 	//Message
-	data, err := w.Serialize()
+	data, err := w.SerializePayload()
 	if err != nil {
 		return false, err
 	}
-
 	//Public Key
-	payload := i.AssetPayload()
+	payload := i.IDDocPayload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)
-
 	if rc == 0 {
 		return true, nil
 	}
 	return false, nil
-
 }
 
+//Sign a wallet with the supplied IDDoc - who must be decalred as the wallet owner
 func (w *Wallet) Sign(i *IDDoc) (err error) {
-
 	walletOwner := w.Asset.GetOwner()
 	signer := i.Key()
 
@@ -71,9 +60,9 @@ func (w *Wallet) Sign(i *IDDoc) (err error) {
 	return nil
 }
 
-//Setup a new IDDoc
+//NewWallet - Setup a new IDDoc
 func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
-	w = EmptyWallet()
+	w = emptyWallet()
 	w.store = iddoc.store
 
 	walletKey, err := RandomBytes(32)
@@ -84,33 +73,11 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_wallet
 	w.PBSignedAsset.Asset.Owner = iddoc.Key()
 	return w, nil
-
-	// //Asset
-	// asset := &protobuffer.Asset{}
-	// asset.Type = protobuffer.AssetType_wallet
-
-	// walletKey, err := RandomBytes(32)
-	// if err != nil {
-	// 	return nil, errors.New("Fail to generate random key")
-	// }
-	// asset.ID = walletKey
-	// asset.Owner = iddoc.key
-
-	// //Wallet
-	// wallet := &protobuffer.Wallet{}
-
-	// //Compose
-	// w.Signature.Asset = asset
-	// payload := &protobuffer.Asset_Wallet{}
-	// payload.Wallet = wallet
-	// w.Signature.Asset.Payload = payload
-	// w.store = iddoc.store
-	// return w, nil
-
 }
 
+//NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
-	w = EmptyWallet()
+	w = emptyWallet()
 	if previousWallet.store != nil {
 		w.store = previousWallet.store
 	}
@@ -121,7 +88,14 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 	return w, nil
 }
 
-func EmptyWallet() (w *Wallet) {
+//ReBuildWallet an existing Wallet from it's on chain PBSignedAsset
+func ReBuildWallet(sig *protobuffer.PBSignedAsset) (w *Wallet, err error) {
+	w = &Wallet{}
+	w.PBSignedAsset = *sig
+	return w, nil
+}
+
+func emptyWallet() (w *Wallet) {
 	w = &Wallet{}
 	//Asset
 	asset := &protobuffer.PBAsset{}
@@ -134,22 +108,4 @@ func EmptyWallet() (w *Wallet) {
 	payload.Wallet = wallet
 	w.PBSignedAsset.Asset.Payload = payload
 	return w
-}
-
-//Rebuild an existing Signed Wallet into WalletDeclaration object
-func ReBuildWallet(sig *protobuffer.PBSignedAsset) (w *Wallet, err error) {
-	w = &Wallet{}
-	w.PBSignedAsset = *sig
-	return w, nil
-}
-
-//For testing only
-func (i *Wallet) SetTestKey() (err error) {
-	data, err := i.Serialize()
-	if err != nil {
-		return err
-	}
-	res := sha256.Sum256(data)
-	i.SetKey(res[:])
-	return nil
 }

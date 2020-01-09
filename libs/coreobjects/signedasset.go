@@ -3,7 +3,6 @@ package coreobjects
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -18,17 +17,30 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//AssetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
+func (a *SignedAsset) AssetKeyFromPayloadHash() (err error) {
+	data, err := a.SerializePayload()
+	if err != nil {
+		return err
+	}
+	res := sha256.Sum256(data)
+	a.SetKey(res[:])
+	return nil
+}
+
+//Key Return the AssetKey
 func (a *SignedAsset) Key() []byte {
 	return a.Asset.GetID()
 }
 
+//SetKey - set the asset Key
 func (a *SignedAsset) SetKey(key []byte) {
 	a.Asset.ID = key
 }
 
+//Save - write the entire Signed Asset to the store
 func (a *SignedAsset) Save() error {
 	store := a.store
-	//msg := a.PBSignedAsset
 	data, err := proto.Marshal(a)
 	if err != nil {
 		return err
@@ -37,6 +49,7 @@ func (a *SignedAsset) Save() error {
 	return nil
 }
 
+//Load - read a SignedAsset from the store
 func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	val, err := store.Load(key)
 	if err != nil {
@@ -53,25 +66,18 @@ func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	return msg, nil
 }
 
-//For testing only
-func (a *SignedAsset) SetTestKey() (err error) {
-	data, err := a.SerializePayload()
-	if err != nil {
-		return err
-	}
-	res := sha256.Sum256(data)
-	a.SetKey(res[:])
-	return nil
-}
-
 //Pretty print the Asset for debugging
 func (a *SignedAsset) Dump() {
 	pp, _ := prettyjson.Marshal(a)
 	fmt.Printf("%v", string(pp))
 }
 
-//Add a new Transfer/Update rule
-//Specify the boolean expression & add list of participants
+/* AddTransfer
+Add a new Transfer/Update rule to the Asset's Transferlist
+transferType	enum of transfer type such as settlePush, swap, Transfer etc.
+expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
+participant		map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
+*/
 func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte) error {
 	transferRule := &protobuffer.PBTransfer{}
 	transferRule.Type = transferType
@@ -91,7 +97,10 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	return nil
 }
 
-//Given a list of signature build a sig map
+/* IsValidTransfer
+Calculates if the boolean expression in the asset has been satisfied by the supplied signatures
+transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
+*/
 func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, transferSignatures []SignatureID) (bool, error) {
 	transferListMapString := transferType.String()
 	previousAsset := a.previousAsset
@@ -103,14 +112,18 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, errors.New("No Transfer Found")
 	}
 	expression := transfer.Expression
-	expression, _ = ResolveExpression(expression, transfer.Participants, transferSignatures)
+	expression, _ = resolveExpression(expression, transfer.Participants, transferSignatures)
 	result := boolparser.BoolSolve(expression)
-	fmt.Printf("%v %s \n", result, expression)
 	return result, nil
 }
 
-//Using the Specified participants change the abbreviations (t1, p etc) into boolean/int values
-func ResolveExpression(expression string, participants map[string][]byte, transferSignatures []SignatureID) (expressionOut string, display string) {
+/*resolveExpression
+Resolve the asset's expression by substituting 0's & 1's depending on whether signatures are available for each abbreviation/participant
+expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
+participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
+transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
+*/
+func resolveExpression(expression string, participants map[string][]byte, transferSignatures []SignatureID) (expressionOut string, display string) {
 	expressionOut = expression
 	display = expression
 	//Loop all the participants from previous Asset
@@ -135,6 +148,15 @@ func ResolveExpression(expression string, participants map[string][]byte, transf
 	return expressionOut, display
 }
 
+/*
+TruthTable
+For the supplied TransferType iterate through every combination of the existence or not of a participants signature.
+Every possible matchining combination is returned where that combination will result in an asset Transfer
+Unecessary abbreviations(Participants) are marked as 0s
+Required signatures are marked with their abbreviation
+eg.  [ 0 + t2 + t3 > 1 & p] = Transfer will occur if Trustee2, Trustee3 & Principals Signatures are present
+	 [t1 + 0 + t3 > 1 & p]  = Transfer will occur if Trustee1, Trustee3 & Principals Signatures are present
+*/
 func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
 	transferListMapString := transferType.String()
 	transfer := a.Asset.Transferlist[transferListMapString]
@@ -165,12 +187,10 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	var matchedTrue []string
 
 	for j = 0; j < int64(math.Pow(2, float64(totalParticipants))); j++ {
-		//fmt.Printf("%v:", j)
 		var transferSignatures []SignatureID
 		for i := 0; i < totalParticipants; i++ {
 			pos := int64(math.Pow(2, float64(i)))
 			val := j & pos
-			//fmt.Printf("%v", val)
 			iddoc := participantArray[i].IDDoc
 
 			if val == 0 {
@@ -178,11 +198,9 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 			} else {
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
 			}
-
 		}
-		resolvedExpression, display := ResolveExpression(expression, transfer.Participants, transferSignatures)
+		resolvedExpression, display := resolveExpression(expression, transfer.Participants, transferSignatures)
 		result := boolparser.BoolSolve(resolvedExpression)
-
 		if result == true {
 			matchedTrue = append(matchedTrue, display)
 		}
@@ -191,8 +209,11 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	return matchedTrue, nil
 }
 
-//Payload
-
+/*
+SignPayload
+returns the BLS signature of the serialize payload, signed with the BLS Private key of the supplied IDDoc
+note the IDDoc must contain the seed
+*/
 func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
 	data, err := a.SerializePayload()
 	if err != nil {
@@ -212,6 +233,11 @@ func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
 	return signature, nil
 }
 
+/*
+VerifyPayload
+verifies the supplied signature with supplied IDDoc's BLS Public Key
+note the IDDoc seed is NOT required
+*/
 func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err error) {
 	//Message
 	data, err := a.SerializePayload()
@@ -219,7 +245,7 @@ func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, er
 		return false, errors.New("Failed to serialize payload")
 	}
 	//Public Key
-	payload := i.AssetPayload()
+	payload := i.IDDocPayload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)
@@ -229,6 +255,10 @@ func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, er
 	return false, nil
 }
 
+/*
+SerializePayload
+serialize the Assets payload (oneof) into a byte
+*/
 func (a *SignedAsset) SerializePayload() (s []byte, err error) {
 	s, err = proto.Marshal(a.PBSignedAsset.Asset)
 	if err != nil {
@@ -237,67 +267,73 @@ func (a *SignedAsset) SerializePayload() (s []byte, err error) {
 	return s, err
 }
 
-func (a *SignedAsset) Description() {
-	print("Asset Description")
-}
-
-//BLS Aggregation
+/*
+AggregatedSign
+Aggregates BLSPubKeys and BLSSignatures from supplied array of SignatureIDs
+Results are inserted into the object
+only error is returned
+*/
 func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	if transferSignatures == nil || len(transferSignatures) == 0 {
 		return errors.New("Invalid transferSignatures BLS Aggregation")
 	}
 	var aggregatedSig []byte
+	rc := 0
 	var aggregatedPublicKey []byte
 	var signers []string
 	for i := 0; i < len(transferSignatures); i++ {
-
 		sig := transferSignatures[i].Signature
 		pubKey := transferSignatures[i].IDDoc.GetAsset().GetIddoc().GetBLSPublicKey()
-		//idDocKey := transferSignatures[i].IDDoc.Key()
 		abbreviation := transferSignatures[i].Abbreviation
-
 		signers = append(signers, abbreviation)
-
 		if sig == nil || pubKey == nil {
-			return errors.New("Invalid Sig/PubKey BLS Aggregation")
+			continue
 		}
-
 		if i == 0 {
 			aggregatedSig = sig
 			aggregatedPublicKey = pubKey
 		} else {
-			_, aggregatedSig = crypto.BLSAddG1(aggregatedSig, sig)
-			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+			rc, aggregatedSig = crypto.BLSAddG1(aggregatedSig, sig)
+			if rc != 0 {
+				return errors.New("BLSAddG1 failed in AggregatedSign")
+			}
+			rc, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+			if rc != 0 {
+				return errors.New("BLSAddG2 failed in AggregatedSign")
+			}
 		}
 	}
 	a.PublicKey = aggregatedPublicKey
 	a.Signature = aggregatedSig
 	a.Signers = signers
-
 	data, err := a.SerializePayload()
-	print(err)
-
-	rc := crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
+	if err != nil {
+		return errors.Wrap(err, "Fail to Aggregated Signatures")
+	}
+	rc = crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
 	if rc != 0 {
 		return errors.New("Signature failed to Verify")
 	}
-
 	return nil
 }
 
-//Verify the whole Asset
-func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool, error) {
-	//Get Transfer from previous
-	transferType := a.Asset.TransferType
-	//	aggregatedPublicKey := a.PublicKey
-	//	aggregatedSig := a.Signature
-	//	signers := a.Signers
-	var aggregatedPublicKey []byte
+/*
+FullVerify
+Based on the previous Asset state, retrieve the IDDocs of all signers.
+publickeys = Aggregated the signers BLS Public Keys
+message = Create a Serialized Payload
 
+Using these fields verify the Signature in the transfer.
+
+*/
+func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool, error) {
+	transferType := a.Asset.TransferType
+	var transferSignatures []SignatureID
+
+	var aggregatedPublicKey []byte
 	if previousAsset == nil {
 		return false, errors.New("No Previous Asset supplied for Verify")
 	}
-
 	transferList := previousAsset.GetAsset().GetTransferlist()
 	_ = transferList
 	currentTransfer := transferList[transferType.String()]
@@ -306,13 +342,10 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	for _, abbreviation := range a.Signers {
 		participantIDDocID := currentTransfer.Participants[abbreviation]
 		signedAsset, err := Load(a.store, participantIDDocID)
-
 		if err != nil {
 			return false, errors.New("Failed to retieve IDDoc")
 		}
-
 		iddoc, err := ReBuildIDDoc(signedAsset, participantIDDocID)
-
 		pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
 		if aggregatedPublicKey == nil {
 			aggregatedPublicKey = pubKey
@@ -320,30 +353,41 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
 		}
 
+		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
+		transferSignatures = append(transferSignatures, sigID)
 	}
 
-	//check the one used matches the one just created
+	//check the one in the object matches the one just created
+	//Todo: We could probably remove the one in the object?
 	res := bytes.Compare(aggregatedPublicKey, a.GetPublicKey())
-
 	if res != 0 {
 		return false, errors.New("Generated Aggregated Public Key doesnt match the one used to sign")
 	}
 
-	//Check the Signature
 	//Get Message
 	data, err := a.SerializePayload()
 	if err != nil {
 		return false, errors.New("Failed to serialize payload")
 	}
-	//Sig
+	//Retrieve the Sig
 	aggregatedSig := a.GetSignature()
 
+	//Verify
 	rc := crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
-
-	fmt.Println(hex.EncodeToString(data))
 
 	if rc != 0 {
 		return false, errors.New("Signature failed to Verify")
+	}
+
+	//As the Signature Verified, we know that each  Signature:[]byte("UNKNOWN") which was used to generate the aggregate Signature
+	//is valid, but currently unknown, we have enough info to do an IsValidTransfer
+
+	validTransfer, err := a.IsValidTransfer(transferType, transferSignatures)
+	if err != nil {
+		return false, errors.Wrap(err, "Fail to fullVerify asset - checking IsValidTransfer failed")
+	}
+	if validTransfer == false {
+		return false, errors.New("Invalid transfer - insufficient signatures")
 	}
 
 	return true, nil
