@@ -1,5 +1,5 @@
 API Expose:
-
+-----------
 
 //Main Data Objects
     IDDoc/Wallet/TrusteeGroup = [asset]
@@ -28,5 +28,3 @@ API Expose:
 
    [asset].SignPayload             - Sign the payload - trustee does this when required
    [asset].VerifyPayload           - verify payload sig
-  
-   
