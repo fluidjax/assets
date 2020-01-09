@@ -3,6 +3,11 @@ package coreobjects
 import "github.com/qredo/assets/libs/protobuffer"
 
 //Core Heirachcy
+
+type TrusteeGroup struct {
+	SignedAsset
+}
+
 type Wallet struct {
 	SignedAsset
 }

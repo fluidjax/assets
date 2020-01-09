@@ -28,6 +28,10 @@ func (a *SignedAsset) AssetKeyFromPayloadHash() (err error) {
 	return nil
 }
 
+func Description() string {
+	return "hello"
+}
+
 //Key Return the AssetKey
 func (a *SignedAsset) Key() []byte {
 	return a.Asset.GetID()
@@ -96,7 +100,7 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	a.PBSignedAsset.Asset.Transferlist[transferListMapString] = transferRule
 	return nil
 }
-
+ 
 /* IsValidTransfer
 Calculates if the boolean expression in the asset has been satisfied by the supplied signatures
 transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}

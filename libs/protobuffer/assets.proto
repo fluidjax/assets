@@ -28,7 +28,7 @@ message PBAsset {
 
 enum PBAssetType {
 	wallet      = 0;
-	trustee     = 1;
+	trusteeGroup     = 1;
 	iddoc       = 2;
 }                              
 enum PBTransferType {
@@ -61,6 +61,7 @@ message PBWallet {
 message PBTrusteeGroup {
     repeated bytes TrusteeID    = 1; //List of Trustee DocIDs
     int64 threshold             = 2; //Threshold required
+    string Description          = 3;
 }
 
 message PBIDDoc {
