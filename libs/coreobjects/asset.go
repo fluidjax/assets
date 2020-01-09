@@ -17,23 +17,12 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//Use to hold ID & Signatures for expression parsing
-type SignatureID struct {
-	IDDoc     *IDDoc
-	Signature []byte
-}
-
-type TransferParticipant struct {
-	IDDoc        *IDDoc
-	Abbreviation string
-}
-
 type BaseAsset struct {
-	protobuffer.SignedAsset            //the object stored in the chain
-	store                   *Mapstore  //Reference to object store (map or blockchain)
-	seed                    []byte     //If available a seed to generate keys for object
-	key                     []byte     //
-	previousAsset           *BaseAsset //Reference to (if any) previous object with the same key
+	protobuffer.PBSignedAsset            //the object stored in the chain
+	store                     *Mapstore  //Reference to object store (map or blockchain)
+	seed                      []byte     //If available a seed to generate keys for object
+	key                       []byte     //
+	previousAsset             *BaseAsset //Reference to (if any) previous object with the same key
 }
 
 func (a *BaseAsset) SignPayload(i *IDDoc) (s []byte, err error) {
@@ -73,7 +62,7 @@ func (a *BaseAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err 
 }
 
 func (a *BaseAsset) PayloadSerialize() (s []byte, err error) {
-	s, err = proto.Marshal(a.SignedAsset.Asset)
+	s, err = proto.Marshal(a.PBSignedAsset.Asset)
 	if err != nil {
 		s = nil
 	}
@@ -82,7 +71,7 @@ func (a *BaseAsset) PayloadSerialize() (s []byte, err error) {
 
 func (a *BaseAsset) Save() error {
 	store := a.store
-	msg := a.SignedAsset
+	msg := a.PBSignedAsset
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err
@@ -91,7 +80,7 @@ func (a *BaseAsset) Save() error {
 	return nil
 }
 
-func Load(store *Mapstore, key []byte) (*protobuffer.SignedAsset, error) {
+func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	val, err := store.Load(key)
 	if err != nil {
 		return nil, err
@@ -100,7 +89,7 @@ func Load(store *Mapstore, key []byte) (*protobuffer.SignedAsset, error) {
 		return nil, errors.New("Key not found")
 	}
 
-	msg := &protobuffer.SignedAsset{}
+	msg := &protobuffer.PBSignedAsset{}
 	err = proto.Unmarshal(val, msg)
 	if err != nil {
 		return nil, err
@@ -126,8 +115,8 @@ func (a *BaseAsset) Description() {
 
 //Add a new Transfer/Update rule
 //Specify the boolean expression & add list of participants
-func (a *BaseAsset) AddTransfer(transferType protobuffer.TransferType, expression string, participants *map[string][]byte) error {
-	transferRule := &protobuffer.Transfer{}
+func (a *BaseAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte) error {
+	transferRule := &protobuffer.PBTransfer{}
 	transferRule.Type = transferType
 	transferRule.Expression = expression
 	if transferRule.Participants == nil {
@@ -138,10 +127,10 @@ func (a *BaseAsset) AddTransfer(transferType protobuffer.TransferType, expressio
 	}
 	//Cant use enum as map key, so convert to a string
 	transferListMapString := transferType.String()
-	if a.SignedAsset.Asset.Transferlist == nil {
-		a.SignedAsset.Asset.Transferlist = make(map[string]*protobuffer.Transfer)
+	if a.PBSignedAsset.Asset.Transferlist == nil {
+		a.PBSignedAsset.Asset.Transferlist = make(map[string]*protobuffer.PBTransfer)
 	}
-	a.SignedAsset.Asset.Transferlist[transferListMapString] = transferRule
+	a.PBSignedAsset.Asset.Transferlist[transferListMapString] = transferRule
 	return nil
 }
 
@@ -152,7 +141,7 @@ func (a *BaseAsset) Dump() {
 }
 
 //Given a list of signature build a sig map
-func (a *BaseAsset) IsValidTransfer(transferType protobuffer.TransferType, transferSignatures []SignatureID) (bool, error) {
+func (a *BaseAsset) IsValidTransfer(transferType protobuffer.PBTransferType, transferSignatures []SignatureID) (bool, error) {
 	transferListMapString := transferType.String()
 	previousAsset := a.previousAsset
 	if previousAsset == nil {
@@ -195,7 +184,7 @@ func ResolveExpression(expression string, participants map[string][]byte, transf
 	return expressionOut, display
 }
 
-func (a *BaseAsset) TruthTable(transferType protobuffer.TransferType) ([]string, error) {
+func (a *BaseAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
 	transferListMapString := transferType.String()
 	transfer := a.Asset.Transferlist[transferListMapString]
 	if transfer == nil {

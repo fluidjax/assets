@@ -34,7 +34,7 @@ func Test_Serialize_IDDoc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, data, "Result should not be nil")
 
-	i.SignedAsset.Asset = nil
+	i.PBSignedAsset.Asset = nil
 	data, err = i.PayloadSerialize()
 	assert.NotNil(t, err, "Error should not be nil")
 }
@@ -70,7 +70,7 @@ func Test_Wallet(t *testing.T) {
 	walletContents.Description = testDescription
 	w.SetTestKey()
 	w.Sign(i)
-	assert.NotNil(t, w.SignedAsset.Signature, "Signature is empty")
+	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
@@ -100,7 +100,7 @@ func Test_RuleAdd(t *testing.T) {
 
 	w1, _ := NewWallet(idP)
 	w1.SetTestKey()
-	w1.AddTransfer(protobuffer.TransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 	//w1.Dump()
 
 	//Create another based on previous, ie. AnUpdateWallet
@@ -129,7 +129,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Signature: sigT2},
 		SignatureID{IDDoc: idT3, Signature: nil},
 	}
-	validTransfer1, _ := w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.True(t, validTransfer1, "Transfer should be valid")
 
 	//Pass too many correct
@@ -139,7 +139,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Signature: sigT2},
 		SignatureID{IDDoc: idT3, Signature: sigT3},
 	}
-	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.True(t, validTransfer1, "Transfer should be valid")
 
 	//Fail not enough threshold
@@ -149,7 +149,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Signature: nil},
 		SignatureID{IDDoc: idT3, Signature: sigT3},
 	}
-	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid")
 
 	//Fail no principal
@@ -159,7 +159,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Signature: sigT2},
 		SignatureID{IDDoc: idT3, Signature: sigT3},
 	}
-	validTransfer1, _ = w2.IsValidTransfer(protobuffer.TransferType_settlePush, transferSignatures1)
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid")
 }
 
@@ -193,12 +193,12 @@ func Test_TruthTable(t *testing.T) {
 
 	w1, _ := NewWallet(idP)
 	w1.SetTestKey()
-	w1.AddTransfer(protobuffer.TransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 	//w1.Dump()
 
 	//Create another based on previous, ie. AnUpdateWallet
 
-	res, err := w1.TruthTable(protobuffer.TransferType_settlePush)
+	res, err := w1.TruthTable(protobuffer.PBTransferType_settlePush)
 	assert.Nil(t, err, "Truth table return should be nil")
 
 	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")

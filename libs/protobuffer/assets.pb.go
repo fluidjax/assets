@@ -20,47 +20,47 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type AssetType int32
+type PBAssetType int32
 
 const (
-	AssetType_wallet  AssetType = 0
-	AssetType_trustee AssetType = 1
-	AssetType_iddoc   AssetType = 2
+	PBAssetType_wallet  PBAssetType = 0
+	PBAssetType_trustee PBAssetType = 1
+	PBAssetType_iddoc   PBAssetType = 2
 )
 
-var AssetType_name = map[int32]string{
+var PBAssetType_name = map[int32]string{
 	0: "wallet",
 	1: "trustee",
 	2: "iddoc",
 }
 
-var AssetType_value = map[string]int32{
+var PBAssetType_value = map[string]int32{
 	"wallet":  0,
 	"trustee": 1,
 	"iddoc":   2,
 }
 
-func (x AssetType) String() string {
-	return proto.EnumName(AssetType_name, int32(x))
+func (x PBAssetType) String() string {
+	return proto.EnumName(PBAssetType_name, int32(x))
 }
 
-func (AssetType) EnumDescriptor() ([]byte, []int) {
+func (PBAssetType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{0}
 }
 
-type TransferType int32
+type PBTransferType int32
 
 const (
-	TransferType_unspecified  TransferType = 0
-	TransferType_settlePush   TransferType = 1
-	TransferType_settlePull   TransferType = 2
-	TransferType_transferPush TransferType = 3
-	TransferType_transferPull TransferType = 4
-	TransferType_swap         TransferType = 5
-	TransferType_load         TransferType = 6
+	PBTransferType_unspecified  PBTransferType = 0
+	PBTransferType_settlePush   PBTransferType = 1
+	PBTransferType_settlePull   PBTransferType = 2
+	PBTransferType_transferPush PBTransferType = 3
+	PBTransferType_transferPull PBTransferType = 4
+	PBTransferType_swap         PBTransferType = 5
+	PBTransferType_load         PBTransferType = 6
 )
 
-var TransferType_name = map[int32]string{
+var PBTransferType_name = map[int32]string{
 	0: "unspecified",
 	1: "settlePush",
 	2: "settlePull",
@@ -70,7 +70,7 @@ var TransferType_name = map[int32]string{
 	6: "load",
 }
 
-var TransferType_value = map[string]int32{
+var PBTransferType_value = map[string]int32{
 	"unspecified":  0,
 	"settlePush":   1,
 	"settlePull":   2,
@@ -80,181 +80,181 @@ var TransferType_value = map[string]int32{
 	"load":         6,
 }
 
-func (x TransferType) String() string {
-	return proto.EnumName(TransferType_name, int32(x))
+func (x PBTransferType) String() string {
+	return proto.EnumName(PBTransferType_name, int32(x))
 }
 
-func (TransferType) EnumDescriptor() ([]byte, []int) {
+func (PBTransferType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{1}
 }
 
-type SignedAsset struct {
+type PBSignedAsset struct {
 	Signature            []byte   `protobuf:"bytes,1,opt,name=Signature,proto3" json:"Signature,omitempty"`
 	Signers              [][]byte `protobuf:"bytes,2,rep,name=Signers,proto3" json:"Signers,omitempty"`
-	Asset                *Asset   `protobuf:"bytes,3,opt,name=Asset,proto3" json:"Asset,omitempty"`
+	Asset                *PBAsset `protobuf:"bytes,3,opt,name=Asset,proto3" json:"Asset,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SignedAsset) Reset()         { *m = SignedAsset{} }
-func (m *SignedAsset) String() string { return proto.CompactTextString(m) }
-func (*SignedAsset) ProtoMessage()    {}
-func (*SignedAsset) Descriptor() ([]byte, []int) {
+func (m *PBSignedAsset) Reset()         { *m = PBSignedAsset{} }
+func (m *PBSignedAsset) String() string { return proto.CompactTextString(m) }
+func (*PBSignedAsset) ProtoMessage()    {}
+func (*PBSignedAsset) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{0}
 }
 
-func (m *SignedAsset) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SignedAsset.Unmarshal(m, b)
+func (m *PBSignedAsset) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PBSignedAsset.Unmarshal(m, b)
 }
-func (m *SignedAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SignedAsset.Marshal(b, m, deterministic)
+func (m *PBSignedAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PBSignedAsset.Marshal(b, m, deterministic)
 }
-func (m *SignedAsset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SignedAsset.Merge(m, src)
+func (m *PBSignedAsset) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBSignedAsset.Merge(m, src)
 }
-func (m *SignedAsset) XXX_Size() int {
-	return xxx_messageInfo_SignedAsset.Size(m)
+func (m *PBSignedAsset) XXX_Size() int {
+	return xxx_messageInfo_PBSignedAsset.Size(m)
 }
-func (m *SignedAsset) XXX_DiscardUnknown() {
-	xxx_messageInfo_SignedAsset.DiscardUnknown(m)
+func (m *PBSignedAsset) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBSignedAsset.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SignedAsset proto.InternalMessageInfo
+var xxx_messageInfo_PBSignedAsset proto.InternalMessageInfo
 
-func (m *SignedAsset) GetSignature() []byte {
+func (m *PBSignedAsset) GetSignature() []byte {
 	if m != nil {
 		return m.Signature
 	}
 	return nil
 }
 
-func (m *SignedAsset) GetSigners() [][]byte {
+func (m *PBSignedAsset) GetSigners() [][]byte {
 	if m != nil {
 		return m.Signers
 	}
 	return nil
 }
 
-func (m *SignedAsset) GetAsset() *Asset {
+func (m *PBSignedAsset) GetAsset() *PBAsset {
 	if m != nil {
 		return m.Asset
 	}
 	return nil
 }
 
-type Asset struct {
-	Type     AssetType `protobuf:"varint,1,opt,name=Type,proto3,enum=protobuffer.AssetType" json:"Type,omitempty"`
-	AsssetID []byte    `protobuf:"bytes,2,opt,name=AsssetID,proto3" json:"AsssetID,omitempty"`
-	Owner    []byte    `protobuf:"bytes,3,opt,name=Owner,proto3" json:"Owner,omitempty"`
+type PBAsset struct {
+	Type  PBAssetType `protobuf:"varint,1,opt,name=Type,proto3,enum=protobuffer.PBAssetType" json:"Type,omitempty"`
+	ID    []byte      `protobuf:"bytes,2,opt,name=ID,proto3" json:"ID,omitempty"`
+	Owner []byte      `protobuf:"bytes,3,opt,name=Owner,proto3" json:"Owner,omitempty"`
 	// Types that are valid to be assigned to AssetDefinition:
-	//	*Asset_Wallet
-	//	*Asset_TrusteeGroup
-	//	*Asset_Iddoc
-	AssetDefinition      isAsset_AssetDefinition `protobuf_oneof:"AssetDefinition"`
-	Transferlist         map[string]*Transfer    `protobuf:"bytes,8,rep,name=Transferlist,proto3" json:"Transferlist,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
-	XXX_unrecognized     []byte                  `json:"-"`
-	XXX_sizecache        int32                   `json:"-"`
+	//	*PBAsset_Wallet
+	//	*PBAsset_TrusteeGroup
+	//	*PBAsset_Iddoc
+	AssetDefinition      isPBAsset_AssetDefinition `protobuf_oneof:"AssetDefinition"`
+	Transferlist         map[string]*PBTransfer    `protobuf:"bytes,8,rep,name=Transferlist,proto3" json:"Transferlist,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
 }
 
-func (m *Asset) Reset()         { *m = Asset{} }
-func (m *Asset) String() string { return proto.CompactTextString(m) }
-func (*Asset) ProtoMessage()    {}
-func (*Asset) Descriptor() ([]byte, []int) {
+func (m *PBAsset) Reset()         { *m = PBAsset{} }
+func (m *PBAsset) String() string { return proto.CompactTextString(m) }
+func (*PBAsset) ProtoMessage()    {}
+func (*PBAsset) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{1}
 }
 
-func (m *Asset) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Asset.Unmarshal(m, b)
+func (m *PBAsset) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PBAsset.Unmarshal(m, b)
 }
-func (m *Asset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Asset.Marshal(b, m, deterministic)
+func (m *PBAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PBAsset.Marshal(b, m, deterministic)
 }
-func (m *Asset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Asset.Merge(m, src)
+func (m *PBAsset) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBAsset.Merge(m, src)
 }
-func (m *Asset) XXX_Size() int {
-	return xxx_messageInfo_Asset.Size(m)
+func (m *PBAsset) XXX_Size() int {
+	return xxx_messageInfo_PBAsset.Size(m)
 }
-func (m *Asset) XXX_DiscardUnknown() {
-	xxx_messageInfo_Asset.DiscardUnknown(m)
+func (m *PBAsset) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBAsset.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Asset proto.InternalMessageInfo
+var xxx_messageInfo_PBAsset proto.InternalMessageInfo
 
-func (m *Asset) GetType() AssetType {
+func (m *PBAsset) GetType() PBAssetType {
 	if m != nil {
 		return m.Type
 	}
-	return AssetType_wallet
+	return PBAssetType_wallet
 }
 
-func (m *Asset) GetAsssetID() []byte {
+func (m *PBAsset) GetID() []byte {
 	if m != nil {
-		return m.AsssetID
+		return m.ID
 	}
 	return nil
 }
 
-func (m *Asset) GetOwner() []byte {
+func (m *PBAsset) GetOwner() []byte {
 	if m != nil {
 		return m.Owner
 	}
 	return nil
 }
 
-type isAsset_AssetDefinition interface {
-	isAsset_AssetDefinition()
+type isPBAsset_AssetDefinition interface {
+	isPBAsset_AssetDefinition()
 }
 
-type Asset_Wallet struct {
-	Wallet *Wallet `protobuf:"bytes,4,opt,name=Wallet,proto3,oneof"`
+type PBAsset_Wallet struct {
+	Wallet *PBWallet `protobuf:"bytes,4,opt,name=Wallet,proto3,oneof"`
 }
 
-type Asset_TrusteeGroup struct {
-	TrusteeGroup *TrusteeGroup `protobuf:"bytes,5,opt,name=TrusteeGroup,proto3,oneof"`
+type PBAsset_TrusteeGroup struct {
+	TrusteeGroup *PBTrusteeGroup `protobuf:"bytes,5,opt,name=TrusteeGroup,proto3,oneof"`
 }
 
-type Asset_Iddoc struct {
-	Iddoc *IDDoc `protobuf:"bytes,6,opt,name=Iddoc,proto3,oneof"`
+type PBAsset_Iddoc struct {
+	Iddoc *PBIDDoc `protobuf:"bytes,6,opt,name=Iddoc,proto3,oneof"`
 }
 
-func (*Asset_Wallet) isAsset_AssetDefinition() {}
+func (*PBAsset_Wallet) isPBAsset_AssetDefinition() {}
 
-func (*Asset_TrusteeGroup) isAsset_AssetDefinition() {}
+func (*PBAsset_TrusteeGroup) isPBAsset_AssetDefinition() {}
 
-func (*Asset_Iddoc) isAsset_AssetDefinition() {}
+func (*PBAsset_Iddoc) isPBAsset_AssetDefinition() {}
 
-func (m *Asset) GetAssetDefinition() isAsset_AssetDefinition {
+func (m *PBAsset) GetAssetDefinition() isPBAsset_AssetDefinition {
 	if m != nil {
 		return m.AssetDefinition
 	}
 	return nil
 }
 
-func (m *Asset) GetWallet() *Wallet {
-	if x, ok := m.GetAssetDefinition().(*Asset_Wallet); ok {
+func (m *PBAsset) GetWallet() *PBWallet {
+	if x, ok := m.GetAssetDefinition().(*PBAsset_Wallet); ok {
 		return x.Wallet
 	}
 	return nil
 }
 
-func (m *Asset) GetTrusteeGroup() *TrusteeGroup {
-	if x, ok := m.GetAssetDefinition().(*Asset_TrusteeGroup); ok {
+func (m *PBAsset) GetTrusteeGroup() *PBTrusteeGroup {
+	if x, ok := m.GetAssetDefinition().(*PBAsset_TrusteeGroup); ok {
 		return x.TrusteeGroup
 	}
 	return nil
 }
 
-func (m *Asset) GetIddoc() *IDDoc {
-	if x, ok := m.GetAssetDefinition().(*Asset_Iddoc); ok {
+func (m *PBAsset) GetIddoc() *PBIDDoc {
+	if x, ok := m.GetAssetDefinition().(*PBAsset_Iddoc); ok {
 		return x.Iddoc
 	}
 	return nil
 }
 
-func (m *Asset) GetTransferlist() map[string]*Transfer {
+func (m *PBAsset) GetTransferlist() map[string]*PBTransfer {
 	if m != nil {
 		return m.Transferlist
 	}
@@ -262,16 +262,16 @@ func (m *Asset) GetTransferlist() map[string]*Transfer {
 }
 
 // XXX_OneofWrappers is for the internal use of the proto package.
-func (*Asset) XXX_OneofWrappers() []interface{} {
+func (*PBAsset) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
-		(*Asset_Wallet)(nil),
-		(*Asset_TrusteeGroup)(nil),
-		(*Asset_Iddoc)(nil),
+		(*PBAsset_Wallet)(nil),
+		(*PBAsset_TrusteeGroup)(nil),
+		(*PBAsset_Iddoc)(nil),
 	}
 }
 
-type Transfer struct {
-	Type                 TransferType      `protobuf:"varint,1,opt,name=Type,proto3,enum=protobuffer.TransferType" json:"Type,omitempty"`
+type PBTransfer struct {
+	Type                 PBTransferType    `protobuf:"varint,1,opt,name=Type,proto3,enum=protobuffer.PBTransferType" json:"Type,omitempty"`
 	Expression           string            `protobuf:"bytes,2,opt,name=Expression,proto3" json:"Expression,omitempty"`
 	Participants         map[string][]byte `protobuf:"bytes,3,rep,name=Participants,proto3" json:"Participants,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
@@ -279,46 +279,46 @@ type Transfer struct {
 	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *Transfer) Reset()         { *m = Transfer{} }
-func (m *Transfer) String() string { return proto.CompactTextString(m) }
-func (*Transfer) ProtoMessage()    {}
-func (*Transfer) Descriptor() ([]byte, []int) {
+func (m *PBTransfer) Reset()         { *m = PBTransfer{} }
+func (m *PBTransfer) String() string { return proto.CompactTextString(m) }
+func (*PBTransfer) ProtoMessage()    {}
+func (*PBTransfer) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{2}
 }
 
-func (m *Transfer) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Transfer.Unmarshal(m, b)
+func (m *PBTransfer) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PBTransfer.Unmarshal(m, b)
 }
-func (m *Transfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Transfer.Marshal(b, m, deterministic)
+func (m *PBTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PBTransfer.Marshal(b, m, deterministic)
 }
-func (m *Transfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Transfer.Merge(m, src)
+func (m *PBTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBTransfer.Merge(m, src)
 }
-func (m *Transfer) XXX_Size() int {
-	return xxx_messageInfo_Transfer.Size(m)
+func (m *PBTransfer) XXX_Size() int {
+	return xxx_messageInfo_PBTransfer.Size(m)
 }
-func (m *Transfer) XXX_DiscardUnknown() {
-	xxx_messageInfo_Transfer.DiscardUnknown(m)
+func (m *PBTransfer) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBTransfer.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Transfer proto.InternalMessageInfo
+var xxx_messageInfo_PBTransfer proto.InternalMessageInfo
 
-func (m *Transfer) GetType() TransferType {
+func (m *PBTransfer) GetType() PBTransferType {
 	if m != nil {
 		return m.Type
 	}
-	return TransferType_unspecified
+	return PBTransferType_unspecified
 }
 
-func (m *Transfer) GetExpression() string {
+func (m *PBTransfer) GetExpression() string {
 	if m != nil {
 		return m.Expression
 	}
 	return ""
 }
 
-func (m *Transfer) GetParticipants() map[string][]byte {
+func (m *PBTransfer) GetParticipants() map[string][]byte {
 	if m != nil {
 		return m.Participants
 	}
@@ -326,7 +326,7 @@ func (m *Transfer) GetParticipants() map[string][]byte {
 }
 
 //Asset Definitons
-type Wallet struct {
+type PBWallet struct {
 	Description          string   `protobuf:"bytes,1,opt,name=Description,proto3" json:"Description,omitempty"`
 	Principal            []byte   `protobuf:"bytes,2,opt,name=principal,proto3" json:"principal,omitempty"`
 	Creditor             []byte   `protobuf:"bytes,3,opt,name=creditor,proto3" json:"creditor,omitempty"`
@@ -338,74 +338,74 @@ type Wallet struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Wallet) Reset()         { *m = Wallet{} }
-func (m *Wallet) String() string { return proto.CompactTextString(m) }
-func (*Wallet) ProtoMessage()    {}
-func (*Wallet) Descriptor() ([]byte, []int) {
+func (m *PBWallet) Reset()         { *m = PBWallet{} }
+func (m *PBWallet) String() string { return proto.CompactTextString(m) }
+func (*PBWallet) ProtoMessage()    {}
+func (*PBWallet) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{3}
 }
 
-func (m *Wallet) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Wallet.Unmarshal(m, b)
+func (m *PBWallet) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PBWallet.Unmarshal(m, b)
 }
-func (m *Wallet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Wallet.Marshal(b, m, deterministic)
+func (m *PBWallet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PBWallet.Marshal(b, m, deterministic)
 }
-func (m *Wallet) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Wallet.Merge(m, src)
+func (m *PBWallet) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBWallet.Merge(m, src)
 }
-func (m *Wallet) XXX_Size() int {
-	return xxx_messageInfo_Wallet.Size(m)
+func (m *PBWallet) XXX_Size() int {
+	return xxx_messageInfo_PBWallet.Size(m)
 }
-func (m *Wallet) XXX_DiscardUnknown() {
-	xxx_messageInfo_Wallet.DiscardUnknown(m)
+func (m *PBWallet) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBWallet.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Wallet proto.InternalMessageInfo
+var xxx_messageInfo_PBWallet proto.InternalMessageInfo
 
-func (m *Wallet) GetDescription() string {
+func (m *PBWallet) GetDescription() string {
 	if m != nil {
 		return m.Description
 	}
 	return ""
 }
 
-func (m *Wallet) GetPrincipal() []byte {
+func (m *PBWallet) GetPrincipal() []byte {
 	if m != nil {
 		return m.Principal
 	}
 	return nil
 }
 
-func (m *Wallet) GetCreditor() []byte {
+func (m *PBWallet) GetCreditor() []byte {
 	if m != nil {
 		return m.Creditor
 	}
 	return nil
 }
 
-func (m *Wallet) GetInitiator() []byte {
+func (m *PBWallet) GetInitiator() []byte {
 	if m != nil {
 		return m.Initiator
 	}
 	return nil
 }
 
-func (m *Wallet) GetAddress() []byte {
+func (m *PBWallet) GetAddress() []byte {
 	if m != nil {
 		return m.Address
 	}
 	return nil
 }
 
-func (m *Wallet) GetCounterparty() []byte {
+func (m *PBWallet) GetCounterparty() []byte {
 	if m != nil {
 		return m.Counterparty
 	}
 	return nil
 }
 
-type TrusteeGroup struct {
+type PBTrusteeGroup struct {
 	TrusteeID            [][]byte `protobuf:"bytes,1,rep,name=TrusteeID,proto3" json:"TrusteeID,omitempty"`
 	Threshold            int64    `protobuf:"varint,2,opt,name=threshold,proto3" json:"threshold,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -413,46 +413,46 @@ type TrusteeGroup struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TrusteeGroup) Reset()         { *m = TrusteeGroup{} }
-func (m *TrusteeGroup) String() string { return proto.CompactTextString(m) }
-func (*TrusteeGroup) ProtoMessage()    {}
-func (*TrusteeGroup) Descriptor() ([]byte, []int) {
+func (m *PBTrusteeGroup) Reset()         { *m = PBTrusteeGroup{} }
+func (m *PBTrusteeGroup) String() string { return proto.CompactTextString(m) }
+func (*PBTrusteeGroup) ProtoMessage()    {}
+func (*PBTrusteeGroup) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{4}
 }
 
-func (m *TrusteeGroup) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TrusteeGroup.Unmarshal(m, b)
+func (m *PBTrusteeGroup) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PBTrusteeGroup.Unmarshal(m, b)
 }
-func (m *TrusteeGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TrusteeGroup.Marshal(b, m, deterministic)
+func (m *PBTrusteeGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PBTrusteeGroup.Marshal(b, m, deterministic)
 }
-func (m *TrusteeGroup) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TrusteeGroup.Merge(m, src)
+func (m *PBTrusteeGroup) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBTrusteeGroup.Merge(m, src)
 }
-func (m *TrusteeGroup) XXX_Size() int {
-	return xxx_messageInfo_TrusteeGroup.Size(m)
+func (m *PBTrusteeGroup) XXX_Size() int {
+	return xxx_messageInfo_PBTrusteeGroup.Size(m)
 }
-func (m *TrusteeGroup) XXX_DiscardUnknown() {
-	xxx_messageInfo_TrusteeGroup.DiscardUnknown(m)
+func (m *PBTrusteeGroup) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBTrusteeGroup.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TrusteeGroup proto.InternalMessageInfo
+var xxx_messageInfo_PBTrusteeGroup proto.InternalMessageInfo
 
-func (m *TrusteeGroup) GetTrusteeID() [][]byte {
+func (m *PBTrusteeGroup) GetTrusteeID() [][]byte {
 	if m != nil {
 		return m.TrusteeID
 	}
 	return nil
 }
 
-func (m *TrusteeGroup) GetThreshold() int64 {
+func (m *PBTrusteeGroup) GetThreshold() int64 {
 	if m != nil {
 		return m.Threshold
 	}
 	return 0
 }
 
-type IDDoc struct {
+type PBIDDoc struct {
 	AuthenticationReference string   `protobuf:"bytes,1,opt,name=AuthenticationReference,proto3" json:"AuthenticationReference,omitempty"`
 	BeneficiaryECPublicKey  []byte   `protobuf:"bytes,2,opt,name=BeneficiaryECPublicKey,proto3" json:"BeneficiaryECPublicKey,omitempty"`
 	SikePublicKey           []byte   `protobuf:"bytes,3,opt,name=SikePublicKey,proto3" json:"SikePublicKey,omitempty"`
@@ -463,60 +463,60 @@ type IDDoc struct {
 	XXX_sizecache           int32    `json:"-"`
 }
 
-func (m *IDDoc) Reset()         { *m = IDDoc{} }
-func (m *IDDoc) String() string { return proto.CompactTextString(m) }
-func (*IDDoc) ProtoMessage()    {}
-func (*IDDoc) Descriptor() ([]byte, []int) {
+func (m *PBIDDoc) Reset()         { *m = PBIDDoc{} }
+func (m *PBIDDoc) String() string { return proto.CompactTextString(m) }
+func (*PBIDDoc) ProtoMessage()    {}
+func (*PBIDDoc) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{5}
 }
 
-func (m *IDDoc) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_IDDoc.Unmarshal(m, b)
+func (m *PBIDDoc) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PBIDDoc.Unmarshal(m, b)
 }
-func (m *IDDoc) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_IDDoc.Marshal(b, m, deterministic)
+func (m *PBIDDoc) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PBIDDoc.Marshal(b, m, deterministic)
 }
-func (m *IDDoc) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IDDoc.Merge(m, src)
+func (m *PBIDDoc) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBIDDoc.Merge(m, src)
 }
-func (m *IDDoc) XXX_Size() int {
-	return xxx_messageInfo_IDDoc.Size(m)
+func (m *PBIDDoc) XXX_Size() int {
+	return xxx_messageInfo_PBIDDoc.Size(m)
 }
-func (m *IDDoc) XXX_DiscardUnknown() {
-	xxx_messageInfo_IDDoc.DiscardUnknown(m)
+func (m *PBIDDoc) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBIDDoc.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_IDDoc proto.InternalMessageInfo
+var xxx_messageInfo_PBIDDoc proto.InternalMessageInfo
 
-func (m *IDDoc) GetAuthenticationReference() string {
+func (m *PBIDDoc) GetAuthenticationReference() string {
 	if m != nil {
 		return m.AuthenticationReference
 	}
 	return ""
 }
 
-func (m *IDDoc) GetBeneficiaryECPublicKey() []byte {
+func (m *PBIDDoc) GetBeneficiaryECPublicKey() []byte {
 	if m != nil {
 		return m.BeneficiaryECPublicKey
 	}
 	return nil
 }
 
-func (m *IDDoc) GetSikePublicKey() []byte {
+func (m *PBIDDoc) GetSikePublicKey() []byte {
 	if m != nil {
 		return m.SikePublicKey
 	}
 	return nil
 }
 
-func (m *IDDoc) GetBLSPublicKey() []byte {
+func (m *PBIDDoc) GetBLSPublicKey() []byte {
 	if m != nil {
 		return m.BLSPublicKey
 	}
 	return nil
 }
 
-func (m *IDDoc) GetTimestamp() int64 {
+func (m *PBIDDoc) GetTimestamp() int64 {
 	if m != nil {
 		return m.Timestamp
 	}
@@ -524,65 +524,65 @@ func (m *IDDoc) GetTimestamp() int64 {
 }
 
 func init() {
-	proto.RegisterEnum("protobuffer.AssetType", AssetType_name, AssetType_value)
-	proto.RegisterEnum("protobuffer.TransferType", TransferType_name, TransferType_value)
-	proto.RegisterType((*SignedAsset)(nil), "protobuffer.SignedAsset")
-	proto.RegisterType((*Asset)(nil), "protobuffer.Asset")
-	proto.RegisterMapType((map[string]*Transfer)(nil), "protobuffer.Asset.TransferlistEntry")
-	proto.RegisterType((*Transfer)(nil), "protobuffer.Transfer")
-	proto.RegisterMapType((map[string][]byte)(nil), "protobuffer.Transfer.ParticipantsEntry")
-	proto.RegisterType((*Wallet)(nil), "protobuffer.Wallet")
-	proto.RegisterType((*TrusteeGroup)(nil), "protobuffer.TrusteeGroup")
-	proto.RegisterType((*IDDoc)(nil), "protobuffer.IDDoc")
+	proto.RegisterEnum("protobuffer.PBAssetType", PBAssetType_name, PBAssetType_value)
+	proto.RegisterEnum("protobuffer.PBTransferType", PBTransferType_name, PBTransferType_value)
+	proto.RegisterType((*PBSignedAsset)(nil), "protobuffer.PBSignedAsset")
+	proto.RegisterType((*PBAsset)(nil), "protobuffer.PBAsset")
+	proto.RegisterMapType((map[string]*PBTransfer)(nil), "protobuffer.PBAsset.TransferlistEntry")
+	proto.RegisterType((*PBTransfer)(nil), "protobuffer.PBTransfer")
+	proto.RegisterMapType((map[string][]byte)(nil), "protobuffer.PBTransfer.ParticipantsEntry")
+	proto.RegisterType((*PBWallet)(nil), "protobuffer.PBWallet")
+	proto.RegisterType((*PBTrusteeGroup)(nil), "protobuffer.PBTrusteeGroup")
+	proto.RegisterType((*PBIDDoc)(nil), "protobuffer.PBIDDoc")
 }
 
 func init() { proto.RegisterFile("assets.proto", fileDescriptor_610ca40ce07a87fe) }
 
 var fileDescriptor_610ca40ce07a87fe = []byte{
-	// 706 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x54, 0x51, 0x6f, 0xda, 0x48,
-	0x10, 0xc6, 0x18, 0x13, 0x18, 0xfb, 0x12, 0x67, 0x2f, 0x97, 0x73, 0xa2, 0xd3, 0x09, 0xa1, 0x48,
-	0x87, 0x38, 0x85, 0x93, 0x38, 0xe9, 0x14, 0xdd, 0x4b, 0x94, 0x94, 0xa8, 0xd0, 0x54, 0x6a, 0xb4,
-	0x89, 0xda, 0x67, 0xc7, 0x1e, 0xca, 0x2a, 0x8e, 0x6d, 0xed, 0xae, 0x4b, 0xf9, 0x63, 0x7d, 0xee,
-	0x5f, 0xe9, 0x53, 0xff, 0x46, 0xb5, 0x6b, 0x83, 0xed, 0x42, 0x9e, 0xf0, 0x7c, 0xf3, 0x7d, 0x33,
-	0xbb, 0xdf, 0xce, 0x00, 0x8e, 0x2f, 0x04, 0x4a, 0x31, 0x4a, 0x79, 0x22, 0x13, 0x62, 0xeb, 0x9f,
-	0xc7, 0x6c, 0x3e, 0x47, 0xde, 0x4f, 0xc0, 0xbe, 0x67, 0x1f, 0x63, 0x0c, 0xaf, 0x14, 0x85, 0xfc,
-	0x01, 0x5d, 0x15, 0xfa, 0x32, 0xe3, 0xe8, 0x19, 0x3d, 0x63, 0xe0, 0xd0, 0x12, 0x20, 0x1e, 0xec,
-	0x69, 0x32, 0x17, 0x5e, 0xb3, 0x67, 0x0e, 0x1c, 0xba, 0x0e, 0xc9, 0x00, 0x2c, 0x5d, 0xc0, 0x33,
-	0x7b, 0xc6, 0xc0, 0x1e, 0x93, 0x51, 0xa5, 0xc7, 0x48, 0x67, 0x68, 0x4e, 0xe8, 0x7f, 0x31, 0x0b,
-	0x2a, 0x19, 0x42, 0xeb, 0x61, 0x95, 0xe6, 0x6d, 0xf6, 0xc7, 0xc7, 0xdb, 0x12, 0x95, 0xa5, 0x9a,
-	0x43, 0x4e, 0xa1, 0x73, 0x25, 0x14, 0x36, 0x9b, 0x78, 0x4d, 0x7d, 0xac, 0x4d, 0x4c, 0x8e, 0xc0,
-	0x7a, 0xb7, 0x8c, 0x91, 0xeb, 0xde, 0x0e, 0xcd, 0x03, 0x72, 0x0e, 0xed, 0x0f, 0x7e, 0x14, 0xa1,
-	0xf4, 0x5a, 0xfa, 0x48, 0xbf, 0xd6, 0xea, 0xe7, 0xa9, 0x69, 0x83, 0x16, 0x24, 0x72, 0x09, 0xce,
-	0x03, 0xcf, 0x84, 0x44, 0x7c, 0xcd, 0x93, 0x2c, 0xf5, 0x2c, 0x2d, 0x3a, 0xa9, 0x89, 0xaa, 0x84,
-	0x69, 0x83, 0xd6, 0x04, 0x64, 0x08, 0xd6, 0x2c, 0x0c, 0x93, 0xc0, 0x6b, 0xef, 0x70, 0x60, 0x36,
-	0x99, 0x24, 0xc1, 0xb4, 0x41, 0x73, 0x0a, 0x99, 0xaa, 0x66, 0x7e, 0x2c, 0xe6, 0xc8, 0x23, 0x26,
-	0xa4, 0xd7, 0xe9, 0x99, 0x03, 0x7b, 0x7c, 0xb6, 0xed, 0xc0, 0xa8, 0x4a, 0xbb, 0x89, 0x25, 0x5f,
-	0xd1, 0x9a, 0xf2, 0xf4, 0x3d, 0x1c, 0x6e, 0x51, 0x88, 0x0b, 0xe6, 0x13, 0xae, 0xb4, 0xaf, 0x5d,
-	0xaa, 0x3e, 0xc9, 0xdf, 0x60, 0x7d, 0xf2, 0xa3, 0x0c, 0xb5, 0x77, 0xf6, 0xf8, 0xb7, 0x9f, 0xae,
-	0x95, 0x17, 0xa0, 0x39, 0xe7, 0xff, 0xe6, 0x85, 0x71, 0x7d, 0x08, 0x07, 0xfa, 0x00, 0x13, 0x9c,
-	0xb3, 0x98, 0x49, 0x96, 0xc4, 0xfd, 0xef, 0x06, 0x74, 0xd6, 0x54, 0x72, 0x5e, 0x7b, 0xbb, 0x93,
-	0x9d, 0xf5, 0x2a, 0xcf, 0xf7, 0x27, 0xc0, 0xcd, 0xe7, 0x94, 0xa3, 0x10, 0x2c, 0x89, 0xf5, 0x21,
-	0xba, 0xb4, 0x82, 0x90, 0x5b, 0x70, 0xee, 0x7c, 0x2e, 0x59, 0xc0, 0x52, 0x3f, 0x96, 0xc2, 0x33,
-	0xb5, 0x21, 0x7f, 0xed, 0x2c, 0x3b, 0xaa, 0x32, 0x0b, 0x4f, 0xaa, 0xd0, 0xe9, 0x25, 0x1c, 0x6e,
-	0x51, 0x76, 0x78, 0x72, 0x54, 0xf5, 0xc4, 0xa9, 0x5c, 0xbe, 0xff, 0xd5, 0x58, 0xcf, 0x0e, 0xe9,
-	0x81, 0x3d, 0x41, 0x11, 0x70, 0x96, 0x2a, 0x0f, 0x0a, 0x79, 0x15, 0x52, 0x1b, 0x93, 0x72, 0x16,
-	0xab, 0x66, 0x51, 0x51, 0xaa, 0x04, 0xd4, 0xdc, 0x06, 0x1c, 0x43, 0x26, 0x93, 0xf5, 0x78, 0x6e,
-	0x62, 0xa5, 0xd4, 0xde, 0xfa, 0x2a, 0xd9, 0xca, 0x95, 0x1b, 0x40, 0xed, 0x9a, 0x1f, 0x86, 0xca,
-	0x20, 0x3d, 0x8b, 0x0e, 0x5d, 0x87, 0xa4, 0x0f, 0x4e, 0x90, 0x64, 0xb1, 0x44, 0x9e, 0xfa, 0x5c,
-	0xae, 0xf4, 0xc0, 0x39, 0xb4, 0x86, 0xf5, 0xdf, 0xd4, 0xc7, 0x59, 0xf5, 0x2a, 0xe2, 0xd9, 0xc4,
-	0x33, 0xf4, 0xee, 0x96, 0x80, 0xca, 0xca, 0x05, 0x47, 0xb1, 0x48, 0xa2, 0x50, 0xdf, 0xc1, 0xa4,
-	0x25, 0xd0, 0xff, 0x66, 0x80, 0xa5, 0x07, 0x98, 0x5c, 0xc0, 0xef, 0x57, 0x99, 0x5c, 0x60, 0x2c,
-	0x59, 0xe0, 0xab, 0xdb, 0x53, 0x9c, 0x23, 0xc7, 0x38, 0xc0, 0xc2, 0x99, 0x97, 0xd2, 0xe4, 0x3f,
-	0x38, 0xbe, 0xc6, 0x18, 0xe7, 0x2c, 0x60, 0x3e, 0x5f, 0xdd, 0xbc, 0xba, 0xcb, 0x1e, 0x23, 0x16,
-	0xdc, 0xe2, 0xaa, 0xb0, 0xec, 0x85, 0x2c, 0x39, 0x83, 0x5f, 0xee, 0xd9, 0x13, 0x96, 0xf4, 0xdc,
-	0xc4, 0x3a, 0xa8, 0x1c, 0xb9, 0x7e, 0x7b, 0x5f, 0x92, 0x72, 0x33, 0x6b, 0x98, 0x76, 0x80, 0x3d,
-	0xa3, 0x90, 0xfe, 0x73, 0xbe, 0xdd, 0x26, 0x2d, 0x81, 0xe1, 0x3f, 0xd0, 0xdd, 0xfc, 0xe5, 0x10,
-	0x80, 0xf6, 0x52, 0x3f, 0xbf, 0xdb, 0x20, 0x36, 0xec, 0xc9, 0xdc, 0x27, 0xd7, 0x20, 0x5d, 0xb0,
-	0x98, 0x5a, 0x60, 0xb7, 0x39, 0x5c, 0x96, 0x2b, 0xac, 0x35, 0x07, 0x60, 0x67, 0xb1, 0x48, 0x31,
-	0x60, 0x73, 0x86, 0xa1, 0xdb, 0x20, 0xfb, 0x00, 0x02, 0xa5, 0x8c, 0xf0, 0x2e, 0x13, 0x0b, 0xd7,
-	0xa8, 0xc6, 0x51, 0xe4, 0x36, 0x89, 0x0b, 0x8e, 0x2c, 0x0a, 0x68, 0x86, 0x59, 0x47, 0xa2, 0xc8,
-	0x6d, 0x91, 0x0e, 0xb4, 0xc4, 0xd2, 0x4f, 0x5d, 0x4b, 0x7d, 0x45, 0x89, 0x1f, 0xba, 0xed, 0xc7,
-	0xb6, 0xde, 0x89, 0x7f, 0x7f, 0x04, 0x00, 0x00, 0xff, 0xff, 0x85, 0x65, 0x84, 0xde, 0xd4, 0x05,
-	0x00, 0x00,
+	// 715 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x54, 0xd1, 0x4e, 0xdb, 0x4a,
+	0x10, 0x8d, 0xe3, 0x24, 0x24, 0x63, 0x13, 0xcc, 0x8a, 0x7b, 0xb1, 0xe0, 0xea, 0x2a, 0x8a, 0xae,
+	0xae, 0x52, 0x44, 0x83, 0x9a, 0x4a, 0x15, 0xea, 0x4b, 0x45, 0x1a, 0x54, 0xd2, 0x52, 0x35, 0x5a,
+	0x90, 0xda, 0x57, 0x63, 0x4f, 0x9a, 0x15, 0xc6, 0xb6, 0x76, 0xd7, 0xa5, 0xf9, 0xb3, 0x3e, 0xf7,
+	0x57, 0xfa, 0xdc, 0x7f, 0xa8, 0x76, 0xed, 0x60, 0x1b, 0x92, 0xa7, 0x78, 0xce, 0x9c, 0x99, 0xd9,
+	0x3d, 0x7b, 0x26, 0x60, 0x7b, 0x42, 0xa0, 0x14, 0xc3, 0x84, 0xc7, 0x32, 0x26, 0x96, 0xfe, 0xb9,
+	0x49, 0xe7, 0x73, 0xe4, 0x7d, 0x01, 0xdb, 0xb3, 0xf1, 0x15, 0xfb, 0x1a, 0x61, 0x70, 0xa6, 0x48,
+	0xe4, 0x1f, 0xe8, 0xa8, 0xd0, 0x93, 0x29, 0x47, 0xd7, 0xe8, 0x19, 0x03, 0x9b, 0x16, 0x00, 0x71,
+	0x61, 0x4b, 0x93, 0xb9, 0x70, 0xeb, 0x3d, 0x73, 0x60, 0xd3, 0x55, 0x48, 0x8e, 0xa0, 0xa9, 0x1b,
+	0xb8, 0x66, 0xcf, 0x18, 0x58, 0xa3, 0xbd, 0x61, 0x69, 0xca, 0x70, 0x36, 0xd6, 0x39, 0x9a, 0x51,
+	0xfa, 0x3f, 0x4c, 0xd8, 0xca, 0x21, 0x72, 0x0c, 0x8d, 0xeb, 0x65, 0x92, 0x8d, 0xea, 0x8e, 0xdc,
+	0x75, 0x65, 0x2a, 0x4f, 0x35, 0x8b, 0x74, 0xa1, 0x3e, 0x9d, 0xb8, 0x75, 0x7d, 0xac, 0xfa, 0x74,
+	0x42, 0xf6, 0xa0, 0xf9, 0xe9, 0x3e, 0x42, 0xae, 0xa7, 0xda, 0x34, 0x0b, 0xc8, 0x09, 0xb4, 0x3e,
+	0x7b, 0x61, 0x88, 0xd2, 0x6d, 0xe8, 0xc3, 0xfc, 0xf5, 0xa8, 0x6b, 0x96, 0xbc, 0xa8, 0xd1, 0x9c,
+	0x46, 0xce, 0xc0, 0xbe, 0xe6, 0xa9, 0x90, 0x88, 0xef, 0x78, 0x9c, 0x26, 0x6e, 0x53, 0x97, 0x1d,
+	0x3e, 0x2a, 0x2b, 0x53, 0x2e, 0x6a, 0xb4, 0x52, 0x42, 0x8e, 0xa1, 0x39, 0x0d, 0x82, 0xd8, 0x77,
+	0x5b, 0x6b, 0xef, 0x3f, 0x9d, 0x4c, 0x62, 0xff, 0xa2, 0x46, 0x33, 0x12, 0x79, 0xaf, 0x06, 0x7a,
+	0x91, 0x98, 0x23, 0x0f, 0x99, 0x90, 0x6e, 0xbb, 0x67, 0x0e, 0xac, 0xd1, 0xff, 0xeb, 0x6e, 0x3f,
+	0x2c, 0x13, 0xcf, 0x23, 0xc9, 0x97, 0xb4, 0x52, 0x7b, 0xf0, 0x05, 0x76, 0x9f, 0x50, 0x88, 0x03,
+	0xe6, 0x2d, 0x2e, 0xb5, 0xaa, 0x1d, 0xaa, 0x3e, 0xc9, 0x73, 0x68, 0x7e, 0xf3, 0xc2, 0x14, 0xb5,
+	0x7a, 0xd6, 0x68, 0xff, 0xc9, 0xe5, 0xb2, 0x16, 0x34, 0x63, 0xbd, 0xae, 0x9f, 0x1a, 0xe3, 0x5d,
+	0xd8, 0xd1, 0x47, 0x98, 0xe0, 0x9c, 0x45, 0x4c, 0xb2, 0x38, 0xea, 0xff, 0x36, 0x00, 0x0a, 0x32,
+	0x39, 0xa9, 0xbc, 0xde, 0xe1, 0x86, 0x9e, 0xa5, 0x07, 0xfc, 0x17, 0xe0, 0xfc, 0x7b, 0xc2, 0x51,
+	0x08, 0x16, 0x47, 0xfa, 0x28, 0x1d, 0x5a, 0x42, 0xc8, 0x47, 0xb0, 0x67, 0x1e, 0x97, 0xcc, 0x67,
+	0x89, 0x17, 0x49, 0xe1, 0x9a, 0x5a, 0x98, 0x67, 0x1b, 0x1a, 0x0f, 0xcb, 0xdc, 0x5c, 0x9b, 0x32,
+	0x74, 0xf0, 0x06, 0x76, 0x9f, 0x50, 0xd6, 0x68, 0xb3, 0x57, 0xd6, 0xc6, 0x2e, 0x49, 0xd0, 0xff,
+	0x69, 0x40, 0x7b, 0x65, 0x18, 0xd2, 0x03, 0x6b, 0x82, 0xc2, 0xe7, 0x2c, 0x51, 0x5a, 0xe4, 0x0d,
+	0xca, 0x90, 0xda, 0x9e, 0x84, 0xb3, 0x48, 0x8d, 0x0b, 0xf3, 0x66, 0x05, 0x40, 0x0e, 0xa0, 0xed,
+	0x73, 0x0c, 0x98, 0x8c, 0x57, 0x86, 0x7d, 0x88, 0x55, 0xa5, 0xd6, 0xd8, 0x53, 0xc9, 0x46, 0x56,
+	0xf9, 0x00, 0xa8, 0xbd, 0xf3, 0x82, 0x40, 0x89, 0xa4, 0xbd, 0x69, 0xd3, 0x55, 0x48, 0xfa, 0x60,
+	0xfb, 0x71, 0x1a, 0x49, 0xe4, 0x89, 0xc7, 0xe5, 0x52, 0xdb, 0xcf, 0xa6, 0x15, 0xac, 0x7f, 0x09,
+	0xdd, 0xaa, 0x7b, 0xd5, 0xb4, 0x3c, 0x9e, 0x4e, 0x5c, 0x43, 0x6f, 0x72, 0x01, 0xa8, 0xac, 0x5c,
+	0x70, 0x14, 0x8b, 0x38, 0x0c, 0xf4, 0x2d, 0x4c, 0x5a, 0x00, 0xfd, 0x5f, 0x86, 0xda, 0x5e, 0x6d,
+	0x68, 0x72, 0x0a, 0xfb, 0x67, 0xa9, 0x5c, 0x60, 0x24, 0x99, 0xef, 0x29, 0x05, 0x28, 0xce, 0x91,
+	0x63, 0xe4, 0x63, 0xae, 0xce, 0xa6, 0x34, 0x79, 0x05, 0x7f, 0x8f, 0x31, 0xc2, 0x39, 0xf3, 0x99,
+	0xc7, 0x97, 0xe7, 0x6f, 0x67, 0xe9, 0x4d, 0xc8, 0xfc, 0x0f, 0xb8, 0xcc, 0x65, 0xdb, 0x90, 0x25,
+	0xff, 0xc1, 0xf6, 0x15, 0xbb, 0xc5, 0x82, 0x9e, 0x09, 0x59, 0x05, 0x95, 0x2a, 0xe3, 0xcb, 0xab,
+	0x82, 0x94, 0x09, 0x5a, 0xc1, 0xb4, 0x06, 0xec, 0x0e, 0x85, 0xf4, 0xee, 0xb2, 0x8d, 0x37, 0x69,
+	0x01, 0x1c, 0xbd, 0x00, 0xab, 0xf4, 0xf7, 0x43, 0x00, 0x5a, 0xf7, 0xda, 0x04, 0x4e, 0x8d, 0x58,
+	0xb0, 0x25, 0x33, 0xad, 0x1c, 0x83, 0x74, 0xa0, 0xc9, 0xd4, 0x4a, 0x3b, 0xf5, 0xa3, 0x65, 0x26,
+	0x73, 0xe1, 0x79, 0xb2, 0x03, 0x56, 0x1a, 0x89, 0x04, 0x7d, 0x36, 0x67, 0x18, 0x38, 0x35, 0xd2,
+	0x05, 0x10, 0x28, 0x65, 0x88, 0xb3, 0x54, 0x2c, 0x1c, 0xa3, 0x1c, 0x87, 0xa1, 0x53, 0x27, 0x0e,
+	0xd8, 0x32, 0x6f, 0xa0, 0x19, 0x66, 0x15, 0x09, 0x43, 0xa7, 0x41, 0xda, 0xd0, 0x10, 0xf7, 0x5e,
+	0xe2, 0x34, 0xd5, 0x57, 0x18, 0x7b, 0x81, 0xd3, 0xba, 0x69, 0xe9, 0xfd, 0x78, 0xf9, 0x27, 0x00,
+	0x00, 0xff, 0xff, 0x7c, 0xd5, 0x21, 0x71, 0xea, 0x05, 0x00, 0x00,
 }

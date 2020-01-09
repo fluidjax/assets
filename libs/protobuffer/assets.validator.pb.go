@@ -15,7 +15,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *SignedAsset) Validate() error {
+func (this *PBSignedAsset) Validate() error {
 	if this.Asset != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Asset); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Asset", err)
@@ -23,22 +23,22 @@ func (this *SignedAsset) Validate() error {
 	}
 	return nil
 }
-func (this *Asset) Validate() error {
-	if oneOfNester, ok := this.GetAssetDefinition().(*Asset_Wallet); ok {
+func (this *PBAsset) Validate() error {
+	if oneOfNester, ok := this.GetAssetDefinition().(*PBAsset_Wallet); ok {
 		if oneOfNester.Wallet != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Wallet); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Wallet", err)
 			}
 		}
 	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*Asset_TrusteeGroup); ok {
+	if oneOfNester, ok := this.GetAssetDefinition().(*PBAsset_TrusteeGroup); ok {
 		if oneOfNester.TrusteeGroup != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.TrusteeGroup); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("TrusteeGroup", err)
 			}
 		}
 	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*Asset_Iddoc); ok {
+	if oneOfNester, ok := this.GetAssetDefinition().(*PBAsset_Iddoc); ok {
 		if oneOfNester.Iddoc != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Iddoc); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Iddoc", err)
@@ -48,16 +48,16 @@ func (this *Asset) Validate() error {
 	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
-func (this *Transfer) Validate() error {
+func (this *PBTransfer) Validate() error {
 	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
-func (this *Wallet) Validate() error {
+func (this *PBWallet) Validate() error {
 	return nil
 }
-func (this *TrusteeGroup) Validate() error {
+func (this *PBTrusteeGroup) Validate() error {
 	return nil
 }
-func (this *IDDoc) Validate() error {
+func (this *PBIDDoc) Validate() error {
 	return nil
 }

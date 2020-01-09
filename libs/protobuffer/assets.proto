@@ -5,32 +5,32 @@ package protobuffer;
 
 
 
-message SignedAsset{
+message PBSignedAsset{
     bytes Signature         = 1;
     repeated bytes Signers  = 2;
-    Asset Asset             = 3;
+    PBAsset Asset             = 3;
 }
 
-message Asset {
-	AssetType Type  = 1;            //Type of Asset
-	bytes AsssetID        = 2;                       //unique ID of asset
+message PBAsset {
+	PBAssetType Type  = 1;            //Type of Asset
+	bytes ID        = 2;                       //unique ID of asset
 	bytes Owner     = 3;                    //IDDoc of owner            
     oneof AssetDefinition {          //Definiton of the asset
-        Wallet Wallet = 4;
-        TrusteeGroup TrusteeGroup = 5;
-        IDDoc Iddoc = 6;
+        PBWallet Wallet = 4;
+        PBTrusteeGroup TrusteeGroup = 5;
+        PBIDDoc Iddoc = 6;
     }
-    map<string, Transfer> Transferlist = 8;
+    map<string, PBTransfer> Transferlist = 8;
 	//repeated Transfer Transferlist    = 7;    //List of Transfer rules for subsequent updates
 }
 
 
-enum AssetType {
+enum PBAssetType {
 	wallet      = 0;
 	trustee     = 1;
 	iddoc       = 2;
 }                              
-enum TransferType {
+enum PBTransferType {
     unspecified         = 0;
     settlePush          = 1;
     settlePull          = 2;
@@ -40,14 +40,14 @@ enum TransferType {
     load                = 6;
 }
 
-message Transfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
-    TransferType Type               = 1;	
+message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
+    PBTransferType Type               = 1;	
     string Expression               = 2;              //Boolean expression eg. (SigTrustee1 + SigTrustee2 + SigTrustee3) >=2 & Owner   
     map<string, bytes> Participants = 3;
 }
 
 //Asset Definitons
-message Wallet {
+message PBWallet {
     string Description      = 1;
     bytes principal         = 2;
 	bytes creditor          = 3;
@@ -57,12 +57,12 @@ message Wallet {
 }
 
 
-message TrusteeGroup {
+message PBTrusteeGroup {
     repeated bytes TrusteeID    = 1; //List of Trustee DocIDs
     int64 threshold             = 2; //Threshold required
 }
 
-message IDDoc {
+message PBIDDoc {
     string AuthenticationReference = 1;
     bytes BeneficiaryECPublicKey   = 2;
     bytes SikePublicKey            = 3;
