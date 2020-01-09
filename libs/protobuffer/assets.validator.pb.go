@@ -15,7 +15,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *Signature) Validate() error {
+func (this *SignedAsset) Validate() error {
 	if this.Asset != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Asset); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Asset", err)

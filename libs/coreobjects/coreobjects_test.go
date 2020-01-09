@@ -34,7 +34,7 @@ func Test_Serialize_IDDoc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, data, "Result should not be nil")
 
-	i.Signature.Asset = nil
+	i.SignedAsset.Asset = nil
 	data, err = i.PayloadSerialize()
 	assert.NotNil(t, err, "Error should not be nil")
 }
@@ -70,7 +70,7 @@ func Test_Wallet(t *testing.T) {
 	walletContents.Description = testDescription
 	w.SetTestKey()
 	w.Sign(i)
-	assert.NotNil(t, w.Signature.Signature, "Signature is empty")
+	assert.NotNil(t, w.SignedAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")

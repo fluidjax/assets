@@ -20,13 +20,13 @@ func (i *IDDoc) PayloadSerialize() (s []byte, err error) {
 }
 
 func (i *IDDoc) AssetPayload() *protobuffer.IDDoc {
-	return i.Signature.Asset.GetIddoc()
+	return i.SignedAsset.Asset.GetIddoc()
 }
 
 func (i *IDDoc) Verify() (bool, error) {
 
 	//Signature
-	signature := i.Signature.Signature
+	signature := i.SignedAsset.Signature
 	if signature == nil {
 		return false, errors.New("No Signature")
 	}
@@ -71,8 +71,8 @@ func (i *IDDoc) Sign() (err error) {
 		return errors.New("Failed to sign IDDoc")
 	}
 
-	i.Signature.Signature = signature
-	i.Signature.Signers = append(i.Signature.Signers, i.key)
+	i.SignedAsset.Signature = signature
+	i.SignedAsset.Signers = append(i.SignedAsset.Signers, i.key)
 	return nil
 }
 
@@ -114,19 +114,19 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	iddoc.BLSPublicKey = blsPublicKey
 
 	//Compose
-	i.Signature.Asset = asset
+	i.SignedAsset.Asset = asset
 	assetDefinition := &protobuffer.Asset_Iddoc{}
 	assetDefinition.Iddoc = iddoc
-	i.Signature.Asset.AssetDefinition = assetDefinition
+	i.SignedAsset.Asset.AssetDefinition = assetDefinition
 	i.SetTestKey()
 	return i, nil
 }
 
 //Rebuild an existing Signed IDDoc into IDDocDeclaration object
 //Seed can be manually set if known (ie. Is a local ID)
-func ReBuildIDDoc(sig *protobuffer.Signature, key []byte) (i *IDDoc, err error) {
+func ReBuildIDDoc(sig *protobuffer.SignedAsset, key []byte) (i *IDDoc, err error) {
 	i = &IDDoc{}
 	i.key = key
-	i.Signature = *sig
+	i.SignedAsset = *sig
 	return i, nil
 }

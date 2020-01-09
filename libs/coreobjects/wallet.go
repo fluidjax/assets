@@ -20,7 +20,7 @@ func (w *Wallet) Serialize() (s []byte, err error) {
 }
 
 func (w *Wallet) AssetPayload() *protobuffer.Wallet {
-	signatureAsset := w.Signature.Asset
+	signatureAsset := w.SignedAsset.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet
 }
@@ -28,7 +28,7 @@ func (w *Wallet) AssetPayload() *protobuffer.Wallet {
 func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 
 	//Signature
-	signature := w.Signature.Signature
+	signature := w.SignedAsset.Signature
 	if signature == nil {
 		return false, errors.New("No Signature")
 	}
@@ -80,8 +80,8 @@ func (w *Wallet) Sign(i *IDDoc) (err error) {
 	// 	return errors.New("Failed to sign IDDoc")
 	// }
 
-	w.Signature.Signature = signature
-	w.Signature.Signers = append(w.Signature.Signers, i.key)
+	w.SignedAsset.Signature = signature
+	w.SignedAsset.Signers = append(w.SignedAsset.Signers, i.key)
 	return nil
 }
 
@@ -94,9 +94,9 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	w.Signature.Asset.ID = walletKey
-	w.Signature.Asset.Type = protobuffer.AssetType_wallet
-	w.Signature.Asset.Owner = iddoc.key
+	w.SignedAsset.Asset.ID = walletKey
+	w.SignedAsset.Asset.Type = protobuffer.AssetType_wallet
+	w.SignedAsset.Asset.Owner = iddoc.key
 	return w, nil
 
 	// //Asset
@@ -125,9 +125,9 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
 	w = EmptyWallet()
-	w.Signature.Asset.ID = previousWallet.Signature.Asset.ID
-	w.Signature.Asset.Type = protobuffer.AssetType_wallet
-	w.Signature.Asset.Owner = iddoc.key //new owner
+	w.SignedAsset.Asset.ID = previousWallet.SignedAsset.Asset.ID
+	w.SignedAsset.Asset.Type = protobuffer.AssetType_wallet
+	w.SignedAsset.Asset.Owner = iddoc.key //new owner
 	w.previousAsset = &previousWallet.BaseAsset
 	return w, nil
 }
@@ -140,17 +140,17 @@ func EmptyWallet() (w *Wallet) {
 	//Wallet
 	wallet := &protobuffer.Wallet{}
 	//Compose
-	w.Signature.Asset = asset
+	w.SignedAsset.Asset = asset
 	assetDefinition := &protobuffer.Asset_Wallet{}
 	assetDefinition.Wallet = wallet
-	w.Signature.Asset.AssetDefinition = assetDefinition
+	w.SignedAsset.Asset.AssetDefinition = assetDefinition
 	return w
 }
 
 //Rebuild an existing Signed Wallet into WalletDeclaration object
-func ReBuildWallet(sig *protobuffer.Signature) (w *Wallet, err error) {
+func ReBuildWallet(sig *protobuffer.SignedAsset) (w *Wallet, err error) {
 	w = &Wallet{}
-	w.Signature = *sig
+	w.SignedAsset = *sig
 	return w, nil
 }
 

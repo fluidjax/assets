@@ -5,7 +5,7 @@ package protobuffer;
 
 
 
-message Signature {
+message SignedAsset{
     bytes Signature         = 1;
     repeated bytes Signers  = 2;
     Asset Asset             = 3;

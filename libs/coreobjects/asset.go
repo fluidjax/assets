@@ -29,7 +29,7 @@ type TransferParticipant struct {
 }
 
 type BaseAsset struct {
-	protobuffer.Signature
+	protobuffer.SignedAsset
 	store         *Mapstore
 	seed          []byte
 	key           []byte
@@ -73,7 +73,7 @@ func (a *BaseAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err 
 }
 
 func (a *BaseAsset) PayloadSerialize() (s []byte, err error) {
-	s, err = proto.Marshal(a.Signature.Asset)
+	s, err = proto.Marshal(a.SignedAsset.Asset)
 	if err != nil {
 		s = nil
 	}
@@ -82,7 +82,7 @@ func (a *BaseAsset) PayloadSerialize() (s []byte, err error) {
 
 func (a *BaseAsset) Save() error {
 	store := a.store
-	msg := a.Signature
+	msg := a.SignedAsset
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (a *BaseAsset) Save() error {
 	return nil
 }
 
-func Load(store *Mapstore, key []byte) (*protobuffer.Signature, error) {
+func Load(store *Mapstore, key []byte) (*protobuffer.SignedAsset, error) {
 	val, err := store.Load(key)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func Load(store *Mapstore, key []byte) (*protobuffer.Signature, error) {
 		return nil, errors.New("Key not found")
 	}
 
-	msg := &protobuffer.Signature{}
+	msg := &protobuffer.SignedAsset{}
 	err = proto.Unmarshal(val, msg)
 	if err != nil {
 		return nil, err
@@ -138,10 +138,10 @@ func (a *BaseAsset) AddTransfer(transferType protobuffer.TransferType, expressio
 	}
 	//Cant use enum as map key, so convert to a string
 	transferListMapString := transferType.String()
-	if a.Signature.Asset.Transferlist == nil {
-		a.Signature.Asset.Transferlist = make(map[string]*protobuffer.Transfer)
+	if a.SignedAsset.Asset.Transferlist == nil {
+		a.SignedAsset.Asset.Transferlist = make(map[string]*protobuffer.Transfer)
 	}
-	a.Signature.Asset.Transferlist[transferListMapString] = transferRule
+	a.SignedAsset.Asset.Transferlist[transferListMapString] = transferRule
 	return nil
 }
 
