@@ -29,11 +29,11 @@ type TransferParticipant struct {
 }
 
 type BaseAsset struct {
-	protobuffer.SignedAsset
-	store         *Mapstore
-	seed          []byte
-	key           []byte
-	previousAsset *BaseAsset
+	protobuffer.SignedAsset            //the object stored in the chain
+	store                   *Mapstore  //Reference to object store (map or blockchain)
+	seed                    []byte     //If available a seed to generate keys for object
+	key                     []byte     //
+	previousAsset           *BaseAsset //Reference to (if any) previous object with the same key
 }
 
 func (a *BaseAsset) SignPayload(i *IDDoc) (s []byte, err error) {

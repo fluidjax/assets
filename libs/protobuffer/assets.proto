@@ -13,7 +13,7 @@ message SignedAsset{
 
 message Asset {
 	AssetType Type  = 1;            //Type of Asset
-	bytes ID        = 2;                       //unique ID of asset
+	bytes AsssetID        = 2;                       //unique ID of asset
 	bytes Owner     = 3;                    //IDDoc of owner            
     oneof AssetDefinition {          //Definiton of the asset
         Wallet Wallet = 4;

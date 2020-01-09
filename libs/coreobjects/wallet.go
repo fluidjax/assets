@@ -94,7 +94,7 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	w.SignedAsset.Asset.ID = walletKey
+	w.SignedAsset.Asset.AsssetID = walletKey
 	w.SignedAsset.Asset.Type = protobuffer.AssetType_wallet
 	w.SignedAsset.Asset.Owner = iddoc.key
 	return w, nil
@@ -125,7 +125,7 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
 	w = EmptyWallet()
-	w.SignedAsset.Asset.ID = previousWallet.SignedAsset.Asset.ID
+	w.SignedAsset.Asset.AsssetID = previousWallet.SignedAsset.Asset.AsssetID
 	w.SignedAsset.Asset.Type = protobuffer.AssetType_wallet
 	w.SignedAsset.Asset.Owner = iddoc.key //new owner
 	w.previousAsset = &previousWallet.BaseAsset
