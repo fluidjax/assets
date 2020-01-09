@@ -7,21 +7,22 @@ package protobuffer;
 
 message PBSignedAsset{
     bytes Signature         = 1;
-    repeated bytes Signers  = 2;
-    PBAsset Asset             = 3;
+    bytes PublicKey         = 2;
+    repeated string Signers  = 3;
+    PBAsset Asset           = 4;
 }
 
 message PBAsset {
-	PBAssetType Type  = 1;            //Type of Asset
-	bytes ID        = 2;                       //unique ID of asset
-	bytes Owner     = 3;                    //IDDoc of owner            
-    oneof Payload {          //Definiton of the asset
-        PBWallet Wallet = 4;
-        PBTrusteeGroup TrusteeGroup = 5;
-        PBIDDoc Iddoc = 6;
+	PBAssetType Type                = 1;            //Type of Asset
+	bytes ID                        = 2;            //unique ID of asset
+    bytes Owner                     = 3;            //IDDoc of owner            
+    PBTransferType TransferType     = 4;            //Which transfer used to get to this version
+    oneof Payload {                                 //Definiton of the asset
+        PBWallet Wallet             = 5;
+        PBTrusteeGroup TrusteeGroup = 6;
+        PBIDDoc Iddoc               = 7;
     }
     map<string, PBTransfer> Transferlist = 8;
-	//repeated Transfer Transferlist    = 7;    //List of Transfer rules for subsequent updates
 }
 
 

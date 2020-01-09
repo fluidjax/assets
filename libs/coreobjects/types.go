@@ -21,8 +21,9 @@ type SignedAsset struct {
 
 //Use to hold ID & Signatures for expression parsing
 type SignatureID struct {
-	IDDoc     *IDDoc
-	Signature []byte
+	IDDoc        *IDDoc
+	Abbreviation string
+	Signature    []byte
 }
 
 type TransferParticipant struct {

@@ -3,6 +3,7 @@ package coreobjects
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -44,13 +45,11 @@ func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	if val == nil {
 		return nil, errors.New("Key not found")
 	}
-
 	msg := &protobuffer.PBSignedAsset{}
 	err = proto.Unmarshal(val, msg)
 	if err != nil {
 		return nil, err
 	}
-
 	return msg, nil
 }
 
@@ -240,4 +239,112 @@ func (a *SignedAsset) SerializePayload() (s []byte, err error) {
 
 func (a *SignedAsset) Description() {
 	print("Asset Description")
+}
+
+//BLS Aggregation
+func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
+	if transferSignatures == nil || len(transferSignatures) == 0 {
+		return errors.New("Invalid transferSignatures BLS Aggregation")
+	}
+	var aggregatedSig []byte
+	var aggregatedPublicKey []byte
+	var signers []string
+	for i := 0; i < len(transferSignatures); i++ {
+
+		sig := transferSignatures[i].Signature
+		pubKey := transferSignatures[i].IDDoc.GetAsset().GetIddoc().GetBLSPublicKey()
+		//idDocKey := transferSignatures[i].IDDoc.Key()
+		abbreviation := transferSignatures[i].Abbreviation
+
+		signers = append(signers, abbreviation)
+
+		if sig == nil || pubKey == nil {
+			return errors.New("Invalid Sig/PubKey BLS Aggregation")
+		}
+
+		if i == 0 {
+			aggregatedSig = sig
+			aggregatedPublicKey = pubKey
+		} else {
+			_, aggregatedSig = crypto.BLSAddG1(aggregatedSig, sig)
+			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+		}
+	}
+	a.PublicKey = aggregatedPublicKey
+	a.Signature = aggregatedSig
+	a.Signers = signers
+
+	data, err := a.SerializePayload()
+	print(err)
+
+	rc := crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
+	if rc != 0 {
+		return errors.New("Signature failed to Verify")
+	}
+
+	return nil
+}
+
+//Verify the whole Asset
+func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool, error) {
+	//Get Transfer from previous
+	transferType := a.Asset.TransferType
+	//	aggregatedPublicKey := a.PublicKey
+	//	aggregatedSig := a.Signature
+	//	signers := a.Signers
+	var aggregatedPublicKey []byte
+
+	if previousAsset == nil {
+		return false, errors.New("No Previous Asset supplied for Verify")
+	}
+
+	transferList := previousAsset.GetAsset().GetTransferlist()
+	_ = transferList
+	currentTransfer := transferList[transferType.String()]
+
+	//For each supplied signer re-build a PublicKey
+	for _, abbreviation := range a.Signers {
+		participantIDDocID := currentTransfer.Participants[abbreviation]
+		signedAsset, err := Load(a.store, participantIDDocID)
+
+		if err != nil {
+			return false, errors.New("Failed to retieve IDDoc")
+		}
+
+		iddoc, err := ReBuildIDDoc(signedAsset, participantIDDocID)
+
+		pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
+		if aggregatedPublicKey == nil {
+			aggregatedPublicKey = pubKey
+		} else {
+			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+		}
+
+	}
+
+	//check the one used matches the one just created
+	res := bytes.Compare(aggregatedPublicKey, a.GetPublicKey())
+
+	if res != 0 {
+		return false, errors.New("Generated Aggregated Public Key doesnt match the one used to sign")
+	}
+
+	//Check the Signature
+	//Get Message
+	data, err := a.SerializePayload()
+	if err != nil {
+		return false, errors.New("Failed to serialize payload")
+	}
+	//Sig
+	aggregatedSig := a.GetSignature()
+
+	rc := crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
+
+	fmt.Println(hex.EncodeToString(data))
+
+	if rc != 0 {
+		return false, errors.New("Signature failed to Verify")
+	}
+
+	return true, nil
 }

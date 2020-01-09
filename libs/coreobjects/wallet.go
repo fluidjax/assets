@@ -1,6 +1,7 @@
 package coreobjects
 
 import (
+	"bytes"
 	"crypto/sha256"
 
 	"github.com/pkg/errors"
@@ -53,31 +54,20 @@ func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 
 func (w *Wallet) Sign(i *IDDoc) (err error) {
 
+	walletOwner := w.Asset.GetOwner()
+	signer := i.Key()
+
+	res := bytes.Compare(walletOwner, signer)
+	if res != 0 {
+		return errors.New("Only the Owner can self sign")
+	}
+
 	signature, err := w.SignPayload(i)
 	if err != nil {
 		return err
 	}
-	// data, err := w.Serialize()
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if i.seed == nil {
-	// 	return errors.New("No Seed in Supplied IDDoc")
-	// }
-	// _, blsSK, err := keystore.GenerateBLSKeys(i.seed)
-	// if err != nil {
-	// 	return err
-	// }
-	// rc, signature := crypto.BLSSign(data, blsSK)
-
-	// if rc != 0 {
-	// 	return errors.New("Failed to sign IDDoc")
-	// }
-
 	w.PBSignedAsset.Signature = signature
-	w.PBSignedAsset.Signers = append(w.PBSignedAsset.Signers, i.Key())
+	w.PBSignedAsset.Signers = append(w.PBSignedAsset.Signers, "self")
 	return nil
 }
 
@@ -121,6 +111,9 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
 	w = EmptyWallet()
+	if previousWallet.store != nil {
+		w.store = previousWallet.store
+	}
 	w.PBSignedAsset.Asset.ID = previousWallet.PBSignedAsset.Asset.ID
 	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_wallet
 	w.PBSignedAsset.Asset.Owner = iddoc.Key() //new owner

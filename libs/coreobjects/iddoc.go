@@ -68,7 +68,7 @@ func (i *IDDoc) Sign() (err error) {
 	}
 
 	i.PBSignedAsset.Signature = signature
-	i.PBSignedAsset.Signers = append(i.PBSignedAsset.Signers, i.Key())
+	i.PBSignedAsset.Signers = append(i.PBSignedAsset.Signers, "self")
 	return nil
 }
 
