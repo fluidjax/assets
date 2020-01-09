@@ -1,4 +1,4 @@
-package coreobjects
+package assets
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ func Test_Wallet(t *testing.T) {
 	w, err := NewWallet(i)
 	walletContents := w.Payload()
 	walletContents.Description = testDescription
-	
+
 	w.Sign(i)
 	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)

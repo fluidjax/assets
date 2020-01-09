@@ -1,4 +1,4 @@
-package coreobjects
+package assets
 
 import (
 	"fmt"
