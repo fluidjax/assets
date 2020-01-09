@@ -8,14 +8,10 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type Wallet struct {
-	BaseAsset
-}
-
 //AuthenticatorInterface Implementations
 func (w *Wallet) Serialize() (s []byte, err error) {
 	//Use Asset parent method
-	return w.BaseAsset.PayloadSerialize()
+	return w.SerializePayload()
 
 }
 
@@ -57,7 +53,7 @@ func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 
 func (w *Wallet) Sign(i *IDDoc) (err error) {
 
-	signature, err := w.BaseAsset.SignPayload(i)
+	signature, err := w.SignPayload(i)
 	if err != nil {
 		return err
 	}
@@ -81,7 +77,7 @@ func (w *Wallet) Sign(i *IDDoc) (err error) {
 	// }
 
 	w.PBSignedAsset.Signature = signature
-	w.PBSignedAsset.Signers = append(w.PBSignedAsset.Signers, i.key)
+	w.PBSignedAsset.Signers = append(w.PBSignedAsset.Signers, i.Key())
 	return nil
 }
 
@@ -96,7 +92,7 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 	}
 	w.PBSignedAsset.Asset.ID = walletKey
 	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_wallet
-	w.PBSignedAsset.Asset.Owner = iddoc.key
+	w.PBSignedAsset.Asset.Owner = iddoc.Key()
 	return w, nil
 
 	// //Asset
@@ -115,9 +111,9 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 
 	// //Compose
 	// w.Signature.Asset = asset
-	// assetDefinition := &protobuffer.Asset_Wallet{}
-	// assetDefinition.Wallet = wallet
-	// w.Signature.Asset.AssetDefinition = assetDefinition
+	// payload := &protobuffer.Asset_Wallet{}
+	// payload.Wallet = wallet
+	// w.Signature.Asset.Payload = payload
 	// w.store = iddoc.store
 	// return w, nil
 
@@ -127,8 +123,8 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 	w = EmptyWallet()
 	w.PBSignedAsset.Asset.ID = previousWallet.PBSignedAsset.Asset.ID
 	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_wallet
-	w.PBSignedAsset.Asset.Owner = iddoc.key //new owner
-	w.previousAsset = &previousWallet.BaseAsset
+	w.PBSignedAsset.Asset.Owner = iddoc.Key() //new owner
+	w.previousAsset = &previousWallet.PBSignedAsset
 	return w, nil
 }
 
@@ -141,9 +137,9 @@ func EmptyWallet() (w *Wallet) {
 	wallet := &protobuffer.PBWallet{}
 	//Compose
 	w.PBSignedAsset.Asset = asset
-	assetDefinition := &protobuffer.PBAsset_Wallet{}
-	assetDefinition.Wallet = wallet
-	w.PBSignedAsset.Asset.AssetDefinition = assetDefinition
+	payload := &protobuffer.PBAsset_Wallet{}
+	payload.Wallet = wallet
+	w.PBSignedAsset.Asset.Payload = payload
 	return w
 }
 
@@ -161,6 +157,6 @@ func (i *Wallet) SetTestKey() (err error) {
 		return err
 	}
 	res := sha256.Sum256(data)
-	i.key = res[:]
+	i.SetKey(res[:])
 	return nil
 }

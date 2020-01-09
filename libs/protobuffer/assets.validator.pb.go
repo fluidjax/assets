@@ -24,21 +24,21 @@ func (this *PBSignedAsset) Validate() error {
 	return nil
 }
 func (this *PBAsset) Validate() error {
-	if oneOfNester, ok := this.GetAssetDefinition().(*PBAsset_Wallet); ok {
+	if oneOfNester, ok := this.GetPayload().(*PBAsset_Wallet); ok {
 		if oneOfNester.Wallet != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Wallet); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Wallet", err)
 			}
 		}
 	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*PBAsset_TrusteeGroup); ok {
+	if oneOfNester, ok := this.GetPayload().(*PBAsset_TrusteeGroup); ok {
 		if oneOfNester.TrusteeGroup != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.TrusteeGroup); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("TrusteeGroup", err)
 			}
 		}
 	}
-	if oneOfNester, ok := this.GetAssetDefinition().(*PBAsset_Iddoc); ok {
+	if oneOfNester, ok := this.GetPayload().(*PBAsset_Iddoc); ok {
 		if oneOfNester.Iddoc != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(oneOfNester.Iddoc); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Iddoc", err)

@@ -17,66 +17,22 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type BaseAsset struct {
-	protobuffer.PBSignedAsset            //the object stored in the chain
-	store                     *Mapstore  //Reference to object store (map or blockchain)
-	seed                      []byte     //If available a seed to generate keys for object
-	key                       []byte     //
-	previousAsset             *BaseAsset //Reference to (if any) previous object with the same key
+func (a *SignedAsset) Key() []byte {
+	return a.Asset.GetID()
 }
 
-func (a *BaseAsset) SignPayload(i *IDDoc) (s []byte, err error) {
-	data, err := a.PayloadSerialize()
-	if err != nil {
-		return nil, errors.New("Failed to serialize payload")
-	}
-	if i.seed == nil {
-		return nil, errors.New("No Seed in Supplied IDDoc")
-	}
-	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
-	if err != nil {
-		return nil, err
-	}
-	rc, signature := crypto.BLSSign(data, blsSK)
-	if rc != 0 {
-		return nil, errors.New("Failed to sign IDDoc")
-	}
-	return signature, nil
+func (a *SignedAsset) SetKey(key []byte) {
+	a.Asset.ID = key
 }
 
-func (a *BaseAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err error) {
-	//Message
-	data, err := a.PayloadSerialize()
-	if err != nil {
-		return false, errors.New("Failed to serialize payload")
-	}
-	//Public Key
-	payload := i.AssetPayload()
-	blsPK := payload.GetBLSPublicKey()
-
-	rc := crypto.BLSVerify(data, blsPK, signature)
-	if rc == 0 {
-		return true, nil
-	}
-	return false, nil
-}
-
-func (a *BaseAsset) PayloadSerialize() (s []byte, err error) {
-	s, err = proto.Marshal(a.PBSignedAsset.Asset)
-	if err != nil {
-		s = nil
-	}
-	return s, err
-}
-
-func (a *BaseAsset) Save() error {
+func (a *SignedAsset) Save() error {
 	store := a.store
-	msg := a.PBSignedAsset
-	data, err := proto.Marshal(&msg)
+	//msg := a.PBSignedAsset
+	data, err := proto.Marshal(a)
 	if err != nil {
 		return err
 	}
-	store.Save(a.key, data)
+	store.Save(a.Key(), data)
 	return nil
 }
 
@@ -99,23 +55,25 @@ func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 }
 
 //For testing only
-func (a *BaseAsset) SetTestKey() (err error) {
-	data, err := a.PayloadSerialize()
+func (a *SignedAsset) SetTestKey() (err error) {
+	data, err := a.SerializePayload()
 	if err != nil {
 		return err
 	}
 	res := sha256.Sum256(data)
-	a.key = res[:]
+	a.SetKey(res[:])
 	return nil
 }
 
-func (a *BaseAsset) Description() {
-	print("Asset Description")
+//Pretty print the Asset for debugging
+func (a *SignedAsset) Dump() {
+	pp, _ := prettyjson.Marshal(a)
+	fmt.Printf("%v", string(pp))
 }
 
 //Add a new Transfer/Update rule
 //Specify the boolean expression & add list of participants
-func (a *BaseAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte) error {
+func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte) error {
 	transferRule := &protobuffer.PBTransfer{}
 	transferRule.Type = transferType
 	transferRule.Expression = expression
@@ -134,14 +92,8 @@ func (a *BaseAsset) AddTransfer(transferType protobuffer.PBTransferType, express
 	return nil
 }
 
-//Pretty print the Asset for debugging
-func (a *BaseAsset) Dump() {
-	pp, _ := prettyjson.Marshal(a.Signature)
-	fmt.Printf("%v", string(pp))
-}
-
 //Given a list of signature build a sig map
-func (a *BaseAsset) IsValidTransfer(transferType protobuffer.PBTransferType, transferSignatures []SignatureID) (bool, error) {
+func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, transferSignatures []SignatureID) (bool, error) {
 	transferListMapString := transferType.String()
 	previousAsset := a.previousAsset
 	if previousAsset == nil {
@@ -167,7 +119,7 @@ func ResolveExpression(expression string, participants map[string][]byte, transf
 		found := false
 		//Loop throught all the gathered signatures
 		for _, sigID := range transferSignatures {
-			res := bytes.Compare(sigID.IDDoc.key, id)
+			res := bytes.Compare(sigID.IDDoc.Key(), id)
 			if res == 0 && sigID.Signature != nil {
 				//Where we have a signature for a given IDDoc, replace it with a 1
 				expressionOut = strings.ReplaceAll(expressionOut, abbreviation, "1")
@@ -184,7 +136,7 @@ func ResolveExpression(expression string, participants map[string][]byte, transf
 	return expressionOut, display
 }
 
-func (a *BaseAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
+func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
 	transferListMapString := transferType.String()
 	transfer := a.Asset.Transferlist[transferListMapString]
 	if transfer == nil {
@@ -238,4 +190,54 @@ func (a *BaseAsset) TruthTable(transferType protobuffer.PBTransferType) ([]strin
 	}
 	sort.Strings(matchedTrue)
 	return matchedTrue, nil
+}
+
+//Payload
+
+func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
+	data, err := a.SerializePayload()
+	if err != nil {
+		return nil, errors.New("Failed to serialize payload")
+	}
+	if i.seed == nil {
+		return nil, errors.New("No Seed in Supplied IDDoc")
+	}
+	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
+	if err != nil {
+		return nil, err
+	}
+	rc, signature := crypto.BLSSign(data, blsSK)
+	if rc != 0 {
+		return nil, errors.New("Failed to sign IDDoc")
+	}
+	return signature, nil
+}
+
+func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err error) {
+	//Message
+	data, err := a.SerializePayload()
+	if err != nil {
+		return false, errors.New("Failed to serialize payload")
+	}
+	//Public Key
+	payload := i.AssetPayload()
+	blsPK := payload.GetBLSPublicKey()
+
+	rc := crypto.BLSVerify(data, blsPK, signature)
+	if rc == 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (a *SignedAsset) SerializePayload() (s []byte, err error) {
+	s, err = proto.Marshal(a.PBSignedAsset.Asset)
+	if err != nil {
+		s = nil
+	}
+	return s, err
+}
+
+func (a *SignedAsset) Description() {
+	print("Asset Description")
 }

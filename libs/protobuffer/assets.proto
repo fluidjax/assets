@@ -15,7 +15,7 @@ message PBAsset {
 	PBAssetType Type  = 1;            //Type of Asset
 	bytes ID        = 2;                       //unique ID of asset
 	bytes Owner     = 3;                    //IDDoc of owner            
-    oneof AssetDefinition {          //Definiton of the asset
+    oneof Payload {          //Definiton of the asset
         PBWallet Wallet = 4;
         PBTrusteeGroup TrusteeGroup = 5;
         PBIDDoc Iddoc = 6;
@@ -35,7 +35,7 @@ enum PBTransferType {
     settlePush          = 1;
     settlePull          = 2;
     transferPush        = 3;
-    transferPull         = 4;
+    transferPull        = 4;
     swap                = 5;
     load                = 6;
 }

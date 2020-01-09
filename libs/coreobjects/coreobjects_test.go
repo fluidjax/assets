@@ -46,7 +46,7 @@ func Test_Save_Load(t *testing.T) {
 	i.SetTestKey()
 	i.Sign()
 	i.store = NewMapstore()
-	key := i.key
+	key := i.Key()
 	i.Save()
 	retrieved, err := Load(i.store, key)
 	assert.Nil(t, err, "Error should be nil")
@@ -76,7 +76,7 @@ func Test_Wallet(t *testing.T) {
 	assert.True(t, res, "Verify should be true")
 	w.Save()
 
-	retrieved, err := Load(i.store, w.key)
+	retrieved, err := Load(i.store, w.Key())
 	retrievedWallet := retrieved.Asset.GetWallet()
 
 	assert.Equal(t, testDescription, retrievedWallet.Description, "Load/Save failed")
@@ -92,10 +92,10 @@ func Test_RuleAdd(t *testing.T) {
 
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
-		"p":  idP.key,
-		"t1": idT1.key,
-		"t2": idT2.key,
-		"t3": idT3.key,
+		"p":  idP.Key(),
+		"t1": idT1.Key(),
+		"t2": idT2.Key(),
+		"t3": idT3.Key(),
 	}
 
 	w1, _ := NewWallet(idP)
@@ -132,16 +132,6 @@ func Test_RuleAdd(t *testing.T) {
 	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.True(t, validTransfer1, "Transfer should be valid")
 
-	//Pass too many correct
-	transferSignatures1 = []SignatureID{
-		SignatureID{IDDoc: idP, Signature: sigP},
-		SignatureID{IDDoc: idT1, Signature: sigT1},
-		SignatureID{IDDoc: idT2, Signature: sigT2},
-		SignatureID{IDDoc: idT3, Signature: sigT3},
-	}
-	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
-	assert.True(t, validTransfer1, "Transfer should be valid")
-
 	//Fail not enough threshold
 	transferSignatures1 = []SignatureID{
 		SignatureID{IDDoc: idP, Signature: sigP},
@@ -161,6 +151,23 @@ func Test_RuleAdd(t *testing.T) {
 	}
 	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid")
+
+	//Pass too many correct
+	transferSignatures1 = []SignatureID{
+		SignatureID{IDDoc: idP, Signature: sigP},
+		SignatureID{IDDoc: idT1, Signature: sigT1},
+		SignatureID{IDDoc: idT2, Signature: sigT2},
+		SignatureID{IDDoc: idT3, Signature: sigT3},
+	}
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	assert.True(t, validTransfer1, "Transfer should be valid")
+
+
+	//Build signature
+	
+
+
+
 }
 
 func Test_TruthTable(t *testing.T) {
@@ -185,10 +192,10 @@ func Test_TruthTable(t *testing.T) {
 
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
-		"p":  idP.key,
-		"t1": idT1.key,
-		"t2": idT2.key,
-		"t3": idT3.key,
+		"p":  idP.Key(),
+		"t1": idT1.Key(),
+		"t2": idT2.Key(),
+		"t3": idT3.Key(),
 	}
 
 	w1, _ := NewWallet(idP)

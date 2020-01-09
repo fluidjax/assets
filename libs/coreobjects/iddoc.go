@@ -8,14 +8,10 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-type IDDoc struct {
-	BaseAsset
-}
-
 //AuthenticatorInterface Implementations
 func (i *IDDoc) PayloadSerialize() (s []byte, err error) {
 	//Use Asset parent method
-	return i.BaseAsset.PayloadSerialize()
+	return i.SerializePayload()
 
 }
 
@@ -53,7 +49,7 @@ func (i *IDDoc) Verify() (bool, error) {
 }
 
 func (i *IDDoc) Sign() (err error) {
-	data, err := i.PayloadSerialize()
+	data, err := i.SerializePayload()
 	if err != nil {
 		return err
 	}
@@ -72,7 +68,7 @@ func (i *IDDoc) Sign() (err error) {
 	}
 
 	i.PBSignedAsset.Signature = signature
-	i.PBSignedAsset.Signers = append(i.PBSignedAsset.Signers, i.key)
+	i.PBSignedAsset.Signers = append(i.PBSignedAsset.Signers, i.Key())
 	return nil
 }
 
@@ -115,9 +111,9 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 
 	//Compose
 	i.PBSignedAsset.Asset = asset
-	assetDefinition := &protobuffer.PBAsset_Iddoc{}
-	assetDefinition.Iddoc = iddoc
-	i.PBSignedAsset.Asset.AssetDefinition = assetDefinition
+	Payload := &protobuffer.PBAsset_Iddoc{}
+	Payload.Iddoc = iddoc
+	i.PBSignedAsset.Asset.Payload = Payload
 	i.SetTestKey()
 	return i, nil
 }
@@ -126,7 +122,8 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 //Seed can be manually set if known (ie. Is a local ID)
 func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err error) {
 	i = &IDDoc{}
-	i.key = key
 	i.PBSignedAsset = *sig
+	i.SetKey(key)
+
 	return i, nil
 }
