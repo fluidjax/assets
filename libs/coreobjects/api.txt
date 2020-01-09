@@ -1,0 +1,15 @@
+Expose:
+
+
+
+    IDDoc/Wallet/TrusteeGroup = [asset]
+    Wallet/TrusteeGroup = [updateableAsset]
+     
+
+    [asset].Payload              - retrieve the Payload object 
+    [asset].Verify               - Verify the signed Assset
+    [asset].Sign                 - Sign asset
+    
+    New[asset]                  - create a new Object, pre-populate essential items
+    ReBuild[asset]              - Recreate a New[asset] based on a SignedAssett from the Store
+    NewUpdate[updateableAsset]  - Recreate a New[asset], based on and pointing too a previous Asset.

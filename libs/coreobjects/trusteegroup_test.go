@@ -17,12 +17,12 @@ func Test_TrusteeGroup(t *testing.T) {
 	i.Save()
 
 	w, err := NewTrusteeGroup(i)
-	trusteegroupContents := w.TrusteeGroupPayload()
+	trusteegroupContents := w.Payload()
 	trusteegroupContents.Description = testDescription
 	w.AssetKeyFromPayloadHash()
-	w.TrusteeGroupSign(i)
+	w.Sign(i)
 	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
-	res, err := w.TrusteeGroupVerify(i)
+	res, err := w.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
 	w.Save()

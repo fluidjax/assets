@@ -9,7 +9,7 @@ import (
 )
 
 //WalletPayload - return the wallet Payload object
-func (w *Wallet) WalletPayload() *protobuffer.PBWallet {
+func (w *Wallet) Payload() *protobuffer.PBWallet {
 	signatureAsset := w.PBSignedAsset.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet
@@ -31,7 +31,7 @@ func (w *Wallet) Verify(i *IDDoc) (bool, error) {
 		return false, err
 	}
 	//Public Key
-	payload := i.IDDocPayload()
+	payload := i.Payload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)

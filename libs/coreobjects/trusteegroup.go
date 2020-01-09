@@ -9,14 +9,14 @@ import (
 )
 
 //TrusteeGroupPayload - return the trusteeGroup Payload object
-func (w *TrusteeGroup) TrusteeGroupPayload() *protobuffer.PBTrusteeGroup {
+func (w *TrusteeGroup) Payload() *protobuffer.PBTrusteeGroup {
 	signatureAsset := w.PBSignedAsset.Asset
 	trusteeGroup := signatureAsset.GetTrusteeGroup()
 	return trusteeGroup
 }
 
 //Verify - Verify a TrusteeGroup signature with supplied ID
-func (w *TrusteeGroup) TrusteeGroupVerify(i *IDDoc) (bool, error) {
+func (w *TrusteeGroup) Verify(i *IDDoc) (bool, error) {
 	//Signature
 	signature := w.PBSignedAsset.Signature
 	if signature == nil {
@@ -31,7 +31,7 @@ func (w *TrusteeGroup) TrusteeGroupVerify(i *IDDoc) (bool, error) {
 		return false, err
 	}
 	//Public Key
-	payload := i.IDDocPayload()
+	payload := i.Payload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)
@@ -42,7 +42,7 @@ func (w *TrusteeGroup) TrusteeGroupVerify(i *IDDoc) (bool, error) {
 }
 
 //Sign a trusteeGroup with the supplied IDDoc - who must be decalred as the trusteeGroup owner
-func (w *TrusteeGroup) TrusteeGroupSign(i *IDDoc) (err error) {
+func (w *TrusteeGroup) Sign(i *IDDoc) (err error) {
 	trusteeGroupOwner := w.Asset.GetOwner()
 	signer := i.Key()
 

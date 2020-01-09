@@ -17,7 +17,7 @@ func Test_Wallet(t *testing.T) {
 	i.Save()
 
 	w, err := NewWallet(i)
-	walletContents := w.WalletPayload()
+	walletContents := w.Payload()
 	walletContents.Description = testDescription
 	w.AssetKeyFromPayloadHash()
 	w.Sign(i)

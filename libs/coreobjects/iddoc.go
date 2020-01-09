@@ -8,7 +8,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-func (i *IDDoc) IDDocPayload() *protobuffer.PBIDDoc {
+func (i *IDDoc) Payload() *protobuffer.PBIDDoc {
 	return i.PBSignedAsset.Asset.GetIddoc()
 }
 
@@ -38,7 +38,7 @@ func (i *IDDoc) Verify() (bool, error) {
 	}
 
 	//Public Key
-	payload := i.IDDocPayload()
+	payload := i.Payload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)

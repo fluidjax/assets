@@ -100,7 +100,7 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	a.PBSignedAsset.Asset.Transferlist[transferListMapString] = transferRule
 	return nil
 }
- 
+
 /* IsValidTransfer
 Calculates if the boolean expression in the asset has been satisfied by the supplied signatures
 transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
@@ -249,7 +249,7 @@ func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, er
 		return false, errors.New("Failed to serialize payload")
 	}
 	//Public Key
-	payload := i.IDDocPayload()
+	payload := i.Payload()
 	blsPK := payload.GetBLSPublicKey()
 
 	rc := crypto.BLSVerify(data, blsPK, signature)
