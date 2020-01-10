@@ -3,6 +3,7 @@ package assets
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -255,6 +256,8 @@ func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
 	if rc != 0 {
 		return nil, errors.New("Failed to sign IDDoc")
 	}
+	fmt.Println("Sig:Dat", hex.EncodeToString(data))
+
 	return signature, nil
 }
 
@@ -356,11 +359,9 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 			} else {
 				_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
 			}
-
 			sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
 			transferSignatures = append(transferSignatures, sigID)
 		}
-
 	}
 	return transferSignatures, aggregatedPublicKey, nil
 }

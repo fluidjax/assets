@@ -163,9 +163,6 @@ func Test_Recusion_TrusteeGroupAggregationAndVerify(t *testing.T) {
 	store := NewMapstore()
 	idP, _, idT2, idT3 := SetupIDDocs(store)
 	idX1, idX2, _, trusteeGroup := SetupTrusteeGroup(store)
-
-	fmt.Println("TrusteeGroup:", trusteeGroup.Key())
-
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "tg1 + t2 + t3 > 1"

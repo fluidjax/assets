@@ -2,6 +2,8 @@ package assets
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/crypto"
@@ -17,6 +19,7 @@ func (w *TrusteeGroup) Payload() *protobuffer.PBTrusteeGroup {
 
 //Verify - Verify a TrusteeGroup signature with supplied ID
 func (w *TrusteeGroup) Verify(i *IDDoc) (bool, error) {
+	
 	//Signature
 	signature := w.PBSignedAsset.Signature
 	if signature == nil {
@@ -33,6 +36,8 @@ func (w *TrusteeGroup) Verify(i *IDDoc) (bool, error) {
 	//Public Key
 	payload := i.Payload()
 	blsPK := payload.GetBLSPublicKey()
+
+	fmt.Println("Ver:Dat", hex.EncodeToString(data))
 
 	rc := crypto.BLSVerify(data, blsPK, signature)
 	if rc == 0 {
@@ -52,6 +57,7 @@ func (w *TrusteeGroup) Sign(i *IDDoc) (err error) {
 	}
 
 	signature, err := w.SignPayload(i)
+
 	if err != nil {
 		return err
 	}

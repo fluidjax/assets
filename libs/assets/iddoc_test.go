@@ -13,7 +13,6 @@ func Test_IDDoc(t *testing.T) {
 	res, err := i.Verify()
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
-	i.Dump()
 }
 
 func Test_Serialize_IDDoc(t *testing.T) {
