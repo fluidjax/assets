@@ -39,12 +39,14 @@ enum PBTransferType {
     transferPull        = 4;
     swap                = 5;
     load                = 6;
+    TrusteeGroupDefinition = 7;
 }
 
 message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
-    PBTransferType Type               = 1;	
+    PBTransferType Type             = 1;	
     string Expression               = 2;              //Boolean expression eg. (SigTrustee1 + SigTrustee2 + SigTrustee3) >=2 & Owner   
     map<string, bytes> Participants = 3;
+    string Description              = 4; 
 }
 
 //Asset Definitons
@@ -59,9 +61,7 @@ message PBWallet {
 
 
 message PBTrusteeGroup {
-    repeated bytes TrusteeID    = 1; //List of Trustee DocIDs
-    int64 threshold             = 2; //Threshold required
-    string Description          = 3;
+    PBTransfer TrusteeGroup   = 1; 
 }
 
 message PBIDDoc {

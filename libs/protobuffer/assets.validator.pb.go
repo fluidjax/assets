@@ -56,6 +56,11 @@ func (this *PBWallet) Validate() error {
 	return nil
 }
 func (this *PBTrusteeGroup) Validate() error {
+	if this.TrusteeGroup != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TrusteeGroup); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TrusteeGroup", err)
+		}
+	}
 	return nil
 }
 func (this *PBIDDoc) Validate() error {

@@ -90,6 +90,29 @@ func NewUpdateTrusteeGroup(previousTrusteeGroup *TrusteeGroup, iddoc *IDDoc) (w 
 	return w, nil
 }
 
+func (w *TrusteeGroup) ConfigureTrusteeGroup(expression string, participants *map[string][]byte) error {
+	transferRule := &protobuffer.PBTransfer{}
+	transferRule.Expression = expression
+	transferRule.Type = protobuffer.PBTransferType_TrusteeGroupDefinition
+	if transferRule.Participants == nil {
+		transferRule.Participants = make(map[string][]byte)
+	}
+	for abbreviation, iddocID := range *participants {
+		transferRule.Participants[abbreviation] = iddocID
+	}
+	//Cant use enum as map key, so convert to a string
+
+	pbtrusteeGroup := &protobuffer.PBTrusteeGroup{}
+	pbtrusteeGroup.TrusteeGroup = transferRule
+
+	payload := &protobuffer.PBAsset_TrusteeGroup{}
+	payload.TrusteeGroup = pbtrusteeGroup
+	w.PBSignedAsset.Asset.Payload = payload
+
+	return nil
+
+}
+
 //ReBuildTrusteeGroup an existing TrusteeGroup from it's on chain PBSignedAsset
 func ReBuildTrusteeGroup(sig *protobuffer.PBSignedAsset) (w *TrusteeGroup, err error) {
 	w = &TrusteeGroup{}

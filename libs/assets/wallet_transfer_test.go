@@ -15,7 +15,8 @@ var (
 )
 
 func Test_TruthTable(t *testing.T) {
-	idP, idT1, idT2, idT3 := SetupIDDocs()
+	store := NewMapstore()
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
 		"p":  idP.Key(),
@@ -36,9 +37,7 @@ func Test_TruthTable(t *testing.T) {
 
 }
 
-func SetupIDDocs() (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
-	store := NewMapstore()
-
+func SetupIDDocs(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 	idP, _ := NewIDDoc("Primary")
 	idP.store = store
 	idP.Save()
@@ -59,7 +58,8 @@ func SetupIDDocs() (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 }
 
 func Test_RuleAdd(t *testing.T) {
-	idP, idT1, idT2, idT3 := SetupIDDocs()
+	store := NewMapstore()
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "t1 + t2 + t3 > 1 & p"
@@ -131,7 +131,8 @@ func Test_RuleAdd(t *testing.T) {
 }
 
 func Test_AggregationAndVerify(t *testing.T) {
-	idP, idT1, idT2, idT3 := SetupIDDocs()
+	store := NewMapstore()
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
@@ -185,7 +186,8 @@ func Test_AggregationAndVerify(t *testing.T) {
 }
 
 func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
-	idP, idT1, idT2, idT3 := SetupIDDocs()
+	store := NewMapstore()
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 
 	idNewOwner, _ := NewIDDoc("NewOwner")
 

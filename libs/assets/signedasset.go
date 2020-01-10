@@ -33,13 +33,13 @@ func (a *SignedAsset) Save() error {
 	if err != nil {
 		return err
 	}
-	store.Save(a.Key(), data)
+	store.save(a.Key(), data)
 	return nil
 }
 
 //Load - read a SignedAsset from the store
 func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
-	val, err := store.Load(key)
+	val, err := store.load(key)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,10 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, errors.New("No Transfer Found")
 	}
 	expression := transfer.Expression
-	expression, _ = resolveExpression(expression, transfer.Participants, transferSignatures)
+	expression, _, err := resolveExpression(a.store, expression, transfer.Participants, transferSignatures, "")
+	if err != nil {
+		return false, err
+	}
 	result := boolparser.BoolSolve(expression)
 	return result, nil
 }
@@ -110,30 +113,60 @@ Resolve the asset's expression by substituting 0's & 1's depending on whether si
 expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
 participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
+recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 trusteeGroup
 */
-func resolveExpression(expression string, participants map[string][]byte, transferSignatures []SignatureID) (expressionOut string, display string) {
+func resolveExpression(store *Mapstore, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	expressionOut = expression
 	display = expression
 	//Loop all the participants from previous Asset
 	for abbreviation, id := range participants {
 		found := false
-		//Loop throught all the gathered signatures
-		for _, sigID := range transferSignatures {
-			res := bytes.Compare(sigID.IDDoc.Key(), id)
-			if res == 0 && sigID.Signature != nil {
-				//Where we have a signature for a given IDDoc, replace it with a 1
-				expressionOut = strings.ReplaceAll(expressionOut, abbreviation, "1")
-				found = true
-				break
+
+		participant, err := Load(store, id)
+		if err != nil {
+			return "", "", errors.New("Fail to retrieve participant")
+		}
+
+		switch participant.GetAsset().GetPayload().(type) {
+		case *protobuffer.PBAsset_TrusteeGroup:
+			//Recurse into the Group here
+
+			trusteeGroup, err := ReBuildTrusteeGroup(participant)
+			if err != nil {
+				return "", "", errors.Wrap(err, "Failed to Rebuild Trustee Group in resolve Expression")
+			}
+			recursionExpression := trusteeGroup.Payload().GetTrusteeGroup().Expression
+			recursionParticipants := trusteeGroup.Payload().GetTrusteeGroup().Participants
+
+			recursionPrefix := prefix + abbreviation + "."
+			subExpression, subDisplay, err := resolveExpression(store, recursionExpression, recursionParticipants, transferSignatures, recursionPrefix)
+			if err != nil {
+				return "", "", errors.Wrap(err, "Failed to Resolve Recursive Expression")
+			}
+
+			expressionOut = strings.ReplaceAll(expressionOut, abbreviation, " ( "+subExpression+" ) ")
+			display = strings.ReplaceAll(display, abbreviation, " ( "+subDisplay+" ) ")
+
+		case *protobuffer.PBAsset_Iddoc:
+			//Loop throught all the gathered signatures
+			for _, sigID := range transferSignatures {
+				res := bytes.Compare(sigID.IDDoc.Key(), id)
+				if res == 0 && sigID.Signature != nil {
+					//Where we have a signature for a given IDDoc, replace it with a 1
+					expressionOut = strings.ReplaceAll(expressionOut, abbreviation, "1")
+					found = true
+					break
+				}
+			}
+			if found == false {
+				//Where we do not have signature for a given IDDoc, replace it with a 0
+				display = strings.ReplaceAll(display, abbreviation, "0")
+				expressionOut = strings.ReplaceAll(expressionOut, abbreviation, "0")
 			}
 		}
-		if found == false {
-			//Where we do not have signature for a given IDDoc, replace it with a 0
-			display = strings.ReplaceAll(display, abbreviation, "0")
-			expressionOut = strings.ReplaceAll(expressionOut, abbreviation, "0")
-		}
+
 	}
-	return expressionOut, display
+	return expressionOut, display, nil
 }
 
 /*
@@ -187,7 +220,11 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
 			}
 		}
-		resolvedExpression, display := resolveExpression(expression, transfer.Participants, transferSignatures)
+		resolvedExpression, display, err := resolveExpression(a.store, expression, transfer.Participants, transferSignatures, "")
+		if err != nil {
+			return nil, err
+		}
+
 		result := boolparser.BoolSolve(resolvedExpression)
 		if result == true {
 			matchedTrue = append(matchedTrue, display)
@@ -293,6 +330,39 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	return nil
 }
 
+//Aggregated the signatures and public keys for all Participants
+func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
+	//For each supplied signer re-build a PublicKey
+	for _, abbreviation := range signers {
+		participantID := currentTransfer.Participants[abbreviation]
+		signedAsset, err := Load(store, participantID)
+		if err != nil {
+			return nil, nil, errors.New("Failed to retieve IDDoc")
+		}
+
+		switch signedAsset.GetAsset().GetPayload().(type) {
+		case *protobuffer.PBAsset_TrusteeGroup:
+			print("recurse")
+		case *protobuffer.PBAsset_Iddoc:
+			iddoc, err := ReBuildIDDoc(signedAsset, participantID)
+			if err != nil {
+				return nil, nil, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
+			}
+			pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
+			if aggregatedPublicKey == nil {
+				aggregatedPublicKey = pubKey
+			} else {
+				_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+			}
+
+			sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
+			transferSignatures = append(transferSignatures, sigID)
+		}
+
+	}
+	return transferSignatures, aggregatedPublicKey, nil
+}
+
 /*
 FullVerify
 Based on the previous Asset state, retrieve the IDDocs of all signers.
@@ -314,24 +384,39 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	_ = transferList
 	currentTransfer := transferList[transferType.String()]
 
-	//For each supplied signer re-build a PublicKey
-	for _, abbreviation := range a.Signers {
-		participantIDDocID := currentTransfer.Participants[abbreviation]
-		signedAsset, err := Load(a.store, participantIDDocID)
-		if err != nil {
-			return false, errors.New("Failed to retieve IDDoc")
-		}
-		iddoc, err := ReBuildIDDoc(signedAsset, participantIDDocID)
-		pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
-		if aggregatedPublicKey == nil {
-			aggregatedPublicKey = pubKey
-		} else {
-			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
-		}
-
-		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
-		transferSignatures = append(transferSignatures, sigID)
+	transferSignatures, aggregatedPublicKey, err := buildSigKeys(a.store, a.Signers, currentTransfer, aggregatedPublicKey, transferSignatures)
+	if err != nil {
+		return false, errors.Wrap(err, "Failed to Aggregated Signs in FullVerify")
 	}
+
+	// //For each supplied signer re-build a PublicKey
+	// for _, abbreviation := range a.Signers {
+	// 	participantID := currentTransfer.Participants[abbreviation]
+	// 	signedAsset, err := Load(a.store, participantID)
+	// 	if err != nil {
+	// 		return false, errors.New("Failed to retieve IDDoc")
+	// 	}
+
+	// 	switch signedAsset.GetAsset().GetPayload().(type) {
+	// 	case *protobuffer.PBAsset_TrusteeGroup:
+
+	// 	case *protobuffer.PBAsset_Iddoc:
+	// 		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
+	// 		if err != nil {
+	// 			return false, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
+	// 		}
+	// 		pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
+	// 		if aggregatedPublicKey == nil {
+	// 			aggregatedPublicKey = pubKey
+	// 		} else {
+	// 			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+	// 		}
+
+	// 		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
+	// 		transferSignatures = append(transferSignatures, sigID)
+	// 	}
+
+	// }
 
 	//check the one in the object matches the one just created
 	//Todo: We could probably remove the one in the object?

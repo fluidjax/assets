@@ -7,6 +7,11 @@ import (
 )
 
 func Test_TrusteeGroup(t *testing.T) {
+	store := NewMapstore()
+	idInitiator, idT1, idT2, idT3 := SetupIDDocs(store)
+
+	_ = idInitiator
+
 	testName := "ABC!23"
 	testDescription := "ZXC#@!"
 	i, err := NewIDDoc(testName)
@@ -16,8 +21,17 @@ func Test_TrusteeGroup(t *testing.T) {
 	i.Save()
 
 	w, err := NewTrusteeGroup(i)
-	trusteegroupContents := w.Payload()
-	trusteegroupContents.Description = testDescription
+
+	expression := "t1 + t2 + t3 > 1 "
+	participants := &map[string][]byte{
+		"t1": idT1.Key(),
+		"t2": idT2.Key(),
+		"t3": idT3.Key(),
+	}
+
+	w.ConfigureTrusteeGroup(expression, participants)
+
+	//	trusteegroupContentsi.Description = testDescription
 	w.Sign(i)
 	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
@@ -28,5 +42,5 @@ func Test_TrusteeGroup(t *testing.T) {
 	retrieved, err := Load(i.store, w.Key())
 	retrievedTrusteeGroup := retrieved.Asset.GetTrusteeGroup()
 
-	assert.Equal(t, testDescription, retrievedTrusteeGroup.Description, "Load/Save failed")
+	assert.Equal(t, testDescription, retrievedTrusteeGroup.TrusteeGroup.Description, "Load/Save failed")
 }
