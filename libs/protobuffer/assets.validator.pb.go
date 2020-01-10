@@ -16,6 +16,7 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *PBSignedAsset) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
 	if this.Asset != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Asset); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Asset", err)

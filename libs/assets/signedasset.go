@@ -293,12 +293,14 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	var aggregatedSig []byte
 	rc := 0
 	var aggregatedPublicKey []byte
-	var signers []string
+	signers := make(map[string][]byte)
+
 	for i := 0; i < len(transferSignatures); i++ {
 		sig := transferSignatures[i].Signature
 		pubKey := transferSignatures[i].IDDoc.GetAsset().GetIddoc().GetBLSPublicKey()
+		idkey := transferSignatures[i].IDDoc.Key()
 		abbreviation := transferSignatures[i].Abbreviation
-		signers = append(signers, abbreviation)
+		signers[abbreviation] = idkey
 		if sig == nil || pubKey == nil {
 			continue
 		}
@@ -382,41 +384,37 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	}
 	transferList := previousAsset.GetAsset().GetTransferlist()
 	_ = transferList
-	currentTransfer := transferList[transferType.String()]
+	//currentTransfer := transferList[transferType.String()]
 
-	transferSignatures, aggregatedPublicKey, err := buildSigKeys(a.store, a.Signers, currentTransfer, aggregatedPublicKey, transferSignatures)
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to Aggregated Signs in FullVerify")
-	}
-
-	// //For each supplied signer re-build a PublicKey
-	// for _, abbreviation := range a.Signers {
-	// 	participantID := currentTransfer.Participants[abbreviation]
-	// 	signedAsset, err := Load(a.store, participantID)
-	// 	if err != nil {
-	// 		return false, errors.New("Failed to retieve IDDoc")
-	// 	}
-
-	// 	switch signedAsset.GetAsset().GetPayload().(type) {
-	// 	case *protobuffer.PBAsset_TrusteeGroup:
-
-	// 	case *protobuffer.PBAsset_Iddoc:
-	// 		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
-	// 		if err != nil {
-	// 			return false, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
-	// 		}
-	// 		pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
-	// 		if aggregatedPublicKey == nil {
-	// 			aggregatedPublicKey = pubKey
-	// 		} else {
-	// 			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
-	// 		}
-
-	// 		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
-	// 		transferSignatures = append(transferSignatures, sigID)
-	// 	}
-
+	// transferSignatures, aggregatedPublicKey, err := buildSigKeys(a.store, a.Signers, currentTransfer, aggregatedPublicKey, transferSignatures)
+	// if err != nil {
+	// 	return false, errors.Wrap(err, "Failed to Aggregated Signs in FullVerify")
 	// }
+
+	//Get all Signers and their IDDocs
+
+	//For each supplied signer re-build a PublicKey
+	for abbreviation, participantID := range a.Signers {
+		signedAsset, err := Load(a.store, participantID)
+		if err != nil {
+			return false, errors.New("Failed to retieve IDDoc")
+		}
+
+		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
+		if err != nil {
+			return false, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
+		}
+		pubKey := iddoc.GetAsset().GetIddoc().GetBLSPublicKey()
+		if aggregatedPublicKey == nil {
+			aggregatedPublicKey = pubKey
+		} else {
+			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+		}
+
+		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
+		transferSignatures = append(transferSignatures, sigID)
+
+	}
 
 	//check the one in the object matches the one just created
 	//Todo: We could probably remove the one in the object?

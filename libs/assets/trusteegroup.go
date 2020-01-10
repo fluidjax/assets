@@ -56,7 +56,7 @@ func (w *TrusteeGroup) Sign(i *IDDoc) (err error) {
 		return err
 	}
 	w.PBSignedAsset.Signature = signature
-	w.PBSignedAsset.Signers = append(w.PBSignedAsset.Signers, "self")
+	w.PBSignedAsset.Signers["self"] = i.Key()
 	return nil
 }
 

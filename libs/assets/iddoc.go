@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"bytes"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/cryptowallet"
@@ -18,7 +19,9 @@ func (i *IDDoc) Verify() (bool, error) {
 	if len(i.Signers) != 1 {
 		return false, errors.New("Signer not specified")
 	}
-	if i.Signers[0] != "self" {
+
+	res := bytes.Compare(i.Signers["self"], i.Key())
+	if res != 0 {
 		return false, errors.New("IDDocs can only be self signed")
 	}
 
@@ -70,7 +73,7 @@ func (i *IDDoc) Sign() (err error) {
 	}
 
 	i.PBSignedAsset.Signature = signature
-	i.PBSignedAsset.Signers = append(i.PBSignedAsset.Signers, "self")
+	i.PBSignedAsset.Signers["self"] = i.Key()
 	return nil
 }
 

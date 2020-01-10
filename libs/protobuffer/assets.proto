@@ -6,10 +6,11 @@ package protobuffer;
 
 
 message PBSignedAsset{
-    bytes Signature         = 1;
-    bytes PublicKey         = 2;
-    repeated string Signers  = 3;
-    PBAsset Asset           = 4;
+    bytes Signature            = 1;
+    bytes PublicKey            = 2;
+    map<string, bytes> Signers = 3;
+    //repeated string Signers    = 3;
+    PBAsset Asset              = 4;
 }
 
 message PBAsset {
