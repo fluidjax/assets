@@ -56,6 +56,9 @@ func (w *Wallet) Sign(i *IDDoc) (err error) {
 		return err
 	}
 	w.PBSignedAsset.Signature = signature
+	if w.PBSignedAsset.Signers == nil {
+		w.PBSignedAsset.Signers = make(map[string][]byte)
+	}
 	w.PBSignedAsset.Signers["self"] = i.Key()
 	return nil
 }

@@ -17,7 +17,7 @@ func Test_TrusteeGroup(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign()
-	i.store = NewMapstore()
+	i.store = store
 	i.Save()
 
 	w, err := NewTrusteeGroup(i)
@@ -29,7 +29,7 @@ func Test_TrusteeGroup(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	w.ConfigureTrusteeGroup(expression, participants)
+	w.ConfigureTrusteeGroup(expression, participants, testDescription)
 
 	//	trusteegroupContentsi.Description = testDescription
 	w.Sign(i)

@@ -56,6 +56,9 @@ func (w *TrusteeGroup) Sign(i *IDDoc) (err error) {
 		return err
 	}
 	w.PBSignedAsset.Signature = signature
+	if w.PBSignedAsset.Signers == nil {
+		w.PBSignedAsset.Signers = make(map[string][]byte)
+	}
 	w.PBSignedAsset.Signers["self"] = i.Key()
 	return nil
 }
@@ -90,9 +93,10 @@ func NewUpdateTrusteeGroup(previousTrusteeGroup *TrusteeGroup, iddoc *IDDoc) (w 
 	return w, nil
 }
 
-func (w *TrusteeGroup) ConfigureTrusteeGroup(expression string, participants *map[string][]byte) error {
+func (w *TrusteeGroup) ConfigureTrusteeGroup(expression string, participants *map[string][]byte, description string) error {
 	transferRule := &protobuffer.PBTransfer{}
 	transferRule.Expression = expression
+	transferRule.Description = description
 	transferRule.Type = protobuffer.PBTransferType_TrusteeGroupDefinition
 	if transferRule.Participants == nil {
 		transferRule.Participants = make(map[string][]byte)

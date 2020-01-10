@@ -100,7 +100,7 @@ func SetupTrusteeGroup(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *TrusteeGroup) 
 		"x2": tgT2.Key(),
 		"x3": tgT3.Key(),
 	}
-	w.ConfigureTrusteeGroup(expression, participants)
+	w.ConfigureTrusteeGroup(expression, participants, "Trsutee Group Test Description")
 	w.store = store
 	w.Save()
 

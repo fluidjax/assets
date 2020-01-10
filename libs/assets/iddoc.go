@@ -15,11 +15,9 @@ func (i *IDDoc) Payload() *protobuffer.PBIDDoc {
 
 //Verify - verify IDDoc with its own BLSPublicKey
 func (i *IDDoc) Verify() (bool, error) {
-
 	if len(i.Signers) != 1 {
 		return false, errors.New("Signer not specified")
 	}
-
 	res := bytes.Compare(i.Signers["self"], i.Key())
 	if res != 0 {
 		return false, errors.New("IDDocs can only be self signed")
@@ -73,6 +71,11 @@ func (i *IDDoc) Sign() (err error) {
 	}
 
 	i.PBSignedAsset.Signature = signature
+
+	if i.PBSignedAsset.Signers == nil {
+		i.PBSignedAsset.Signers = make(map[string][]byte)
+	}
+
 	i.PBSignedAsset.Signers["self"] = i.Key()
 	return nil
 }
@@ -129,6 +132,5 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 	i = &IDDoc{}
 	i.PBSignedAsset = *sig
 	i.setKey(key)
-
 	return i, nil
 }
