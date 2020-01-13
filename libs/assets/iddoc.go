@@ -7,8 +7,14 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-func (i *IDDoc) Payload() *protobuffer.PBIDDoc {
-	return i.PBSignedAsset.Asset.GetIddoc()
+func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
+	if i == nil {
+		return nil, errors.New("IDDoc is nil")
+	}
+	if i.PBSignedAsset.Asset == nil {
+		return nil, errors.New("IDDoc has no asset")
+	}
+	return i.PBSignedAsset.Asset.GetIddoc(), nil
 }
 
 //NewIDDoc create a new IDDoc
@@ -60,6 +66,12 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 //Rebuild an existing Signed IDDoc into IDDocDeclaration object
 //Seed can be manually set if known (ie. Is a local ID)
 func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err error) {
+	if sig == nil {
+		return nil, errors.New("ReBuildIDDoc  - sig is nil")
+	}
+	if key == nil {
+		return nil, errors.New("ReBuildIDDoc  - key is nil")
+	}
 	i = &IDDoc{}
 	i.PBSignedAsset = *sig
 	i.setKey(key)

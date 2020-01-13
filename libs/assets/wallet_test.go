@@ -14,20 +14,23 @@ func Test_Wallet(t *testing.T) {
 	i.Sign(i)
 	i.store = NewMapstore()
 	i.Save()
-
 	w, err := NewWallet(i)
-	walletContents := w.Payload()
+	walletContents, _ := w.Payload()
 	walletContents.Description = testDescription
-
 	w.Sign(i)
 	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
 	w.Save()
-
 	retrieved, err := Load(i.store, w.Key())
 	retrievedWallet := retrieved.Asset.GetWallet()
-
 	assert.Equal(t, testDescription, retrievedWallet.Description, "Load/Save failed")
+}
+
+func Test_Wallet_Empty(t *testing.T) {
+	w, err := NewWallet(nil)
+	assert.NotNil(t, err, "Error should not be nil")
+	_, err = w.Payload()
+	assert.NotNil(t, err, "Error should not be nil")
 }

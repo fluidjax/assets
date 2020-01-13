@@ -6,14 +6,23 @@ import (
 )
 
 //WalletPayload - return the wallet Payload object
-func (w *Wallet) Payload() *protobuffer.PBWallet {
+func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
+	if w == nil {
+		return nil, errors.New("Wallet is nil")
+	}
+	if w.PBSignedAsset.Asset == nil {
+		return nil, errors.New("Wallet has no asset")
+	}
 	signatureAsset := w.PBSignedAsset.Asset
 	wallet := signatureAsset.GetWallet()
-	return wallet
+	return wallet, nil
 }
 
 //NewWallet - Setup a new IDDoc
 func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
+	if iddoc == nil {
+		return nil, errors.New("Sign - supplied IDDoc is nil")
+	}
 	w = emptyWallet()
 	w.store = iddoc.store
 
@@ -42,9 +51,16 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 }
 
 //ReBuildWallet an existing Wallet from it's on chain PBSignedAsset
-func ReBuildWallet(sig *protobuffer.PBSignedAsset) (w *Wallet, err error) {
+func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err error) {
+	if sig == nil {
+		return nil, errors.New("ReBuildIDDoc  - sig is nil")
+	}
+	if key == nil {
+		return nil, errors.New("ReBuildIDDoc  - key is nil")
+	}
 	w = &Wallet{}
 	w.PBSignedAsset = *sig
+	w.setKey(key)
 	return w, nil
 }
 

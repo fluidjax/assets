@@ -28,7 +28,6 @@ func Test_GroupTruthTable(t *testing.T) {
 
 	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 ], [t1 + 0 + t3 > 1 ], [t1 + t2 + 0 > 1 ], [t1 + t2 + t3 > 1  ]\n", "Truth table invalid")
-
 }
 
 func Test_GroupRuleAdd(t *testing.T) {
@@ -213,7 +212,6 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	verify, err := t2.FullVerify(t2.previousAsset)
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
-
 }
 
 func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
@@ -351,5 +349,4 @@ func Test_GroupTransferParser(t *testing.T) {
 	verify, err := t2.FullVerify(t2.previousAsset)
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
-
 }

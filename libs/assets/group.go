@@ -9,6 +9,9 @@ import (
 
 //GroupPayload - return the Group Payload object
 func (w *Group) Payload() *protobuffer.PBGroup {
+	if w == nil {
+		return nil
+	}
 	signatureAsset := w.PBSignedAsset.Asset
 	Group := signatureAsset.GetGroup()
 	return Group
@@ -16,6 +19,9 @@ func (w *Group) Payload() *protobuffer.PBGroup {
 
 //NewGroup - Setup a new IDDoc
 func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err error) {
+	if iddoc == nil {
+		return nil, errors.New("NewGroup - supplied IDDoc is nil")
+	}
 	w = emptyGroup(groupType)
 	w.store = iddoc.store
 
@@ -33,6 +39,12 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 
 //NewUpdateGroup - Create a NewGroup for updates/transfers based on a previous one
 func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
+	if iddoc == nil {
+		return nil, errors.New("NewUpdateGroup - supplied IDDoc is nil")
+	}
+	if previousGroup == nil {
+		return nil, errors.New("NewUpdateGroup - supplied previousGroup is nil")
+	}
 
 	p := previousGroup.PBSignedAsset.Asset.GetGroup()
 	previousType := p.GetType()
@@ -49,6 +61,10 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 }
 
 func (w *Group) ConfigureGroup(expression string, participants *map[string][]byte, description string) error {
+	if w == nil {
+		return errors.New("ConfigureGroup - group is nil")
+	}
+
 	pbGroup := &protobuffer.PBGroup{}
 	if pbGroup.Participants == nil {
 		pbGroup.Participants = make(map[string][]byte)
@@ -99,8 +115,11 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 	Allows a GUI to easily display to the end user what changes they need to agree too.
 */
 func (w *Group) ParseChanges() (unchanged, added, deleted [][]byte, err error) {
+	if w == nil {
+		return nil, nil, nil, errors.New("ParseChanges - No Asset")
+	}
 	if w.previousAsset == nil {
-		return nil, nil, nil, errors.New("No previous Asset")
+		return nil, nil, nil, errors.New("ParseChanges - No previous Asset")
 	}
 
 	switch g := w.previousAsset.GetAsset().GetPayload().(type) {
@@ -139,19 +158,25 @@ func (w *Group) ParseChanges() (unchanged, added, deleted [][]byte, err error) {
 				added = append(added, cId)
 			}
 		}
-
 	default:
 		//invalid type
 		return nil, nil, nil, errors.New("Previous Asset is invalid")
 	}
 	return unchanged, added, deleted, nil
-
 }
 
 //ReBuildGroup an existing Group from it's on chain PBSignedAsset
-func ReBuildGroup(sig *protobuffer.PBSignedAsset) (w *Group, err error) {
+func ReBuildGroup(sig *protobuffer.PBSignedAsset, key []byte) (w *Group, err error) {
+	if sig == nil {
+		return nil, errors.New("ReBuildIDDoc  - sig is nil")
+	}
+	if key == nil {
+		return nil, errors.New("ReBuildIDDoc  - key is nil")
+	}
+
 	w = &Group{}
 	w.PBSignedAsset = *sig
+	w.setKey(key)
 	return w, nil
 }
 

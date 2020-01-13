@@ -6,6 +6,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_IDDoc_Misc(t *testing.T) {
+	i, err := NewIDDoc("")
+	assert.Nil(t, err, "Error should be nil")
+	err = i.Sign(nil)
+	assert.NotNil(t, err, "Error should not be nil")
+	_, err = i.Verify(nil)
+	assert.NotNil(t, err, "Error should not be nil")
+}
+
 func Test_IDDoc(t *testing.T) {
 	i, err := NewIDDoc("chris")
 	assert.Nil(t, err, "Error should be nil")
