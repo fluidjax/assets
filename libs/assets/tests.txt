@@ -1,3 +1,0 @@
-IDDoc
-     NewIDDoc()
-    Verify  - 
