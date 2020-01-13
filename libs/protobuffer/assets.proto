@@ -22,7 +22,7 @@ message PBAsset {
     PBTransferType TransferType     = 4;            //Which transfer used to get to this version
     oneof Payload {                                 //Definiton of the asset
         PBWallet Wallet             = 5;
-        PBGroup Group = 6;
+        PBGroup Group               = 6;
         PBIDDoc Iddoc               = 7;
     }
     map<string, PBTransfer> Transferlist = 8;
@@ -59,7 +59,8 @@ message PBWallet {
 	bytes creditor          = 3;
 	bytes initiator         = 4;
 	bytes address           = 5;
-	bytes counterparty      = 6;
+    bytes counterparty      = 6;
+    bytes transactionHash   = 7;
 }
 
 
@@ -85,3 +86,17 @@ message PBIDDoc {
     int64 Timestamp                = 5;
 }
 
+
+//Written by the MPC in response 
+//Contains a public key, used to generate a crypto currency address
+message PBAssetCommitment {
+    bytes ID                    = 1;    // Asset ID
+    bytes pubKey                = 2;    //signature of the transactionHash
+}
+
+
+//MPC Signs the transactionHash and returns signature for later tx composition and broadcast
+message PBAssetTransferSignature {
+    bytes ID                    = 1;    // Asset ID
+    bytes signature             = 2;    //signature of the transactionHash
+}
