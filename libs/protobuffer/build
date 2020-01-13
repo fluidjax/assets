@@ -15,12 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 
-#build the protobuffer docs.pb.go file from the definition file docs.proto
-protoc \
-  --proto_path=$GOPATH/src \
-  --proto_path=$GOPATH/src/github.com/gogo/protobuf/ \
-  --proto_path=. \
-  --go_out=. \
-  --govalidators_out=. \
-  *.proto
+
+protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/github.com/gogo/protobuf/protobuf --gofast_out=\
+Mgoogle/protobuf/any.proto=github.com/gogo/protobuf/types,\
+Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,\
+Mgoogle/protobuf/struct.proto=github.com/gogo/protobuf/types,\
+Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,\
+Mgoogle/protobuf/wrappers.proto=github.com/gogo/protobuf/types:. \
+assets.proto
+
+
+#Standard protobuffers - replace with gogo implementation
+#protoc \
+#  --proto_path=$GOPATH/src \
+#  --proto_path=$GOPATH/src/github.com/gogo/protobuf/ \
+# --proto_path=. \
+#  --go_out=. \
+#  --govalidators_out=. \
+#  *.proto
 

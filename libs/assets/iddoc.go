@@ -1,9 +1,7 @@
 package assets
 
 import (
-	"bytes"
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -11,73 +9,6 @@ import (
 
 func (i *IDDoc) Payload() *protobuffer.PBIDDoc {
 	return i.PBSignedAsset.Asset.GetIddoc()
-}
-
-//Verify - verify IDDoc with its own BLSPublicKey
-func (i *IDDoc) Verify() (bool, error) {
-	if len(i.Signers) != 1 {
-		return false, errors.New("Signer not specified")
-	}
-	res := bytes.Compare(i.Signers["self"], i.Key())
-	if res != 0 {
-		return false, errors.New("IDDocs can only be self signed")
-	}
-
-	//Signature
-	signature := i.PBSignedAsset.Signature
-	if signature == nil {
-		return false, errors.New("No Signature")
-	}
-	if len(signature) == 0 {
-		return false, errors.New("Invalid Signature")
-	}
-
-	//Message
-	data, err := i.serializePayload()
-	if err != nil {
-		return false, err
-	}
-
-	//Public Key
-	payload := i.Payload()
-	blsPK := payload.GetBLSPublicKey()
-
-	rc := crypto.BLSVerify(data, blsPK, signature)
-
-	if rc != 0 {
-		return false, nil
-	}
-	return true, nil
-}
-
-//Sign an IDDoc with its own BLS Private Key, signer is set to self
-func (i *IDDoc) Sign() (err error) {
-	data, err := i.serializePayload()
-	if err != nil {
-		return err
-	}
-
-	if i.seed == nil {
-		return errors.New("Unable to Sign IDDoc - No Seed")
-	}
-	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
-	if err != nil {
-		return err
-	}
-	rc, signature := crypto.BLSSign(data, blsSK)
-
-	if rc != 0 {
-		return errors.New("Failed to sign IDDoc")
-	}
-
-	i.PBSignedAsset.Signature = signature
-
-	if i.PBSignedAsset.Signers == nil {
-		i.PBSignedAsset.Signers = make(map[string][]byte)
-	}
-
-	i.PBSignedAsset.Signers["self"] = i.Key()
-	return nil
 }
 
 //NewIDDoc create a new IDDoc

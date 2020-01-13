@@ -1,12 +1,7 @@
 package assets
 
 import (
-	"bytes"
-	"encoding/hex"
-	"fmt"
-
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
@@ -15,58 +10,6 @@ func (w *TrusteeGroup) Payload() *protobuffer.PBTrusteeGroup {
 	signatureAsset := w.PBSignedAsset.Asset
 	trusteeGroup := signatureAsset.GetTrusteeGroup()
 	return trusteeGroup
-}
-
-//Verify - Verify a TrusteeGroup signature with supplied ID
-func (w *TrusteeGroup) Verify(i *IDDoc) (bool, error) {
-	
-	//Signature
-	signature := w.PBSignedAsset.Signature
-	if signature == nil {
-		return false, errors.New("No Signature")
-	}
-	if len(signature) == 0 {
-		return false, errors.New("Invalid Signature")
-	}
-	//Message
-	data, err := w.serializePayload()
-	if err != nil {
-		return false, err
-	}
-	//Public Key
-	payload := i.Payload()
-	blsPK := payload.GetBLSPublicKey()
-
-	fmt.Println("Ver:Dat", hex.EncodeToString(data))
-
-	rc := crypto.BLSVerify(data, blsPK, signature)
-	if rc == 0 {
-		return true, nil
-	}
-	return false, nil
-}
-
-//Sign a trusteeGroup with the supplied IDDoc - who must be decalred as the trusteeGroup owner
-func (w *TrusteeGroup) Sign(i *IDDoc) (err error) {
-	trusteeGroupOwner := w.Asset.GetOwner()
-	signer := i.Key()
-
-	res := bytes.Compare(trusteeGroupOwner, signer)
-	if res != 0 {
-		return errors.New("Only the Owner can self sign")
-	}
-
-	signature, err := w.SignPayload(i)
-
-	if err != nil {
-		return err
-	}
-	w.PBSignedAsset.Signature = signature
-	if w.PBSignedAsset.Signers == nil {
-		w.PBSignedAsset.Signers = make(map[string][]byte)
-	}
-	w.PBSignedAsset.Signers["self"] = i.Key()
-	return nil
 }
 
 //NewTrusteeGroup - Setup a new IDDoc

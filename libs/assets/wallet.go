@@ -1,10 +1,7 @@
 package assets
 
 import (
-	"bytes"
-
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
@@ -13,54 +10,6 @@ func (w *Wallet) Payload() *protobuffer.PBWallet {
 	signatureAsset := w.PBSignedAsset.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet
-}
-
-//Verify - Verify a Wallet signature with supplied ID
-func (w *Wallet) Verify(i *IDDoc) (bool, error) {
-	//Signature
-	signature := w.PBSignedAsset.Signature
-	if signature == nil {
-		return false, errors.New("No Signature")
-	}
-	if len(signature) == 0 {
-		return false, errors.New("Invalid Signature")
-	}
-	//Message
-	data, err := w.serializePayload()
-	if err != nil {
-		return false, err
-	}
-	//Public Key
-	payload := i.Payload()
-	blsPK := payload.GetBLSPublicKey()
-
-	rc := crypto.BLSVerify(data, blsPK, signature)
-	if rc == 0 {
-		return true, nil
-	}
-	return false, nil
-}
-
-//Sign a wallet with the supplied IDDoc - who must be decalred as the wallet owner
-func (w *Wallet) Sign(i *IDDoc) (err error) {
-	walletOwner := w.Asset.GetOwner()
-	signer := i.Key()
-
-	res := bytes.Compare(walletOwner, signer)
-	if res != 0 {
-		return errors.New("Only the Owner can self sign")
-	}
-
-	signature, err := w.SignPayload(i)
-	if err != nil {
-		return err
-	}
-	w.PBSignedAsset.Signature = signature
-	if w.PBSignedAsset.Signers == nil {
-		w.PBSignedAsset.Signers = make(map[string][]byte)
-	}
-	w.PBSignedAsset.Signers["self"] = i.Key()
-	return nil
 }
 
 //NewWallet - Setup a new IDDoc

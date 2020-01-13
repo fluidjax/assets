@@ -11,7 +11,7 @@ func Test_Wallet(t *testing.T) {
 	testDescription := "ZXC#@!"
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
-	i.Sign()
+	i.Sign(i)
 	i.store = NewMapstore()
 	i.Save()
 

@@ -3,7 +3,6 @@ package assets
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -20,6 +19,50 @@ import (
 
 func Description() string {
 	return "hello"
+}
+
+func (a *SignedAsset) Sign(iddoc *IDDoc) error {
+	msg, err := proto.Marshal(a.Asset)
+	if err != nil {
+		return errors.Wrap(err, "Failed to Marshall Asset in Sign")
+	}
+
+	if iddoc.seed == nil {
+		return errors.New("Unable to Sign IDDoc - No Seed")
+	}
+	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.seed)
+	if err != nil {
+		return err
+	}
+
+	//fmt.Println(hex.EncodeToString(msg))
+
+	rc, signature := crypto.BLSSign(msg, blsSK)
+	if rc != 0 {
+		return errors.New("Failed to Sign Asset")
+	}
+
+	a.Signature = signature
+	return nil
+}
+
+func (a *SignedAsset) Verify(iddocs *IDDoc) (bool, error) {
+
+	msg, err := proto.Marshal(a.Asset)
+	if err != nil {
+		return false, errors.Wrap(err, "Failed to Marshall Asset in Verify")
+	}
+	blsPK := iddocs.Payload().GetBLSPublicKey()
+	//a.Dump()
+
+	//fmt.Println(hex.EncodeToString(msg))
+
+	rc := crypto.BLSVerify(msg, blsPK, a.Signature)
+
+	if rc != 0 {
+		return false, errors.New("Verification of Asset failed")
+	}
+	return true, nil
 }
 
 //Key Return the AssetKey
@@ -256,8 +299,6 @@ func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
 	if rc != 0 {
 		return nil, errors.New("Failed to sign IDDoc")
 	}
-	fmt.Println("Sig:Dat", hex.EncodeToString(data))
-
 	return signature, nil
 }
 
@@ -474,6 +515,9 @@ serializePayload
 serialize the Assets payload (oneof) into a byte
 */
 func (a *SignedAsset) serializePayload() (s []byte, err error) {
+	if a.PBSignedAsset.Asset == nil {
+		return nil, errors.New("Can't serializa a nil payload")
+	}
 	s, err = proto.Marshal(a.PBSignedAsset.Asset)
 	if err != nil {
 		s = nil

@@ -9,8 +9,8 @@ import (
 func Test_IDDoc(t *testing.T) {
 	i, err := NewIDDoc("chris")
 	assert.Nil(t, err, "Error should be nil")
-	i.Sign()
-	res, err := i.Verify()
+	i.Sign(i)
+	res, err := i.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
 }
@@ -32,7 +32,7 @@ func Test_Save_Load(t *testing.T) {
 	testName := "ABC!23"
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
-	i.Sign()
+	i.Sign(i)
 	i.store = NewMapstore()
 	key := i.Key()
 	i.Save()
