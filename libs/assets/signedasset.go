@@ -157,7 +157,7 @@ Resolve the asset's expression by substituting 0's & 1's depending on whether si
 expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
 participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
-recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 trusteeGroup
+recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
 */
 func resolveExpression(store *Mapstore, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	expressionOut = expression
@@ -172,15 +172,19 @@ func resolveExpression(store *Mapstore, expression string, participants map[stri
 		}
 
 		switch participant.GetAsset().GetPayload().(type) {
-		case *protobuffer.PBAsset_TrusteeGroup:
+		case *protobuffer.PBAsset_Group:
 			//Recurse into the Group here
 
-			trusteeGroup, err := ReBuildTrusteeGroup(participant)
-			if err != nil {
-				return "", "", errors.Wrap(err, "Failed to Rebuild Trustee Group in resolve Expression")
+			if participant.Asset.Type != protobuffer.PBAssetType_Group {
+				break
 			}
-			recursionExpression := trusteeGroup.Payload().GetTrusteeGroup().Expression
-			recursionParticipants := trusteeGroup.Payload().GetTrusteeGroup().Participants
+
+			Group, err := ReBuildGroup(participant)
+			if err != nil {
+				return "", "", errors.Wrap(err, "Failed to Rebuild  Group in resolve Expression")
+			}
+			recursionExpression := string(Group.Payload().GetGroupFields()["expression"])
+			recursionParticipants := Group.Payload().Participants
 
 			recursionPrefix := prefix + abbreviation + "."
 			subExpression, subDisplay, err := resolveExpression(store, recursionExpression, recursionParticipants, transferSignatures, recursionPrefix)
@@ -219,8 +223,8 @@ For the supplied TransferType iterate through every combination of the existence
 Every possible matchining combination is returned where that combination will result in an asset Transfer
 Unecessary abbreviations(Participants) are marked as 0s
 Required signatures are marked with their abbreviation
-eg.  [ 0 + t2 + t3 > 1 & p] = Transfer will occur if Trustee2, Trustee3 & Principals Signatures are present
-	 [t1 + 0 + t3 > 1 & p]  = Transfer will occur if Trustee1, Trustee3 & Principals Signatures are present
+eg.  [ 0 + t2 + t3 > 1 & p] = Transfer will occur if 2, 3 & Principals Signatures are present
+	 [t1 + 0 + t3 > 1 & p]  = Transfer will occur if 1, 3 & Principals Signatures are present
 */
 func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
 	transferListMapString := transferType.String()
@@ -387,7 +391,7 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 		}
 
 		switch signedAsset.GetAsset().GetPayload().(type) {
-		case *protobuffer.PBAsset_TrusteeGroup:
+		case *protobuffer.PBAsset_Group:
 			print("recurse")
 		case *protobuffer.PBAsset_Iddoc:
 			iddoc, err := ReBuildIDDoc(signedAsset, participantID)

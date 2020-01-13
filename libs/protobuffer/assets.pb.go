@@ -27,21 +27,21 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type PBAssetType int32
 
 const (
-	PBAssetType_wallet       PBAssetType = 0
-	PBAssetType_trusteeGroup PBAssetType = 1
-	PBAssetType_iddoc        PBAssetType = 2
+	PBAssetType_wallet PBAssetType = 0
+	PBAssetType_Group  PBAssetType = 1
+	PBAssetType_iddoc  PBAssetType = 2
 )
 
 var PBAssetType_name = map[int32]string{
 	0: "wallet",
-	1: "trusteeGroup",
+	1: "Group",
 	2: "iddoc",
 }
 
 var PBAssetType_value = map[string]int32{
-	"wallet":       0,
-	"trusteeGroup": 1,
-	"iddoc":        2,
+	"wallet": 0,
+	"Group":  1,
+	"iddoc":  2,
 }
 
 func (x PBAssetType) String() string {
@@ -55,14 +55,14 @@ func (PBAssetType) EnumDescriptor() ([]byte, []int) {
 type PBTransferType int32
 
 const (
-	PBTransferType_unspecified            PBTransferType = 0
-	PBTransferType_settlePush             PBTransferType = 1
-	PBTransferType_settlePull             PBTransferType = 2
-	PBTransferType_transferPush           PBTransferType = 3
-	PBTransferType_transferPull           PBTransferType = 4
-	PBTransferType_swap                   PBTransferType = 5
-	PBTransferType_load                   PBTransferType = 6
-	PBTransferType_TrusteeGroupDefinition PBTransferType = 7
+	PBTransferType_unspecified     PBTransferType = 0
+	PBTransferType_settlePush      PBTransferType = 1
+	PBTransferType_settlePull      PBTransferType = 2
+	PBTransferType_transferPush    PBTransferType = 3
+	PBTransferType_transferPull    PBTransferType = 4
+	PBTransferType_swap            PBTransferType = 5
+	PBTransferType_load            PBTransferType = 6
+	PBTransferType_GroupDefinition PBTransferType = 7
 )
 
 var PBTransferType_name = map[int32]string{
@@ -73,18 +73,18 @@ var PBTransferType_name = map[int32]string{
 	4: "transferPull",
 	5: "swap",
 	6: "load",
-	7: "TrusteeGroupDefinition",
+	7: "GroupDefinition",
 }
 
 var PBTransferType_value = map[string]int32{
-	"unspecified":            0,
-	"settlePush":             1,
-	"settlePull":             2,
-	"transferPush":           3,
-	"transferPull":           4,
-	"swap":                   5,
-	"load":                   6,
-	"TrusteeGroupDefinition": 7,
+	"unspecified":     0,
+	"settlePush":      1,
+	"settlePull":      2,
+	"transferPush":    3,
+	"transferPull":    4,
+	"swap":            5,
+	"load":            6,
+	"GroupDefinition": 7,
 }
 
 func (x PBTransferType) String() string {
@@ -93,6 +93,31 @@ func (x PBTransferType) String() string {
 
 func (PBTransferType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{1}
+}
+
+type PBGroupType int32
+
+const (
+	PBGroupType_default      PBGroupType = 0
+	PBGroupType_trusteeGroup PBGroupType = 1
+)
+
+var PBGroupType_name = map[int32]string{
+	0: "default",
+	1: "trusteeGroup",
+}
+
+var PBGroupType_value = map[string]int32{
+	"default":      0,
+	"trusteeGroup": 1,
+}
+
+func (x PBGroupType) String() string {
+	return proto.EnumName(PBGroupType_name, int32(x))
+}
+
+func (PBGroupType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_610ca40ce07a87fe, []int{2}
 }
 
 type PBSignedAsset struct {
@@ -170,7 +195,7 @@ type PBAsset struct {
 	TransferType PBTransferType `protobuf:"varint,4,opt,name=TransferType,proto3,enum=protobuffer.PBTransferType" json:"TransferType,omitempty"`
 	// Types that are valid to be assigned to Payload:
 	//	*PBAsset_Wallet
-	//	*PBAsset_TrusteeGroup
+	//	*PBAsset_Group
 	//	*PBAsset_Iddoc
 	Payload              isPBAsset_Payload      `protobuf_oneof:"Payload"`
 	Transferlist         map[string]*PBTransfer `protobuf:"bytes,8,rep,name=Transferlist,proto3" json:"Transferlist,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
@@ -217,16 +242,16 @@ type isPBAsset_Payload interface {
 type PBAsset_Wallet struct {
 	Wallet *PBWallet `protobuf:"bytes,5,opt,name=Wallet,proto3,oneof" json:"Wallet,omitempty"`
 }
-type PBAsset_TrusteeGroup struct {
-	TrusteeGroup *PBTrusteeGroup `protobuf:"bytes,6,opt,name=TrusteeGroup,proto3,oneof" json:"TrusteeGroup,omitempty"`
+type PBAsset_Group struct {
+	Group *PBGroup `protobuf:"bytes,6,opt,name=Group,proto3,oneof" json:"Group,omitempty"`
 }
 type PBAsset_Iddoc struct {
 	Iddoc *PBIDDoc `protobuf:"bytes,7,opt,name=Iddoc,proto3,oneof" json:"Iddoc,omitempty"`
 }
 
-func (*PBAsset_Wallet) isPBAsset_Payload()       {}
-func (*PBAsset_TrusteeGroup) isPBAsset_Payload() {}
-func (*PBAsset_Iddoc) isPBAsset_Payload()        {}
+func (*PBAsset_Wallet) isPBAsset_Payload() {}
+func (*PBAsset_Group) isPBAsset_Payload()  {}
+func (*PBAsset_Iddoc) isPBAsset_Payload()  {}
 
 func (m *PBAsset) GetPayload() isPBAsset_Payload {
 	if m != nil {
@@ -270,9 +295,9 @@ func (m *PBAsset) GetWallet() *PBWallet {
 	return nil
 }
 
-func (m *PBAsset) GetTrusteeGroup() *PBTrusteeGroup {
-	if x, ok := m.GetPayload().(*PBAsset_TrusteeGroup); ok {
-		return x.TrusteeGroup
+func (m *PBAsset) GetGroup() *PBGroup {
+	if x, ok := m.GetPayload().(*PBAsset_Group); ok {
+		return x.Group
 	}
 	return nil
 }
@@ -295,7 +320,7 @@ func (m *PBAsset) GetTransferlist() map[string]*PBTransfer {
 func (*PBAsset) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
 		(*PBAsset_Wallet)(nil),
-		(*PBAsset_TrusteeGroup)(nil),
+		(*PBAsset_Group)(nil),
 		(*PBAsset_Iddoc)(nil),
 	}
 }
@@ -451,23 +476,26 @@ func (m *PBWallet) GetCounterparty() []byte {
 	return nil
 }
 
-type PBTrusteeGroup struct {
-	TrusteeGroup         *PBTransfer `protobuf:"bytes,1,opt,name=TrusteeGroup,proto3" json:"TrusteeGroup,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+type PBGroup struct {
+	Type                 PBGroupType       `protobuf:"varint,1,opt,name=Type,proto3,enum=protobuffer.PBGroupType" json:"Type,omitempty"`
+	GroupFields          map[string][]byte `protobuf:"bytes,2,rep,name=GroupFields,proto3" json:"GroupFields,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Participants         map[string][]byte `protobuf:"bytes,3,rep,name=Participants,proto3" json:"Participants,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Description          string            `protobuf:"bytes,4,opt,name=Description,proto3" json:"Description,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *PBTrusteeGroup) Reset()         { *m = PBTrusteeGroup{} }
-func (m *PBTrusteeGroup) String() string { return proto.CompactTextString(m) }
-func (*PBTrusteeGroup) ProtoMessage()    {}
-func (*PBTrusteeGroup) Descriptor() ([]byte, []int) {
+func (m *PBGroup) Reset()         { *m = PBGroup{} }
+func (m *PBGroup) String() string { return proto.CompactTextString(m) }
+func (*PBGroup) ProtoMessage()    {}
+func (*PBGroup) Descriptor() ([]byte, []int) {
 	return fileDescriptor_610ca40ce07a87fe, []int{4}
 }
-func (m *PBTrusteeGroup) XXX_Unmarshal(b []byte) error {
+func (m *PBGroup) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PBTrusteeGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PBGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	b = b[:cap(b)]
 	n, err := m.MarshalToSizedBuffer(b)
 	if err != nil {
@@ -475,23 +503,44 @@ func (m *PBTrusteeGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 	}
 	return b[:n], nil
 }
-func (m *PBTrusteeGroup) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PBTrusteeGroup.Merge(m, src)
+func (m *PBGroup) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PBGroup.Merge(m, src)
 }
-func (m *PBTrusteeGroup) XXX_Size() int {
+func (m *PBGroup) XXX_Size() int {
 	return m.Size()
 }
-func (m *PBTrusteeGroup) XXX_DiscardUnknown() {
-	xxx_messageInfo_PBTrusteeGroup.DiscardUnknown(m)
+func (m *PBGroup) XXX_DiscardUnknown() {
+	xxx_messageInfo_PBGroup.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PBTrusteeGroup proto.InternalMessageInfo
+var xxx_messageInfo_PBGroup proto.InternalMessageInfo
 
-func (m *PBTrusteeGroup) GetTrusteeGroup() *PBTransfer {
+func (m *PBGroup) GetType() PBGroupType {
 	if m != nil {
-		return m.TrusteeGroup
+		return m.Type
+	}
+	return PBGroupType_default
+}
+
+func (m *PBGroup) GetGroupFields() map[string][]byte {
+	if m != nil {
+		return m.GroupFields
 	}
 	return nil
+}
+
+func (m *PBGroup) GetParticipants() map[string][]byte {
+	if m != nil {
+		return m.Participants
+	}
+	return nil
+}
+
+func (m *PBGroup) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
 }
 
 type PBIDDoc struct {
@@ -572,6 +621,7 @@ func (m *PBIDDoc) GetTimestamp() int64 {
 func init() {
 	proto.RegisterEnum("protobuffer.PBAssetType", PBAssetType_name, PBAssetType_value)
 	proto.RegisterEnum("protobuffer.PBTransferType", PBTransferType_name, PBTransferType_value)
+	proto.RegisterEnum("protobuffer.PBGroupType", PBGroupType_name, PBGroupType_value)
 	proto.RegisterType((*PBSignedAsset)(nil), "protobuffer.PBSignedAsset")
 	proto.RegisterMapType((map[string][]byte)(nil), "protobuffer.PBSignedAsset.SignersEntry")
 	proto.RegisterType((*PBAsset)(nil), "protobuffer.PBAsset")
@@ -579,65 +629,71 @@ func init() {
 	proto.RegisterType((*PBTransfer)(nil), "protobuffer.PBTransfer")
 	proto.RegisterMapType((map[string][]byte)(nil), "protobuffer.PBTransfer.ParticipantsEntry")
 	proto.RegisterType((*PBWallet)(nil), "protobuffer.PBWallet")
-	proto.RegisterType((*PBTrusteeGroup)(nil), "protobuffer.PBTrusteeGroup")
+	proto.RegisterType((*PBGroup)(nil), "protobuffer.PBGroup")
+	proto.RegisterMapType((map[string][]byte)(nil), "protobuffer.PBGroup.GroupFieldsEntry")
+	proto.RegisterMapType((map[string][]byte)(nil), "protobuffer.PBGroup.ParticipantsEntry")
 	proto.RegisterType((*PBIDDoc)(nil), "protobuffer.PBIDDoc")
 }
 
 func init() { proto.RegisterFile("assets.proto", fileDescriptor_610ca40ce07a87fe) }
 
 var fileDescriptor_610ca40ce07a87fe = []byte{
-	// 805 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0xcd, 0x6e, 0xc3, 0x44,
-	0x10, 0xce, 0xe6, 0x3f, 0x13, 0x37, 0xb8, 0xab, 0xd2, 0x5a, 0x01, 0x45, 0x51, 0x84, 0xa0, 0x54,
-	0x6d, 0x22, 0x05, 0xa9, 0xaa, 0xca, 0xa1, 0x4a, 0x48, 0x45, 0x03, 0x54, 0x44, 0x6e, 0x25, 0xb8,
-	0x6e, 0xec, 0x4d, 0xba, 0xaa, 0x6b, 0x5b, 0xeb, 0x35, 0x25, 0x4f, 0xc1, 0x09, 0x89, 0xe7, 0xe1,
-	0xc4, 0x91, 0x23, 0x47, 0x94, 0x3e, 0x01, 0x17, 0xce, 0x68, 0x77, 0xf3, 0x63, 0xe7, 0xa7, 0x12,
-	0x27, 0xef, 0xcc, 0x7c, 0x33, 0xdf, 0xfa, 0x9b, 0x99, 0x05, 0x83, 0x44, 0x11, 0x15, 0x51, 0x3b,
-	0xe4, 0x81, 0x08, 0x70, 0x55, 0x7d, 0xc6, 0xf1, 0x64, 0x42, 0x79, 0xfd, 0x62, 0xca, 0xc4, 0x53,
-	0x3c, 0x6e, 0x3b, 0xc1, 0x4b, 0x67, 0x1a, 0x4c, 0x83, 0xce, 0x32, 0xa8, 0x2c, 0x65, 0xa8, 0x93,
-	0xce, 0x6d, 0xfd, 0x8b, 0xe0, 0x60, 0xd4, 0x7f, 0x60, 0x53, 0x9f, 0xba, 0x3d, 0x59, 0x14, 0x7f,
-	0x0c, 0x15, 0x69, 0x12, 0x11, 0x73, 0x6a, 0xa1, 0x26, 0x3a, 0x35, 0xec, 0xb5, 0x43, 0x46, 0x47,
-	0xf1, 0xd8, 0x63, 0xce, 0xb7, 0x74, 0x66, 0x65, 0x75, 0x74, 0xe5, 0xc0, 0x3d, 0x28, 0xa9, 0x52,
-	0x3c, 0xb2, 0x72, 0xcd, 0xdc, 0x69, 0xb5, 0xfb, 0x59, 0x3b, 0x71, 0xb7, 0x76, 0x8a, 0xa8, 0xbd,
-	0x40, 0xde, 0xfa, 0x82, 0xcf, 0xec, 0x65, 0x1e, 0x3e, 0x83, 0x82, 0x0a, 0x5b, 0xf9, 0x26, 0x3a,
-	0xad, 0x76, 0x8f, 0x36, 0x0a, 0xa8, 0x98, 0xad, 0x21, 0xf5, 0x6b, 0x30, 0x92, 0x45, 0xb0, 0x09,
-	0xb9, 0x67, 0x3a, 0x53, 0x97, 0xae, 0xd8, 0xf2, 0x88, 0x8f, 0xa0, 0xf0, 0x13, 0xf1, 0x62, 0xba,
-	0xb8, 0xaa, 0x36, 0xae, 0xb3, 0x57, 0xa8, 0xf5, 0x4f, 0x0e, 0x4a, 0x8b, 0x72, 0xf8, 0x1c, 0xf2,
-	0x8f, 0xb3, 0x50, 0xff, 0x6d, 0xad, 0x6b, 0xed, 0xa2, 0x94, 0x71, 0x5b, 0xa1, 0x70, 0x0d, 0xb2,
-	0xc3, 0xc1, 0xa2, 0x60, 0x76, 0x38, 0x90, 0x1c, 0xdf, 0xbf, 0xfa, 0x94, 0x5b, 0x39, 0xcd, 0xa1,
-	0x0c, 0x7c, 0x03, 0xc6, 0x23, 0x27, 0x7e, 0x34, 0xa1, 0x5c, 0xd5, 0xce, 0xab, 0xda, 0x1f, 0x6d,
-	0xd4, 0x4e, 0x42, 0xec, 0x54, 0x02, 0xee, 0x40, 0xf1, 0x07, 0xe2, 0x79, 0x54, 0x58, 0x05, 0xa5,
-	0xc4, 0x87, 0x1b, 0xa9, 0x3a, 0x78, 0x97, 0xb1, 0x17, 0x30, 0xdc, 0x93, 0x8c, 0x71, 0x24, 0x28,
-	0xfd, 0x9a, 0x07, 0x71, 0x68, 0x15, 0x55, 0xda, 0x36, 0xe3, 0x1a, 0x72, 0x97, 0xb1, 0x53, 0x29,
-	0xf8, 0x1c, 0x0a, 0x43, 0xd7, 0x0d, 0x1c, 0xab, 0xb4, 0x53, 0xfc, 0xe1, 0x60, 0x10, 0x38, 0x77,
-	0x19, 0x5b, 0x83, 0xf0, 0x37, 0xeb, 0x5f, 0xf4, 0x58, 0x24, 0xac, 0xb2, 0x6a, 0xf9, 0xa7, 0xbb,
-	0xe4, 0x6b, 0x27, 0x81, 0xba, 0xe3, 0xa9, 0xdc, 0xfa, 0x8f, 0x70, 0xb8, 0x05, 0xd9, 0xd1, 0xcf,
-	0x8b, 0x64, 0x3f, 0xab, 0xdd, 0x93, 0x3d, 0x72, 0x26, 0x1a, 0xdd, 0xaf, 0x40, 0x69, 0x44, 0x66,
-	0x5e, 0x40, 0xdc, 0xd6, 0x2f, 0x59, 0x80, 0x35, 0x08, 0x77, 0x52, 0x6d, 0x7f, 0xb7, 0x35, 0xba,
-	0xf3, 0x0d, 0x80, 0xdb, 0x9f, 0x43, 0x4e, 0xa3, 0x88, 0x05, 0xbe, 0xba, 0x42, 0xc5, 0x4e, 0x78,
-	0xf0, 0x3d, 0x18, 0x23, 0xc2, 0x05, 0x73, 0x58, 0x48, 0x7c, 0xb1, 0xdc, 0x81, 0xcf, 0xf7, 0x14,
-	0x6e, 0x27, 0xb1, 0x0b, 0x4d, 0x92, 0x2e, 0xdc, 0x84, 0xea, 0x80, 0x46, 0x0e, 0x67, 0xa1, 0x90,
-	0x7c, 0x79, 0xc5, 0x97, 0x74, 0xd5, 0x6f, 0xe0, 0x70, 0xab, 0xc8, 0xff, 0xda, 0x82, 0xdf, 0x11,
-	0x94, 0x97, 0xa3, 0xb4, 0xc9, 0x87, 0xb6, 0xf8, 0xe4, 0xf6, 0x87, 0x9c, 0xf9, 0x92, 0xce, 0x5b,
-	0x6e, 0xff, 0xca, 0x81, 0xeb, 0x50, 0x76, 0x38, 0x75, 0x99, 0x08, 0x96, 0xbb, 0xb0, 0xb2, 0x65,
-	0x26, 0xf3, 0x99, 0x60, 0x44, 0x06, 0xf3, 0x3a, 0x73, 0xe5, 0xc0, 0x16, 0x94, 0x88, 0xeb, 0x4a,
-	0x19, 0xd5, 0xb0, 0x1b, 0xf6, 0xd2, 0xc4, 0x2d, 0x30, 0x9c, 0x20, 0xf6, 0x05, 0xe5, 0x21, 0xe1,
-	0x62, 0xa6, 0x86, 0xda, 0xb0, 0x53, 0xbe, 0xd6, 0x3d, 0xd4, 0xd2, 0x73, 0x8d, 0xbf, 0xdc, 0x58,
-	0x05, 0xf4, 0xfe, 0xb4, 0xa4, 0xc0, 0xad, 0x37, 0x24, 0x5f, 0x06, 0x35, 0xeb, 0xf8, 0x0a, 0x4e,
-	0x7a, 0xb1, 0x78, 0xa2, 0xbe, 0x60, 0x0e, 0x91, 0x12, 0xd8, 0x74, 0x42, 0x39, 0xf5, 0x1d, 0xba,
-	0x90, 0x67, 0x5f, 0x18, 0x5f, 0xc2, 0x71, 0x9f, 0xfa, 0x74, 0xc2, 0x1c, 0x46, 0xf8, 0xec, 0xf6,
-	0xab, 0xcd, 0x57, 0x73, 0x4f, 0x14, 0x7f, 0x02, 0x07, 0x0f, 0xec, 0x99, 0xae, 0xe1, 0x5a, 0xc9,
-	0xb4, 0x53, 0xca, 0xd2, 0xff, 0xee, 0x61, 0x0d, 0xd2, 0x8a, 0xa6, 0x7c, 0x52, 0xf2, 0x47, 0xf6,
-	0x42, 0x23, 0x41, 0x5e, 0x42, 0x25, 0x6b, 0xce, 0x5e, 0x3b, 0xce, 0x2e, 0xa1, 0x9a, 0x78, 0xda,
-	0x30, 0x40, 0xf1, 0x55, 0x4d, 0x81, 0x99, 0xc1, 0x26, 0x18, 0x22, 0x21, 0x88, 0x89, 0x70, 0x05,
-	0x0a, 0x4c, 0xae, 0xbc, 0x99, 0x3d, 0xfb, 0x15, 0x69, 0xb5, 0x13, 0x2f, 0xd5, 0x07, 0x50, 0x8d,
-	0xfd, 0x28, 0xa4, 0x0e, 0x9b, 0x30, 0xea, 0x9a, 0x19, 0x5c, 0x03, 0x88, 0xa8, 0x10, 0x1e, 0x1d,
-	0xc5, 0xd1, 0x93, 0x89, 0x92, 0xb6, 0xe7, 0x99, 0x59, 0x4d, 0xa0, 0x0b, 0x28, 0x44, 0x2e, 0xed,
-	0xf1, 0x3c, 0x33, 0x8f, 0xcb, 0x90, 0x8f, 0x5e, 0x49, 0x68, 0x16, 0xe4, 0x49, 0x6e, 0xaf, 0x59,
-	0xc4, 0x75, 0x38, 0x4e, 0x76, 0x6a, 0x40, 0x27, 0x6a, 0x84, 0x02, 0xdf, 0x2c, 0xf5, 0x8f, 0xfe,
-	0x98, 0x37, 0xd0, 0x9f, 0xf3, 0x06, 0xfa, 0x6b, 0xde, 0x40, 0x7f, 0xcf, 0x1b, 0xe8, 0xb7, 0xb7,
-	0x46, 0x66, 0x5c, 0x54, 0x1d, 0xff, 0xe2, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x55, 0xec, 0x62,
-	0x05, 0x31, 0x07, 0x00, 0x00,
+	// 867 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0x4d, 0x6f, 0xdb, 0x46,
+	0x10, 0x15, 0xa9, 0x2f, 0x6b, 0xc8, 0x38, 0xcc, 0xd6, 0x6d, 0x08, 0xb5, 0x10, 0x0c, 0xa1, 0x4d,
+	0x5d, 0xc3, 0x91, 0x00, 0x17, 0x28, 0x82, 0x1c, 0x1a, 0x58, 0x95, 0x9b, 0xb8, 0x1f, 0xa8, 0x40,
+	0x1b, 0x68, 0xaf, 0x6b, 0x72, 0x68, 0x2f, 0x42, 0x93, 0xc4, 0xee, 0xb2, 0xae, 0xfe, 0x44, 0x7b,
+	0xed, 0xef, 0xe9, 0xa9, 0xc7, 0x1e, 0x7b, 0xe8, 0xa1, 0x70, 0x7e, 0x40, 0x6f, 0x3d, 0x07, 0xbb,
+	0x24, 0x25, 0x52, 0xa6, 0x03, 0x04, 0x39, 0x89, 0x33, 0xf3, 0xe6, 0xcd, 0xee, 0xbe, 0xb7, 0x2b,
+	0xb0, 0xa9, 0x10, 0x28, 0xc5, 0x24, 0xe5, 0x89, 0x4c, 0x88, 0xa5, 0x7f, 0xce, 0xb3, 0x30, 0x44,
+	0x3e, 0x7c, 0x7c, 0xc1, 0xe4, 0x65, 0x76, 0x3e, 0xf1, 0x93, 0xab, 0xe9, 0x45, 0x72, 0x91, 0x4c,
+	0xcb, 0xa2, 0x8e, 0x74, 0xa0, 0xbf, 0xf2, 0xde, 0xf1, 0xff, 0x06, 0xdc, 0x5b, 0xcc, 0x4e, 0xd9,
+	0x45, 0x8c, 0xc1, 0x91, 0x22, 0x25, 0x1f, 0xc1, 0x40, 0x85, 0x54, 0x66, 0x1c, 0x5d, 0x63, 0xd7,
+	0xd8, 0xb3, 0xbd, 0x75, 0x42, 0x55, 0x17, 0xd9, 0x79, 0xc4, 0xfc, 0x6f, 0x71, 0xe9, 0x9a, 0x79,
+	0x75, 0x95, 0x20, 0x47, 0xd0, 0xd7, 0x54, 0x5c, 0xb8, 0xed, 0xdd, 0xf6, 0x9e, 0x75, 0xf8, 0xe9,
+	0xa4, 0xb2, 0xb6, 0x49, 0x6d, 0xd0, 0xa4, 0x40, 0x1e, 0xc7, 0x92, 0x2f, 0xbd, 0xb2, 0x8f, 0xec,
+	0x43, 0x57, 0x97, 0xdd, 0xce, 0xae, 0xb1, 0x67, 0x1d, 0xee, 0x6c, 0x10, 0xe8, 0x9a, 0x97, 0x43,
+	0x86, 0x4f, 0xc1, 0xae, 0x92, 0x10, 0x07, 0xda, 0x2f, 0x71, 0xa9, 0x17, 0x3d, 0xf0, 0xd4, 0x27,
+	0xd9, 0x81, 0xee, 0xcf, 0x34, 0xca, 0xb0, 0x58, 0x6a, 0x1e, 0x3c, 0x35, 0x9f, 0x18, 0xe3, 0x7f,
+	0xda, 0xd0, 0x2f, 0xe8, 0xc8, 0x01, 0x74, 0xce, 0x96, 0x69, 0xbe, 0xdb, 0xed, 0x43, 0xb7, 0x69,
+	0xa4, 0xaa, 0x7b, 0x1a, 0x45, 0xb6, 0xc1, 0x3c, 0x99, 0x17, 0x84, 0xe6, 0xc9, 0x5c, 0xcd, 0xf8,
+	0xe1, 0x3a, 0x46, 0xee, 0xb6, 0xf3, 0x19, 0x3a, 0x20, 0xcf, 0xc0, 0x3e, 0xe3, 0x34, 0x16, 0x21,
+	0x72, 0xcd, 0xdd, 0xd1, 0xdc, 0x1f, 0x6e, 0x70, 0x57, 0x21, 0x5e, 0xad, 0x81, 0x4c, 0xa1, 0xf7,
+	0x23, 0x8d, 0x22, 0x94, 0x6e, 0x57, 0x9f, 0xc4, 0xfb, 0x1b, 0xad, 0x79, 0xf1, 0x45, 0xcb, 0x2b,
+	0x60, 0xe4, 0x00, 0xba, 0xcf, 0x79, 0x92, 0xa5, 0x6e, 0xaf, 0xf1, 0xe4, 0x74, 0xed, 0x45, 0xcb,
+	0xcb, 0x41, 0x0a, 0x7d, 0x12, 0x04, 0x89, 0xef, 0xf6, 0x1b, 0xd1, 0x27, 0xf3, 0x79, 0xe2, 0x2b,
+	0xb4, 0x06, 0x91, 0x6f, 0xd6, 0xbb, 0x89, 0x98, 0x90, 0xee, 0x96, 0x56, 0xf7, 0x51, 0xd3, 0x49,
+	0x4d, 0xaa, 0xc0, 0x5c, 0xdc, 0x5a, 0xef, 0xf0, 0x27, 0x78, 0x70, 0x0b, 0xd2, 0x20, 0xdd, 0xe3,
+	0xaa, 0x74, 0xd6, 0xe1, 0xc3, 0x3b, 0x4e, 0xae, 0xa2, 0xe9, 0x6c, 0x00, 0xfd, 0x05, 0x5d, 0x46,
+	0x09, 0x0d, 0xc6, 0xbf, 0x99, 0x00, 0x6b, 0x10, 0x99, 0xd6, 0x14, 0x7e, 0xa3, 0x0a, 0xb9, 0xc8,
+	0x23, 0x80, 0xe3, 0x5f, 0x52, 0x8e, 0x42, 0xb0, 0x24, 0xd6, 0x4b, 0x18, 0x78, 0x95, 0x0c, 0xf9,
+	0x1e, 0xec, 0x05, 0xe5, 0x92, 0xf9, 0x2c, 0xa5, 0xb1, 0x2c, 0xed, 0xfe, 0xd9, 0x1d, 0xc4, 0x93,
+	0x2a, 0xb6, 0x38, 0x93, 0x6a, 0x8a, 0xec, 0x82, 0x35, 0x47, 0xe1, 0x73, 0x96, 0x4a, 0x35, 0xaf,
+	0xa3, 0xe7, 0x55, 0x53, 0xc3, 0x67, 0xf0, 0xe0, 0x16, 0xc9, 0x5b, 0x19, 0xfe, 0x0f, 0x03, 0xb6,
+	0x4a, 0xd7, 0x6c, 0xce, 0x33, 0x6e, 0xcd, 0x53, 0x17, 0x3d, 0xe5, 0x2c, 0x56, 0xe3, 0xa2, 0xf2,
+	0xa2, 0xaf, 0x12, 0x64, 0x08, 0x5b, 0x3e, 0xc7, 0x80, 0xc9, 0xa4, 0xb4, 0xfd, 0x2a, 0x56, 0x9d,
+	0x2c, 0x66, 0x92, 0x51, 0x55, 0xec, 0xe4, 0x9d, 0xab, 0x04, 0x71, 0xa1, 0x4f, 0x83, 0x40, 0x1d,
+	0xa3, 0xf6, 0xb5, 0xed, 0x95, 0x21, 0x19, 0x83, 0xed, 0x27, 0x59, 0x2c, 0x91, 0xa7, 0x94, 0xcb,
+	0xa5, 0xb6, 0xb1, 0xed, 0xd5, 0x72, 0xe3, 0xff, 0x4c, 0x75, 0x6b, 0x4b, 0x07, 0xbf, 0xe9, 0xd6,
+	0x6a, 0x4c, 0x45, 0xd0, 0xe7, 0x60, 0xe9, 0xd4, 0xd7, 0x0c, 0xa3, 0x40, 0xb8, 0xa6, 0xd6, 0xeb,
+	0x93, 0xa6, 0xa6, 0x49, 0x05, 0x97, 0x6b, 0x55, 0xed, 0x54, 0x57, 0xa1, 0x41, 0xf9, 0x47, 0x8d,
+	0x4c, 0xef, 0x2e, 0xfb, 0x97, 0xe0, 0x6c, 0x2e, 0xe7, 0x6d, 0x54, 0x7f, 0x77, 0xdb, 0xbc, 0x32,
+	0xd4, 0x89, 0xeb, 0xe7, 0x80, 0x3c, 0x81, 0x87, 0x47, 0x99, 0xbc, 0xc4, 0x58, 0x32, 0x9f, 0xaa,
+	0xe5, 0x79, 0x18, 0x22, 0xc7, 0xd8, 0xc7, 0x82, 0xeb, 0xae, 0x32, 0xf9, 0x02, 0x3e, 0x98, 0x61,
+	0x8c, 0x21, 0xf3, 0x19, 0xe5, 0xcb, 0xe3, 0xaf, 0x36, 0xff, 0x43, 0xee, 0xa8, 0x92, 0x8f, 0xe1,
+	0xde, 0x29, 0x7b, 0x89, 0x6b, 0x78, 0x6e, 0xb6, 0x7a, 0x52, 0x39, 0x67, 0xf6, 0xdd, 0xe9, 0x1a,
+	0x94, 0x9b, 0xae, 0x96, 0x53, 0xae, 0x3c, 0x63, 0x57, 0x28, 0x24, 0xbd, 0x4a, 0xb5, 0xf3, 0xda,
+	0xde, 0x3a, 0xb1, 0x3f, 0x05, 0xab, 0xf2, 0xd0, 0x13, 0x80, 0xde, 0xb5, 0xbe, 0x28, 0x4e, 0x8b,
+	0x0c, 0x8a, 0x67, 0xd5, 0x31, 0xd4, 0x27, 0x53, 0xcf, 0xa1, 0x63, 0xee, 0xff, 0x6a, 0xc0, 0x76,
+	0xfd, 0xe1, 0x20, 0xf7, 0xc1, 0xca, 0x62, 0x91, 0xa2, 0xcf, 0x42, 0x86, 0x81, 0xd3, 0x22, 0xdb,
+	0x00, 0x02, 0xa5, 0x8c, 0x70, 0x91, 0x89, 0x4b, 0xc7, 0xa8, 0xc6, 0x51, 0xe4, 0x98, 0xc4, 0x01,
+	0x5b, 0x16, 0x04, 0x1a, 0xd1, 0xae, 0x67, 0xa2, 0xc8, 0xe9, 0x90, 0x2d, 0xe8, 0x88, 0x6b, 0x9a,
+	0x3a, 0x5d, 0xf5, 0xa5, 0x5e, 0x36, 0xa7, 0x47, 0xde, 0x83, 0xfb, 0x7a, 0x45, 0x73, 0x0c, 0xf5,
+	0xbd, 0x4a, 0x62, 0xa7, 0xbf, 0x7f, 0xa0, 0x76, 0xb0, 0x32, 0x3d, 0xb1, 0xa0, 0x1f, 0x60, 0x48,
+	0xb3, 0x48, 0x6d, 0x41, 0xd3, 0x66, 0x42, 0x22, 0x16, 0x3b, 0x99, 0xed, 0xfc, 0x79, 0x33, 0x32,
+	0xfe, 0xba, 0x19, 0x19, 0x7f, 0xdf, 0x8c, 0x8c, 0x7f, 0x6f, 0x46, 0xc6, 0xef, 0xaf, 0x46, 0xad,
+	0xf3, 0x9e, 0xf6, 0xf0, 0xe7, 0xaf, 0x03, 0x00, 0x00, 0xff, 0xff, 0xd4, 0x12, 0xce, 0x4a, 0x5f,
+	0x08, 0x00, 0x00,
 }
 
 func (m *PBSignedAsset) Marshal() (dAtA []byte, err error) {
@@ -831,16 +887,16 @@ func (m *PBAsset_Wallet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-func (m *PBAsset_TrusteeGroup) MarshalTo(dAtA []byte) (int, error) {
+func (m *PBAsset_Group) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *PBAsset_TrusteeGroup) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *PBAsset_Group) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.TrusteeGroup != nil {
+	if m.Group != nil {
 		{
-			size, err := m.TrusteeGroup.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Group.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1014,7 +1070,7 @@ func (m *PBWallet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *PBTrusteeGroup) Marshal() (dAtA []byte, err error) {
+func (m *PBGroup) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1024,12 +1080,12 @@ func (m *PBTrusteeGroup) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PBTrusteeGroup) MarshalTo(dAtA []byte) (int, error) {
+func (m *PBGroup) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *PBTrusteeGroup) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *PBGroup) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1038,17 +1094,69 @@ func (m *PBTrusteeGroup) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if m.TrusteeGroup != nil {
-		{
-			size, err := m.TrusteeGroup.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAssets(dAtA, i, uint64(size))
-		}
+	if len(m.Description) > 0 {
+		i -= len(m.Description)
+		copy(dAtA[i:], m.Description)
+		i = encodeVarintAssets(dAtA, i, uint64(len(m.Description)))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x22
+	}
+	if len(m.Participants) > 0 {
+		keysForParticipants := make([]string, 0, len(m.Participants))
+		for k := range m.Participants {
+			keysForParticipants = append(keysForParticipants, string(k))
+		}
+		github_com_gogo_protobuf_sortkeys.Strings(keysForParticipants)
+		for iNdEx := len(keysForParticipants) - 1; iNdEx >= 0; iNdEx-- {
+			v := m.Participants[string(keysForParticipants[iNdEx])]
+			baseI := i
+			if len(v) > 0 {
+				i -= len(v)
+				copy(dAtA[i:], v)
+				i = encodeVarintAssets(dAtA, i, uint64(len(v)))
+				i--
+				dAtA[i] = 0x12
+			}
+			i -= len(keysForParticipants[iNdEx])
+			copy(dAtA[i:], keysForParticipants[iNdEx])
+			i = encodeVarintAssets(dAtA, i, uint64(len(keysForParticipants[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintAssets(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.GroupFields) > 0 {
+		keysForGroupFields := make([]string, 0, len(m.GroupFields))
+		for k := range m.GroupFields {
+			keysForGroupFields = append(keysForGroupFields, string(k))
+		}
+		github_com_gogo_protobuf_sortkeys.Strings(keysForGroupFields)
+		for iNdEx := len(keysForGroupFields) - 1; iNdEx >= 0; iNdEx-- {
+			v := m.GroupFields[string(keysForGroupFields[iNdEx])]
+			baseI := i
+			if len(v) > 0 {
+				i -= len(v)
+				copy(dAtA[i:], v)
+				i = encodeVarintAssets(dAtA, i, uint64(len(v)))
+				i--
+				dAtA[i] = 0x12
+			}
+			i -= len(keysForGroupFields[iNdEx])
+			copy(dAtA[i:], keysForGroupFields[iNdEx])
+			i = encodeVarintAssets(dAtA, i, uint64(len(keysForGroupFields[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintAssets(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.Type != 0 {
+		i = encodeVarintAssets(dAtA, i, uint64(m.Type))
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -1214,14 +1322,14 @@ func (m *PBAsset_Wallet) Size() (n int) {
 	}
 	return n
 }
-func (m *PBAsset_TrusteeGroup) Size() (n int) {
+func (m *PBAsset_Group) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.TrusteeGroup != nil {
-		l = m.TrusteeGroup.Size()
+	if m.Group != nil {
+		l = m.Group.Size()
 		n += 1 + l + sovAssets(uint64(l))
 	}
 	return n
@@ -1309,14 +1417,41 @@ func (m *PBWallet) Size() (n int) {
 	return n
 }
 
-func (m *PBTrusteeGroup) Size() (n int) {
+func (m *PBGroup) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.TrusteeGroup != nil {
-		l = m.TrusteeGroup.Size()
+	if m.Type != 0 {
+		n += 1 + sovAssets(uint64(m.Type))
+	}
+	if len(m.GroupFields) > 0 {
+		for k, v := range m.GroupFields {
+			_ = k
+			_ = v
+			l = 0
+			if len(v) > 0 {
+				l = 1 + len(v) + sovAssets(uint64(len(v)))
+			}
+			mapEntrySize := 1 + len(k) + sovAssets(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sovAssets(uint64(mapEntrySize))
+		}
+	}
+	if len(m.Participants) > 0 {
+		for k, v := range m.Participants {
+			_ = k
+			_ = v
+			l = 0
+			if len(v) > 0 {
+				l = 1 + len(v) + sovAssets(uint64(len(v)))
+			}
+			mapEntrySize := 1 + len(k) + sovAssets(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sovAssets(uint64(mapEntrySize))
+		}
+	}
+	l = len(m.Description)
+	if l > 0 {
 		n += 1 + l + sovAssets(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -1820,7 +1955,7 @@ func (m *PBAsset) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TrusteeGroup", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Group", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1847,11 +1982,11 @@ func (m *PBAsset) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := &PBTrusteeGroup{}
+			v := &PBGroup{}
 			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			m.Payload = &PBAsset_TrusteeGroup{v}
+			m.Payload = &PBAsset_Group{v}
 			iNdEx = postIndex
 		case 7:
 			if wireType != 2 {
@@ -2563,7 +2698,7 @@ func (m *PBWallet) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PBTrusteeGroup) Unmarshal(dAtA []byte) error {
+func (m *PBGroup) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2586,15 +2721,34 @@ func (m *PBTrusteeGroup) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PBTrusteeGroup: wiretype end group for non-group")
+			return fmt.Errorf("proto: PBGroup: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PBTrusteeGroup: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PBGroup: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			m.Type = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Type |= PBGroupType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TrusteeGroup", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field GroupFields", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2621,12 +2775,264 @@ func (m *PBTrusteeGroup) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.TrusteeGroup == nil {
-				m.TrusteeGroup = &PBTransfer{}
+			if m.GroupFields == nil {
+				m.GroupFields = make(map[string][]byte)
 			}
-			if err := m.TrusteeGroup.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			var mapkey string
+			mapvalue := []byte{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAssets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAssets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthAssets
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthAssets
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAssets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthAssets
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthAssets
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = make([]byte, mapbyteLen)
+					copy(mapvalue, dAtA[iNdEx:postbytesIndex])
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipAssets(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthAssets
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
 			}
+			m.GroupFields[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Participants", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAssets
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Participants == nil {
+				m.Participants = make(map[string][]byte)
+			}
+			var mapkey string
+			mapvalue := []byte{}
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAssets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAssets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthAssets
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthAssets
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapbyteLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAssets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapbyteLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intMapbyteLen := int(mapbyteLen)
+					if intMapbyteLen < 0 {
+						return ErrInvalidLengthAssets
+					}
+					postbytesIndex := iNdEx + intMapbyteLen
+					if postbytesIndex < 0 {
+						return ErrInvalidLengthAssets
+					}
+					if postbytesIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = make([]byte, mapbyteLen)
+					copy(mapvalue, dAtA[iNdEx:postbytesIndex])
+					iNdEx = postbytesIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipAssets(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthAssets
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Participants[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAssets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Description = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

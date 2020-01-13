@@ -4,7 +4,7 @@ import "github.com/qredo/assets/libs/protobuffer"
 
 //Core Heirachcy
 
-type TrusteeGroup struct {
+type Group struct {
 	SignedAsset
 }
 

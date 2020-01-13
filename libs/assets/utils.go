@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"bytes"
 	"crypto/rand"
 )
 
@@ -11,4 +12,14 @@ func RandomBytes(n int) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
+}
+
+func contains(s [][]byte, e []byte) bool {
+	for _, a := range s {
+		res := bytes.Compare(a, e)
+		if res == 0 {
+			return true
+		}
+	}
+	return false
 }

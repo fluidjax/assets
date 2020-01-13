@@ -7,8 +7,8 @@ API Expose:
 -----------
 
 //Main Data Objects
-    IDDoc/Wallet/TrusteeGroup = [asset]
-    Wallet/TrusteeGroup = [updateableAsset]
+    IDDoc/Wallet/Group = [asset]
+    Wallet/Group = [updateableAsset]
 
     [asset].Payload              - retrieve the Payload object 
     [asset].Verify               - Verify the signed Assset
@@ -31,5 +31,6 @@ API Expose:
    [asset].AggregatedSign         - Aggregate the supplied Signatures/PubKeys and add to Asset
    [asset].FullVerify             - Fully validate if a transfer is correct and allowed on chain
 
-   [asset].SignPayload             - Sign the payload - trustee does this when required
+   [asset].SignPayload             - Sign the payload -  does this when required
    [asset].VerifyPayload           - verify payload sig
+   [asset].ParseChanges            - breakdown the changes between old & new version of Asset

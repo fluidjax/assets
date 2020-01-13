@@ -42,15 +42,15 @@ func SetupIDDocs(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 	idP.store = store
 	idP.Save()
 
-	idT1, _ := NewIDDoc("trustee1")
+	idT1, _ := NewIDDoc("1")
 	idT1.store = store
 	idT1.Save()
 
-	idT2, _ := NewIDDoc("trustee2")
+	idT2, _ := NewIDDoc("2")
 	idT2.store = store
 	idT2.Save()
 
-	idT3, _ := NewIDDoc("trustee3")
+	idT3, _ := NewIDDoc("3")
 	idT3.store = store
 	idT3.Save()
 
@@ -86,7 +86,7 @@ func Test_RuleAdd(t *testing.T) {
 	sigT2, _ := w2.SignPayload(idT2)
 	sigT3, _ := w2.SignPayload(idT3)
 
-	//Everything is sign by the Trustees & Principal
+	//Everything is sign by the s & Principal
 
 	// //Pass correct
 	transferSignatures1 := []SignatureID{
@@ -160,7 +160,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 	sigT2, _ := w2.SignPayload(idT2)
 	sigT3, _ := w2.SignPayload(idT3)
 
-	//Everything is sign by the Trustees & Principal
+	//Everything is sign by the s & Principal
 
 	//Add sufficient Signatures
 	transferSignatures1 := []SignatureID{
@@ -213,7 +213,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	sigP, _ := w2.SignPayload(idP)
 	sigT1, _ := w2.SignPayload(idT1)
 
-	//Everything is sign by the Trustees & Principal
+	//Everything is sign by the s & Principal
 
 	//Add sufficient Signatures
 	transferSignatures1 := []SignatureID{

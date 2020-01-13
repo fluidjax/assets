@@ -22,7 +22,7 @@ message PBAsset {
     PBTransferType TransferType     = 4;            //Which transfer used to get to this version
     oneof Payload {                                 //Definiton of the asset
         PBWallet Wallet             = 5;
-        PBTrusteeGroup TrusteeGroup = 6;
+        PBGroup Group = 6;
         PBIDDoc Iddoc               = 7;
     }
     map<string, PBTransfer> Transferlist = 8;
@@ -31,7 +31,7 @@ message PBAsset {
 
 enum PBAssetType {
 	wallet      = 0;
-	trusteeGroup     = 1;
+	Group     = 1;
 	iddoc       = 2;
 }                              
 enum PBTransferType {
@@ -42,12 +42,12 @@ enum PBTransferType {
     transferPull        = 4;
     swap                = 5;
     load                = 6;
-    TrusteeGroupDefinition = 7;
+    GroupDefinition = 7;
 }
 
 message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
     PBTransferType Type             = 1;	
-    string Expression               = 2;              //Boolean expression eg. (SigTrustee1 + SigTrustee2 + SigTrustee3) >=2 & Owner   
+    string Expression               = 2;              //Boolean expression eg. (Sig1 + Sig2 + Sig3) >=2 & Owner   
     map<string, bytes> Participants = 3;
     string Description              = 4; 
 }
@@ -63,9 +63,19 @@ message PBWallet {
 }
 
 
-message PBTrusteeGroup {
-    PBTransfer TrusteeGroup   = 1; 
+message PBGroup {
+    PBGroupType Type                = 1;
+    map<string, bytes> GroupFields  = 2; 
+    map<string, bytes> Participants = 3;
+    string Description              = 4; 
 }
+
+
+enum PBGroupType {
+    Default         = 0;
+    TrusteeGroup    = 1;
+}
+
 
 message PBIDDoc {
     string AuthenticationReference = 1;
@@ -74,3 +84,4 @@ message PBIDDoc {
     bytes BLSPublicKey             = 4;
     int64 Timestamp                = 5;
 }
+
