@@ -12,7 +12,7 @@ func (w *Group) Payload() *protobuffer.PBGroup {
 	if w == nil {
 		return nil
 	}
-	signatureAsset := w.PBSignedAsset.Asset
+	signatureAsset := w.currentAsset.Asset
 	Group := signatureAsset.GetGroup()
 	return Group
 }
@@ -29,9 +29,9 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	w.PBSignedAsset.Asset.ID = GroupKey
-	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_Group
-	w.PBSignedAsset.Asset.Owner = iddoc.Key()
+	w.currentAsset.Asset.ID = GroupKey
+	w.currentAsset.Asset.Type = protobuffer.PBAssetType_Group
+	w.currentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
 
 	return w, nil
@@ -46,17 +46,17 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 		return nil, errors.New("NewUpdateGroup - supplied previousGroup is nil")
 	}
 
-	p := previousGroup.PBSignedAsset.Asset.GetGroup()
+	p := previousGroup.currentAsset.Asset.GetGroup()
 	previousType := p.GetType()
 
 	w = emptyGroup(previousType)
 	if previousGroup.store != nil {
 		w.store = previousGroup.store
 	}
-	w.PBSignedAsset.Asset.ID = previousGroup.PBSignedAsset.Asset.ID
-	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_Group
-	w.PBSignedAsset.Asset.Owner = iddoc.Key() //new owner
-	w.previousAsset = &previousGroup.PBSignedAsset
+	w.currentAsset.Asset.ID = previousGroup.currentAsset.Asset.ID
+	w.currentAsset.Asset.Type = protobuffer.PBAssetType_Group
+	w.currentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.previousAsset = previousGroup.currentAsset
 	return w, nil
 }
 
@@ -85,7 +85,7 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 
 	payload := &protobuffer.PBAsset_Group{}
 	payload.Group = pbGroup
-	w.PBSignedAsset.Asset.Payload = payload
+	w.currentAsset.Asset.Payload = payload
 
 	return nil
 
@@ -175,13 +175,14 @@ func ReBuildGroup(sig *protobuffer.PBSignedAsset, key []byte) (w *Group, err err
 	}
 
 	w = &Group{}
-	w.PBSignedAsset = *sig
+	w.currentAsset = sig
 	w.setKey(key)
 	return w, nil
 }
 
 func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	w = &Group{}
+	w.currentAsset = &protobuffer.PBSignedAsset{}
 	//Asset
 	asset := &protobuffer.PBAsset{}
 	asset.Type = protobuffer.PBAssetType_Group
@@ -189,9 +190,9 @@ func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	group := &protobuffer.PBGroup{}
 	group.Type = groupType
 	//Compose
-	w.PBSignedAsset.Asset = asset
+	w.currentAsset.Asset = asset
 	payload := &protobuffer.PBAsset_Group{}
 	payload.Group = group
-	w.PBSignedAsset.Asset.Payload = payload
+	w.currentAsset.Asset.Payload = payload
 	return w
 }

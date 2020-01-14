@@ -17,9 +17,9 @@ type IDDoc struct {
 }
 
 type SignedAsset struct {
-	protobuffer.PBSignedAsset
-	store *Mapstore //Reference to object store (map or blockchain)
-	seed  []byte    //If available a seed to generate keys for object
+	currentAsset *protobuffer.PBSignedAsset
+	store        *Mapstore //Reference to object store (map or blockchain)
+	seed         []byte    //If available a seed to generate keys for object
 	//key           []byte                     //
 	previousAsset *protobuffer.PBSignedAsset //Reference to (if any) previous object with the same key
 }

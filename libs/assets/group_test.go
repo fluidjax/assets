@@ -27,7 +27,7 @@ func Test_Group(t *testing.T) {
 	i.store = store
 	i.Save()
 
-	w, err := NewGroup(i, protobuffer.PBGroupType_trusteeGroup)
+	w, err := NewGroup(i, protobuffer.PBGroupType_TrusteeGroup)
 	expression := "t1 + t2 + t3 > 1 "
 	participants := &map[string][]byte{
 		"t1": idT1.Key(),
@@ -39,19 +39,19 @@ func Test_Group(t *testing.T) {
 
 	b := proto.NewBuffer(nil)
 	b.SetDeterministic(true)
-	b.Marshal(w.Asset)
+	b.Marshal(w.currentAsset.Asset)
 	msg1, _ := b.DecodeRawBytes(true)
 	res1 := sha256.Sum256(msg1)
 	fmt.Println(hex.EncodeToString(res1[:]))
 
 	w.Sign(i)
 
-	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
+	assert.NotNil(t, w.currentAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
 
 	c := proto.NewBuffer(nil)
 	c.SetDeterministic(true)
-	c.Marshal(w.Asset)
+	c.Marshal(w.currentAsset.Asset)
 	msg2, _ := c.DecodeRawBytes(true)
 	res2 := sha256.Sum256(msg2)
 	fmt.Println(hex.EncodeToString(res2[:]))
@@ -80,7 +80,7 @@ func Test_Determinism(t *testing.T) {
 	//Non determinsitic serialization is intermittents, 10 times should be enough to show the error
 	//However occasionaly it may not occur on the run of every test, increase iterations if debuggging as issue.
 	for j := 0; j < 10; j++ {
-		w, _ := NewGroup(i, protobuffer.PBGroupType_trusteeGroup)
+		w, _ := NewGroup(i, protobuffer.PBGroupType_TrusteeGroup)
 		expression := "t1 + t2 + t3 > 1 "
 		participants := &map[string][]byte{
 			"t1": idT1.Key(),

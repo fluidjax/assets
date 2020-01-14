@@ -10,10 +10,10 @@ func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
 	if w == nil {
 		return nil, errors.New("Wallet is nil")
 	}
-	if w.PBSignedAsset.Asset == nil {
+	if w.currentAsset.Asset == nil {
 		return nil, errors.New("Wallet has no asset")
 	}
-	signatureAsset := w.PBSignedAsset.Asset
+	signatureAsset := w.currentAsset.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet, nil
 }
@@ -30,9 +30,9 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	w.PBSignedAsset.Asset.ID = walletKey
-	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_wallet
-	w.PBSignedAsset.Asset.Owner = iddoc.Key()
+	w.currentAsset.Asset.ID = walletKey
+	w.currentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.currentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
 	return w, nil
 }
@@ -43,10 +43,10 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 	if previousWallet.store != nil {
 		w.store = previousWallet.store
 	}
-	w.PBSignedAsset.Asset.ID = previousWallet.PBSignedAsset.Asset.ID
-	w.PBSignedAsset.Asset.Type = protobuffer.PBAssetType_wallet
-	w.PBSignedAsset.Asset.Owner = iddoc.Key() //new owner
-	w.previousAsset = &previousWallet.PBSignedAsset
+	w.currentAsset.Asset.ID = previousWallet.currentAsset.Asset.ID
+	w.currentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.currentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.previousAsset = previousWallet.currentAsset
 	return w, nil
 }
 
@@ -59,22 +59,24 @@ func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err e
 		return nil, errors.New("ReBuildIDDoc  - key is nil")
 	}
 	w = &Wallet{}
-	w.PBSignedAsset = *sig
+	w.currentAsset = sig
 	w.setKey(key)
 	return w, nil
 }
 
 func emptyWallet() (w *Wallet) {
 	w = &Wallet{}
+	w.currentAsset = &protobuffer.PBSignedAsset{}
+
 	//Asset
 	asset := &protobuffer.PBAsset{}
 	asset.Type = protobuffer.PBAssetType_wallet
 	//Wallet
 	wallet := &protobuffer.PBWallet{}
 	//Compose
-	w.PBSignedAsset.Asset = asset
+	w.currentAsset.Asset = asset
 	payload := &protobuffer.PBAsset_Wallet{}
 	payload.Wallet = wallet
-	w.PBSignedAsset.Asset.Payload = payload
+	w.currentAsset.Asset.Payload = payload
 	return w
 }

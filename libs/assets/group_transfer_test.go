@@ -19,7 +19,7 @@ func Test_GroupTruthTable(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_trusteeGroup)
+	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_TrusteeGroup)
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another based on previous, ie. AnUpdateGroup
@@ -42,7 +42,7 @@ func Test_GroupRuleAdd(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_trusteeGroup)
+	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_TrusteeGroup)
 	t1.store = idInitiator.store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
@@ -50,7 +50,7 @@ func Test_GroupRuleAdd(t *testing.T) {
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	sigT1, _ := t2.SignAsset(idT1)
@@ -91,7 +91,7 @@ func Test_GroupRuleAdd(t *testing.T) {
 func SetupTrusteeGroup(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *Group) {
 	tgInitiator, tgT1, tgT2, tgT3 := SetupIDDocs(store)
 
-	w, _ := NewGroup(tgInitiator, protobuffer.PBGroupType_trusteeGroup)
+	w, _ := NewGroup(tgInitiator, protobuffer.PBGroupType_TrusteeGroup)
 
 	expression := "x1 + x2 + x3 > 1 "
 	participants := &map[string][]byte{
@@ -119,7 +119,7 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idP, protobuffer.PBGroupType_trusteeGroup)
+	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 	t1.store = idP.store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
@@ -127,7 +127,7 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	sigT1, _ := t2.SignAsset(idT1)
@@ -171,7 +171,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 		"t3":  idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idP, protobuffer.PBGroupType_trusteeGroup)
+	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 	t1.store = idP.store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
@@ -179,7 +179,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	//sigT1, _ := t2.SignAsset(idT1)
@@ -227,7 +227,7 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idP, protobuffer.PBGroupType_trusteeGroup)
+	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 	t1.store = idP.store
 	t1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
@@ -235,7 +235,7 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	sigP, _ := t2.SignAsset(idP)
@@ -292,7 +292,7 @@ func Test_GroupTransferParser(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idP, protobuffer.PBGroupType_default)
+	t1, _ := NewGroup(idP, protobuffer.PBGroupType_Default)
 
 	groupPayload := t1.Payload()
 	groupPayload.Participants = *groupMembers
@@ -304,7 +304,7 @@ func Test_GroupTransferParser(t *testing.T) {
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 	t2Payload := t2.Payload()
 	t2Payload.Participants = *updatedGroupMembers
-	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	unchanged, added, deleted, err := t2.ParseChanges()
 

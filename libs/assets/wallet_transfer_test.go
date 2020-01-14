@@ -78,7 +78,7 @@ func Test_RuleAdd(t *testing.T) {
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)
@@ -152,7 +152,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)
@@ -207,7 +207,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)

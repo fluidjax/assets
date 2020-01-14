@@ -16,7 +16,6 @@ func Test_Wallet_Signing(t *testing.T) {
 	i.Save()
 	w, err := NewWallet(i)
 
-
 	sig1, err := w.SignAsset(i)
 	payload, err := w.SerializeAsset()
 	sig2, err := Sign(payload, i)
@@ -43,7 +42,7 @@ func Test_Wallet(t *testing.T) {
 	walletContents, _ := w.Payload()
 	walletContents.Description = testDescription
 	w.Sign(i)
-	assert.NotNil(t, w.PBSignedAsset.Signature, "Signature is empty")
+	assert.NotNil(t, w.currentAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")

@@ -32,7 +32,7 @@ func Test_Serialize_IDDoc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, data, "Result should not be nil")
 
-	i.PBSignedAsset.Asset = nil
+	i.currentAsset.Asset = nil
 	data, err = i.SerializeAsset()
 	assert.NotNil(t, err, "Error should not be nil")
 }

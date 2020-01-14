@@ -11,10 +11,10 @@ func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 	if i == nil {
 		return nil, errors.New("IDDoc is nil")
 	}
-	if i.PBSignedAsset.Asset == nil {
+	if i.currentAsset.Asset == nil {
 		return nil, errors.New("IDDoc has no asset")
 	}
-	return i.PBSignedAsset.Asset.GetIddoc(), nil
+	return i.currentAsset.Asset.GetIddoc(), nil
 }
 
 //NewIDDoc create a new IDDoc
@@ -44,6 +44,9 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	i = &IDDoc{}
 	i.seed = seed
 
+	//Signed Asset
+	x := protobuffer.PBSignedAsset{}
+	i.currentAsset = &x
 	//Asset
 	asset := &protobuffer.PBAsset{}
 
@@ -55,10 +58,10 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	iddoc.BLSPublicKey = blsPublicKey
 
 	//Compose
-	i.PBSignedAsset.Asset = asset
+	i.currentAsset.Asset = asset
 	Payload := &protobuffer.PBAsset_Iddoc{}
 	Payload.Iddoc = iddoc
-	i.PBSignedAsset.Asset.Payload = Payload
+	i.currentAsset.Asset.Payload = Payload
 	i.assetKeyFromPayloadHash()
 	return i, nil
 }
@@ -73,7 +76,7 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 		return nil, errors.New("ReBuildIDDoc  - key is nil")
 	}
 	i = &IDDoc{}
-	i.PBSignedAsset = *sig
+	i.currentAsset = sig
 	i.setKey(key)
 	return i, nil
 }
