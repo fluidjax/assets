@@ -650,15 +650,12 @@ func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	return s, err
 }
 
-// SerializeAsset
+// SerializeSignedAsset
 func (a *SignedAsset) SerializeSignedAsset() (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SerializeSignedAsset - SignAsset is nil")
 	}
-	b := a.currentAsset
-	c := a.currentAsset.Asset
-	s, err = proto.Marshal(c)
-	s, err = proto.Marshal(b)
+	s, err = proto.Marshal(a.currentAsset)
 	if err != nil {
 		s = nil
 	}

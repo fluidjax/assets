@@ -82,8 +82,8 @@ An [asset] is currently either an IDDoc, Wallet or Group
     Verify(data, sig, IDDoc)     - Verify the complete Asset signature with IDDoc's keys
     Load(store, key)             - retrieve SignedAsset from store
     New[asset]                   - create a new Object, pre-populate essential items
-    ReBuild[asset]               - Recreate a New[asset] based on a SignedAssett from the Store
-    NewUpdate[asset]             - Recreate a New[asset], based on and pointing too a previous Asset.
+    ReBuild[asset]               - Recreate a New[asset] based on a SignedAsset from the Store
+    NewUpdate[asset]             - Create a New[asset], based on and pointing too a previous Asset.
 ````
 
 ````
