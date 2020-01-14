@@ -85,9 +85,9 @@ func Test_Group(t *testing.T) {
 	assert.Equal(t, testDescription, retrievedGroup.Description, "Load/Save failed")
 }
 
-//Tests to ensure objects are determinsitically serialized - something protobuffers by default does not guarantee
-//This bug manifests when serializing maps, - their order when serialized is not guaranteed.
-//Fix is to use a fork of proto buffers https://github.com/gogo/protobuf
+// Tests to ensure objects are determinsitically serialized - something protobuffers by default does not guarantee
+// This bug manifests when serializing maps, - their order when serialized is not guaranteed.
+// Fix is to use a fork of proto buffers https://github.com/gogo/protobuf
 func Test_Determinism(t *testing.T) {
 	store := NewMapstore()
 	_, idT1, idT2, idT3 := SetupIDDocs(store)

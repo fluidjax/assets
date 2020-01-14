@@ -95,6 +95,10 @@ func Test_Parens_Bool(t *testing.T) {
 
 func Test_Threshold_Bool(t *testing.T) {
 	assert.True(t, BoolSolve("1+1+1+1 > 3"), "Bool operation fails")
+	assert.True(t, BoolSolve("(1+1+1+1) > 3"), "Bool operation fails")
+	assert.True(t, BoolSolve("(1+1+1+1 > 3)"), "Bool operation fails")
+	assert.False(t, BoolSolve("(1+1+1+1 > 4)"), "Bool operation fails")
+
 	assert.True(t, BoolSolve("0+1+1+1 > 2)"), "Bool operation fails")
 	assert.True(t, BoolSolve("0 | 0+1+1+1 > 2)"), "Bool operation fails")
 	assert.False(t, BoolSolve("0 | 0+1+1+0 > 2)"), "Bool operation fails")

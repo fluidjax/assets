@@ -36,7 +36,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//Sign - this Signs the Asset including the Payload
+// Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
@@ -63,7 +63,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	return nil
 }
 
-//Verify the Signature of the Asset (including the Payload)
+// Verify the Signature of the Asset (including the Payload)
 func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	if a == nil {
 		return false, errors.New("SignedAsset is nil")
@@ -90,7 +90,7 @@ func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	return true, nil
 }
 
-//Key Return the AssetKey
+// Key Return the AssetKey
 func (a *SignedAsset) Key() []byte {
 	if a == nil {
 		return nil
@@ -98,7 +98,7 @@ func (a *SignedAsset) Key() []byte {
 	return a.currentAsset.Asset.GetID()
 }
 
-//Save - write the entire Signed Asset to the store
+// Save - write the entire Signed Asset to the store
 func (a *SignedAsset) Save() error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
@@ -112,7 +112,7 @@ func (a *SignedAsset) Save() error {
 	return nil
 }
 
-//Load - read a SignedAsset from the store
+// Load - read a SignedAsset from the store
 func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	val, err := store.load(key)
 	if err != nil {
@@ -129,7 +129,7 @@ func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	return msg, nil
 }
 
-//Dump - Pretty print the Asset for debugging
+// Dump - Pretty print the Asset for debugging
 func (a *SignedAsset) Dump() {
 	if a == nil {
 		return
@@ -138,7 +138,7 @@ func (a *SignedAsset) Dump() {
 	fmt.Printf("%v", string(pp))
 }
 
-//AddTransfer - Add a new Transfer/Update rule to the Asset's Transferlist
+// AddTransfer - Add a new Transfer/Update rule to the Asset's Transferlist
 // transferType	enum of transfer type such as settlePush, swap, Transfer etc.
 // expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
 // participant		map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
@@ -278,7 +278,7 @@ func resolveExpression(store *Mapstore, expression string, participants map[stri
 // Unecessary abbreviations(Participants) are marked as 0s
 // Required signatures are marked with their abbreviation
 // eg.  [ 0 + t2 + t3 > 1 & p] = Transfer will occur if 2, 3 & Principals Signatures are present
-//	 [t1 + 0 + t3 > 1 & p]  = Transfer will occur if 1, 3 & Principals Signatures are present
+// [t1 + 0 + t3 > 1 & p]  = Transfer will occur if 1, 3 & Principals Signatures are present
 func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
 	if a == nil {
 		return nil, errors.New("TruthTable - SignedAsset is nil")
@@ -333,7 +333,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	return matchedTrue, nil
 }
 
-//Sign - generic Sign Function
+// Sign - generic Sign Function
 func Sign(msg []byte, iddoc *IDDoc) (signature []byte, err error) {
 	if iddoc == nil {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
@@ -553,7 +553,7 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	return true, nil
 }
 
-//assetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
+// assetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
 func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
 	if a == nil {
 		return errors.New("assetKeyFromPayloadHash - SignAsset is nil")
@@ -567,7 +567,7 @@ func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
 	return nil
 }
 
-//SetKey - set the asset Key
+// SetKey - set the asset Key
 func (a *SignedAsset) setKey(key []byte) {
 	if a == nil {
 		return
