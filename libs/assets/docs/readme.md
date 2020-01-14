@@ -1,4 +1,7 @@
 
+
+
+
 # Assets
 
 An asset object is a multi function representation of a piece of data.
@@ -76,7 +79,6 @@ An [asset] is currently either an IDDoc, Wallet or Group
     [asset].Key()                - get key of asset
     [asset].SerializeAsset       - Serialize the Asset for transmission/signing
     [asset].SerializeSignedAsset - Serialize the Signed Asset for storage
-     
 
     Sign(data, IDDoc)            - Sign the complete Asset  with IDDoc's keys
     Verify(data, sig, IDDoc)     - Verify the complete Asset signature with IDDoc's keys
@@ -95,3 +97,8 @@ An [asset] is currently either an IDDoc, Wallet or Group
     [asset].FullVerify           - Fully validate if a transfer is correct and allowed on chain
     [asset].ParseChanges         - breakdown the changes between old & new version of Asset
 ````
+
+
+
+
+
