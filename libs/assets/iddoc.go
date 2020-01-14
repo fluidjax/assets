@@ -7,6 +7,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//Payload - return the IDDoc payload
 func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 	if i == nil {
 		return nil, errors.New("IDDoc is nil")
@@ -66,7 +67,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	return i, nil
 }
 
-//Rebuild an existing Signed IDDoc into IDDocDeclaration object
+//ReBuildIDDoc rebuild an existing Signed IDDoc into IDDocDeclaration object
 //Seed can be manually set if known (ie. Is a local ID)
 func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err error) {
 	if sig == nil {

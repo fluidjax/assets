@@ -4,18 +4,22 @@ import "github.com/qredo/assets/libs/protobuffer"
 
 //Core Heirachcy
 
+//Group - Group Asset Type
 type Group struct {
 	SignedAsset
 }
 
+//Wallet - Wallet Asset Type
 type Wallet struct {
 	SignedAsset
 }
 
+//IDDoc - IDDoc Asset Type
 type IDDoc struct {
 	SignedAsset
 }
 
+//SignedAsset - Asset/Previous Asset Wrapper, holding temporary objects (seed) & previousVersions
 type SignedAsset struct {
 	currentAsset  *protobuffer.PBSignedAsset
 	store         *Mapstore                  //Reference to object store (map or blockchain)
@@ -23,7 +27,7 @@ type SignedAsset struct {
 	previousAsset *protobuffer.PBSignedAsset //Reference to (if any) previous object with the same key
 }
 
-//Use to hold ID & Signatures for expression parsing
+//SignatureID - Use to hold ID & Signatures for expression parsing
 type SignatureID struct {
 	IDDoc        *IDDoc
 	Abbreviation string
@@ -31,6 +35,7 @@ type SignatureID struct {
 	Signature    []byte
 }
 
+//TransferParticipant -
 type TransferParticipant struct {
 	IDDoc        *IDDoc
 	Abbreviation string

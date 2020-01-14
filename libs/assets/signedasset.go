@@ -17,10 +17,6 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-func Description() string {
-	return "hello"
-}
-
 //Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if a == nil {
@@ -122,7 +118,7 @@ func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
 	return msg, nil
 }
 
-//Pretty print the Asset for debugging
+//Dump - Pretty print the Asset for debugging
 func (a *SignedAsset) Dump() {
 	if a == nil {
 		return
@@ -131,7 +127,8 @@ func (a *SignedAsset) Dump() {
 	fmt.Printf("%v", string(pp))
 }
 
-/* AddTransfer
+//AddTransfer -
+/*
 Add a new Transfer/Update rule to the Asset's Transferlist
 transferType	enum of transfer type such as settlePush, swap, Transfer etc.
 expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
@@ -169,7 +166,8 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	return nil
 }
 
-/* IsValidTransfer
+//IsValidTransfer -
+/*
 Calculates if the boolean expression in the asset has been satisfied by the supplied signatures
 transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 */
@@ -283,15 +281,12 @@ func resolveExpression(store *Mapstore, expression string, participants map[stri
 	return expressionOut, display, nil
 }
 
-/*
-TruthTable
-For the supplied TransferType iterate through every combination of the existence or not of a participants signature.
-Every possible matchining combination is returned where that combination will result in an asset Transfer
-Unecessary abbreviations(Participants) are marked as 0s
-Required signatures are marked with their abbreviation
-eg.  [ 0 + t2 + t3 > 1 & p] = Transfer will occur if 2, 3 & Principals Signatures are present
-	 [t1 + 0 + t3 > 1 & p]  = Transfer will occur if 1, 3 & Principals Signatures are present
-*/
+// TruthTable - For the supplied TransferType iterate through every combination of the existence or not of a participants signature.
+// Every possible matchining combination is returned where that combination will result in an asset Transfer
+// Unecessary abbreviations(Participants) are marked as 0s
+// Required signatures are marked with their abbreviation
+// eg.  [ 0 + t2 + t3 > 1 & p] = Transfer will occur if 2, 3 & Principals Signatures are present
+//	 [t1 + 0 + t3 > 1 & p]  = Transfer will occur if 1, 3 & Principals Signatures are present
 func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]string, error) {
 	if a == nil {
 		return nil, errors.New("TruthTable - SignedAsset is nil")
@@ -371,11 +366,8 @@ func Sign(msg []byte, iddoc *IDDoc) (signature []byte, err error) {
 	return signature, nil
 }
 
-/*
-SignAsset
-returns the BLS signature of the serialize payload, signed with the BLS Private key of the supplied IDDoc
-note the IDDoc must contain the seed
-*/
+// SignAsset - returns the BLS signature of the serialize payload, signed with the BLS Private key of the supplied IDDoc
+// note the IDDoc must contain the seed
 func (a *SignedAsset) SignAsset(i *IDDoc) (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SignAsset - SignedAsset is nil")
@@ -391,7 +383,7 @@ func (a *SignedAsset) SignAsset(i *IDDoc) (s []byte, err error) {
 	return signature, err
 }
 
-//Verify - generic verify function
+// Verify - generic verify function
 func Verify(msg []byte, signature []byte, iddoc *IDDoc) (bool, error) {
 	idDocPayload, err := iddoc.Payload()
 	if err != nil {
@@ -405,11 +397,8 @@ func Verify(msg []byte, signature []byte, iddoc *IDDoc) (bool, error) {
 	return false, nil
 }
 
-/*
-VerifyAsset
-verifies the supplied signature with supplied IDDoc's BLS Public Key
-note the IDDoc seed is NOT required
-*/
+// VerifyAsset - verifies the supplied signature with supplied IDDoc's BLS Public Key
+// note the IDDoc seed is NOT required
 func (a *SignedAsset) VerifyAsset(signature []byte, i *IDDoc) (verify bool, err error) {
 	if a == nil {
 		return false, errors.New("VerifyAsset - SignedAsset is nil")
@@ -428,12 +417,9 @@ func (a *SignedAsset) VerifyAsset(signature []byte, i *IDDoc) (verify bool, err 
 	return Verify(msg, signature, i)
 }
 
-/*
-AggregatedSign
-Aggregates BLSPubKeys and BLSSignatures from supplied array of SignatureIDs
-Results are inserted into the object
-only error is returned
-*/
+// AggregatedSign  - Aggregates BLSPubKeys and BLSSignatures from supplied array of SignatureIDs
+// Results are inserted into the object
+// only error is returned
 func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	if a == nil {
 		return errors.New("AggregatedSign - SignedAsset is nil")
@@ -488,7 +474,7 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	return nil
 }
 
-//Aggregated the signatures and public keys for all Participants
+// buildSigKeys - Aggregated the signatures and public keys for all Participants
 func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
 	//For each supplied signer re-build a PublicKey
 	for _, abbreviation := range signers {
@@ -519,15 +505,10 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 	return transferSignatures, aggregatedPublicKey, nil
 }
 
-/*
-FullVerify
-Based on the previous Asset state, retrieve the IDDocs of all signers.
-publickeys = Aggregated the signers BLS Public Keys
-message = Create a Serialized Payload
-
-Using these fields verify the Signature in the transfer.
-
-*/
+// FullVerify - Based on the previous Asset state, retrieve the IDDocs of all signers.
+// publickeys = Aggregated the signers BLS Public Keys
+// message = Create a Serialized Payload
+// Using these fields verify the Signature in the transfer.
 func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool, error) {
 	if a == nil {
 		return false, errors.New("FullVerify - SignAsset is nil")
@@ -634,7 +615,7 @@ func (a *SignedAsset) setKey(key []byte) {
 	a.currentAsset.Asset.ID = key
 }
 
-// SerializeAsset
+// SerializeAsset - Serialize the Asset (PBAsset, not PBSignedAsset)
 func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SerializeAsset - SignAsset is nil")
@@ -650,7 +631,7 @@ func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	return s, err
 }
 
-// SerializeSignedAsset
+// SerializeSignedAsset - Serialize the entire PBSignedAsset
 func (a *SignedAsset) SerializeSignedAsset() (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SerializeSignedAsset - SignAsset is nil")

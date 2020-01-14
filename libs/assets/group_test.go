@@ -77,7 +77,7 @@ func Test_Determinism(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 
-	//Non determinsitic serialization is intermittents, 10 times should be enough to show the error
+	//Non determinsitic serialization is intermittent, 10 times should be enough to show the error
 	//However occasionaly it may not occur on the run of every test, increase iterations if debuggging as issue.
 	for j := 0; j < 10; j++ {
 		w, _ := NewGroup(i, protobuffer.PBGroupType_TrusteeGroup)

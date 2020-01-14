@@ -5,7 +5,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//WalletPayload - return the wallet Payload object
+//Payload - return the wallet Payload object
 func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
 	if w == nil {
 		return nil, errors.New("Wallet is nil")

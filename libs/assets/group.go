@@ -7,7 +7,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//GroupPayload - return the Group Payload object
+//Payload - return the Group Payload object
 func (w *Group) Payload() *protobuffer.PBGroup {
 	if w == nil {
 		return nil
@@ -60,6 +60,7 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	return w, nil
 }
 
+// ConfigureGroup - configure the Group
 func (w *Group) ConfigureGroup(expression string, participants *map[string][]byte, description string) error {
 	if w == nil {
 		return errors.New("ConfigureGroup - group is nil")
@@ -129,33 +130,33 @@ func (w *Group) ParseChanges() (unchanged, added, deleted [][]byte, err error) {
 		currentSet := w.Payload().Participants
 
 		//Unchanged & Deleted
-		for _, pId := range previousSet {
+		for _, pID := range previousSet {
 			found := false
-			for _, cId := range currentSet {
-				res := bytes.Compare(pId, cId)
+			for _, cID := range currentSet {
+				res := bytes.Compare(pID, cID)
 				if res == 0 {
 					found = true
 				}
 			}
 			if found == false {
-				deleted = append(deleted, pId)
+				deleted = append(deleted, pID)
 			} else {
-				unchanged = append(unchanged, pId)
+				unchanged = append(unchanged, pID)
 			}
 		}
 
 		//Added
 		//Unchanged & Deleted
-		for _, cId := range currentSet {
+		for _, cID := range currentSet {
 			found := false
-			for _, pId := range previousSet {
-				res := bytes.Compare(pId, cId)
+			for _, pID := range previousSet {
+				res := bytes.Compare(pID, cID)
 				if res == 0 {
 					found = true
 				}
 			}
 			if found == false {
-				added = append(added, cId)
+				added = append(added, cID)
 			}
 		}
 	default:

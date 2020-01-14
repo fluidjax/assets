@@ -4,15 +4,18 @@ import (
 	"encoding/hex"
 )
 
+//Mapstore -
 type Mapstore struct {
 	store map[string][]byte
 }
 
+//MapstoreInterface -
 type MapstoreInterface interface {
 	load([]byte) []byte
 	save([]byte, []byte)
 }
 
+//NewMapstore -
 func NewMapstore() *Mapstore {
 	m := &Mapstore{}
 	m.store = make(map[string][]byte)
