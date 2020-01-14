@@ -24,17 +24,13 @@ func Test_TruthTable(t *testing.T) {
 		"t2": idT2.Key(),
 		"t3": idT3.Key(),
 	}
-
 	w1, _ := NewWallet(idP)
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
-
 	//Create another based on previous, ie. AnUpdateWallet
 	res, err := w1.TruthTable(protobuffer.PBTransferType_settlePush)
 	assert.Nil(t, err, "Truth table return should be nil")
-
 	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
-
 }
 
 func SetupIDDocs(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
@@ -86,8 +82,6 @@ func Test_RuleAdd(t *testing.T) {
 	sigT2, _ := w2.SignAsset(idT2)
 	sigT3, _ := w2.SignAsset(idT3)
 
-	//Everything is sign by the s & Principal
-
 	// //Pass correct
 	transferSignatures1 := []SignatureID{
 		SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
@@ -133,9 +127,7 @@ func Test_RuleAdd(t *testing.T) {
 func Test_AggregationAndVerify(t *testing.T) {
 	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
-
 	idNewOwner, _ := NewIDDoc("NewOwner")
-
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
 		"p":  idP.Key(),
@@ -143,7 +135,6 @@ func Test_AggregationAndVerify(t *testing.T) {
 		"t2": idT2.Key(),
 		"t3": idT3.Key(),
 	}
-
 	w1, _ := NewWallet(idP)
 	w1.store = idP.store
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
@@ -188,9 +179,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
-
 	idNewOwner, _ := NewIDDoc("NewOwner")
-
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
 		"p":  idP.Key(),
@@ -220,7 +209,6 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 		SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
 		SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
 	}
-
 	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, validTransfer1, "Transfer should be invalid")
@@ -233,5 +221,4 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	verify, err := w2.FullVerify(w2.previousAsset)
 	assert.False(t, verify, "Verify should be False")
 	assert.NotNil(t, err, "Error should describe the failure")
-
 }

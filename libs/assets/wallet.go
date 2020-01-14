@@ -67,7 +67,6 @@ func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err e
 func emptyWallet() (w *Wallet) {
 	w = &Wallet{}
 	w.currentAsset = &protobuffer.PBSignedAsset{}
-
 	//Asset
 	asset := &protobuffer.PBAsset{}
 	asset.Type = protobuffer.PBAssetType_wallet

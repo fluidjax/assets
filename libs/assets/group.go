@@ -24,7 +24,6 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	}
 	w = emptyGroup(groupType)
 	w.store = iddoc.store
-
 	GroupKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
@@ -33,7 +32,6 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	w.currentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.currentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
-
 	return w, nil
 }
 
@@ -45,7 +43,6 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	if previousGroup == nil {
 		return nil, errors.New("NewUpdateGroup - supplied previousGroup is nil")
 	}
-
 	p := previousGroup.currentAsset.Asset.GetGroup()
 	previousType := p.GetType()
 
@@ -65,7 +62,6 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 	if w == nil {
 		return errors.New("ConfigureGroup - group is nil")
 	}
-
 	pbGroup := &protobuffer.PBGroup{}
 	if pbGroup.Participants == nil {
 		pbGroup.Participants = make(map[string][]byte)
@@ -73,23 +69,16 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 	for abbreviation, iddocID := range *participants {
 		pbGroup.Participants[abbreviation] = iddocID
 	}
-
 	if pbGroup.GroupFields == nil {
 		pbGroup.GroupFields = make(map[string][]byte)
 	}
-
 	pbGroup.Description = description
-
 	expressionBytes := []byte(expression)
-
 	pbGroup.GroupFields["expression"] = expressionBytes
-
 	payload := &protobuffer.PBAsset_Group{}
 	payload.Group = pbGroup
 	w.currentAsset.Asset.Payload = payload
-
 	return nil
-
 }
 
 //ParseChanges given as Group Asset which has a previous version
@@ -146,7 +135,6 @@ func (w *Group) ParseChanges() (unchanged, added, deleted [][]byte, err error) {
 		}
 
 		//Added
-		//Unchanged & Deleted
 		for _, cID := range currentSet {
 			found := false
 			for _, pID := range previousSet {

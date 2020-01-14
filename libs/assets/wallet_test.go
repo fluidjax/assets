@@ -21,13 +21,10 @@ func Test_Wallet_Signing(t *testing.T) {
 	sig2, err := Sign(payload, i)
 	res := bytes.Compare(sig1, sig2)
 	assert.True(t, res == 0, "Compare should be 0")
-
 	verify, err := w.VerifyAsset(sig1, i)
 	assert.True(t, verify, "Verify should be true")
-
 	verify2, err := Verify(payload, sig2, i)
 	assert.True(t, verify2, "Verify should be true")
-
 }
 
 func Test_Wallet(t *testing.T) {

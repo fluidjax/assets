@@ -25,7 +25,6 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if iddoc == nil {
 		return errors.New("Sign - supplied IDDoc is nil")
 	}
-
 	msg, err := proto.Marshal(a.currentAsset.Asset)
 	if err != nil {
 		return errors.Wrap(err, "Failed to Marshall Asset in Sign")
@@ -37,14 +36,10 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if err != nil {
 		return err
 	}
-
-	//fmt.Println(hex.EncodeToString(msg))
-
 	rc, signature := crypto.BLSSign(msg, blsSK)
 	if rc != 0 {
 		return errors.New("Failed to Sign Asset")
 	}
-
 	a.currentAsset.Signature = signature
 	return nil
 }
@@ -61,16 +56,13 @@ func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to Marshall Asset in Verify")
 	}
-
 	if iddoc == nil {
 		return false, errors.New("Verify - supplied IDDoc is nil")
 	}
-
 	payload, err := iddoc.Payload()
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to retrieve Payload")
 	}
-
 	blsPK := payload.GetBLSPublicKey()
 	rc := crypto.BLSVerify(msg, blsPK, a.currentAsset.Signature)
 	if rc != 0 {
@@ -127,13 +119,10 @@ func (a *SignedAsset) Dump() {
 	fmt.Printf("%v", string(pp))
 }
 
-//AddTransfer -
-/*
-Add a new Transfer/Update rule to the Asset's Transferlist
-transferType	enum of transfer type such as settlePush, swap, Transfer etc.
-expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
-participant		map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
-*/
+//AddTransfer - Add a new Transfer/Update rule to the Asset's Transferlist
+// transferType	enum of transfer type such as settlePush, swap, Transfer etc.
+// expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
+// participant		map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte) error {
 	if a == nil {
 		return errors.New("AddTransfer is nil")
@@ -147,7 +136,6 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	if len(*participants) == 0 {
 		return errors.New("AddTransfer - participants is 0 length")
 	}
-
 	transferRule := &protobuffer.PBTransfer{}
 	transferRule.Type = transferType
 	transferRule.Expression = expression
@@ -166,11 +154,8 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	return nil
 }
 
-//IsValidTransfer -
-/*
-Calculates if the boolean expression in the asset has been satisfied by the supplied signatures
-transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
-*/
+// IsValidTransfer - Calculates if the boolean expression in the asset has been satisfied by the supplied signatures
+// transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, transferSignatures []SignatureID) (bool, error) {
 	if a == nil {
 		return false, errors.New("IsValidTransfer - SignedAsset is nil")
@@ -181,7 +166,6 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 	if len(transferSignatures) == 0 {
 		return false, errors.New("IsValidTransfer - transferSignatures is 0 length")
 	}
-
 	transferListMapString := transferType.String()
 	previousAsset := a.previousAsset
 	if previousAsset == nil {
@@ -200,15 +184,12 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 	return result, nil
 }
 
-/*resolveExpression
-Resolve the asset's expression by substituting 0's & 1's depending on whether signatures are available for each abbreviation/participant
-expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
-participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
-transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
-recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
-*/
+// resolveExpression - Resolve the asset's expression by substituting 0's & 1's depending on whether signatures are available for each abbreviation/participant
+// expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
+// participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
+// transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
+// recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
 func resolveExpression(store *Mapstore, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
-
 	if expression == "" {
 		return "", "", errors.New("resolveExpression - expression is empty")
 	}
@@ -229,33 +210,26 @@ func resolveExpression(store *Mapstore, expression string, participants map[stri
 	//Loop all the participants from previous Asset
 	for abbreviation, id := range participants {
 		found := false
-
 		participant, err := Load(store, id)
 		if err != nil {
 			return "", "", errors.New("Fail to retrieve participant")
 		}
-
 		switch participant.GetAsset().GetPayload().(type) {
 		case *protobuffer.PBAsset_Group:
-			//Recurse into the Group here
-
 			if participant.Asset.Type != protobuffer.PBAssetType_Group {
 				break
 			}
-
 			Group, err := ReBuildGroup(participant, id)
 			if err != nil {
 				return "", "", errors.Wrap(err, "Failed to Rebuild  Group in resolve Expression")
 			}
 			recursionExpression := string(Group.Payload().GetGroupFields()["expression"])
 			recursionParticipants := Group.Payload().Participants
-
 			recursionPrefix := prefix + abbreviation + "."
 			subExpression, subDisplay, err := resolveExpression(store, recursionExpression, recursionParticipants, transferSignatures, recursionPrefix)
 			if err != nil {
 				return "", "", errors.Wrap(err, "Failed to Resolve Recursive Expression")
 			}
-
 			expressionOut = strings.ReplaceAll(expressionOut, abbreviation, " ( "+subExpression+" ) ")
 			display = strings.ReplaceAll(display, abbreviation, " ( "+subDisplay+" ) ")
 
@@ -276,7 +250,6 @@ func resolveExpression(store *Mapstore, expression string, participants map[stri
 				expressionOut = strings.ReplaceAll(expressionOut, abbreviation, "0")
 			}
 		}
-
 	}
 	return expressionOut, display, nil
 }
@@ -291,14 +264,12 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	if a == nil {
 		return nil, errors.New("TruthTable - SignedAsset is nil")
 	}
-
 	transferListMapString := transferType.String()
 	transfer := a.currentAsset.Asset.Transferlist[transferListMapString]
 	if transfer == nil {
 		return nil, errors.New("No Transfer Found")
 	}
 	expression := transfer.Expression
-
 	totalParticipants := len(transfer.Participants)
 	var participantArray []TransferParticipant
 	for key, idkey := range transfer.Participants {
@@ -316,17 +287,14 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 		}
 		participantArray = append(participantArray, p)
 	}
-
 	var j int64
 	var matchedTrue []string
-
 	for j = 0; j < int64(math.Pow(2, float64(totalParticipants))); j++ {
 		var transferSignatures []SignatureID
 		for i := 0; i < totalParticipants; i++ {
 			pos := int64(math.Pow(2, float64(i)))
 			val := j & pos
 			iddoc := participantArray[i].IDDoc
-
 			if val == 0 {
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: nil})
 			} else {
@@ -337,7 +305,6 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 		if err != nil {
 			return nil, err
 		}
-
 		result := boolparser.BoolSolve(resolvedExpression)
 		if result == true {
 			matchedTrue = append(matchedTrue, display)
@@ -427,16 +394,13 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	if transferSignatures == nil {
 		return errors.New("AggregatedSign - signature is nil")
 	}
-
 	if transferSignatures == nil || len(transferSignatures) == 0 {
 		return errors.New("Invalid transferSignatures BLS Aggregation")
 	}
-
 	var aggregatedSig []byte
 	rc := 0
 	var aggregatedPublicKey []byte
 	signers := make(map[string][]byte)
-
 	for i := 0; i < len(transferSignatures); i++ {
 		sig := transferSignatures[i].Signature
 		pubKey := transferSignatures[i].IDDoc.currentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
@@ -483,7 +447,6 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 		if err != nil {
 			return nil, nil, errors.New("Failed to retieve IDDoc")
 		}
-
 		switch signedAsset.GetAsset().GetPayload().(type) {
 		case *protobuffer.PBAsset_Group:
 			print("recurse")
@@ -513,32 +476,20 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	if a == nil {
 		return false, errors.New("FullVerify - SignAsset is nil")
 	}
-
 	transferType := a.currentAsset.Asset.TransferType
 	var transferSignatures []SignatureID
-
 	var aggregatedPublicKey []byte
 	if previousAsset == nil {
 		return false, errors.New("No Previous Asset supplied for Verify")
 	}
 	transferList := previousAsset.GetAsset().GetTransferlist()
 	_ = transferList
-	//currentTransfer := transferList[transferType.String()]
-
-	// transferSignatures, aggregatedPublicKey, err := buildSigKeys(a.store, a.Signers, currentTransfer, aggregatedPublicKey, transferSignatures)
-	// if err != nil {
-	// 	return false, errors.Wrap(err, "Failed to Aggregated Signs in FullVerify")
-	// }
-
-	//Get all Signers and their IDDocs
-
 	//For each supplied signer re-build a PublicKey
 	for abbreviation, participantID := range a.currentAsset.Signers {
 		signedAsset, err := Load(a.store, participantID)
 		if err != nil {
 			return false, errors.New("Failed to retieve IDDoc")
 		}
-
 		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
 		if err != nil {
 			return false, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
@@ -549,10 +500,8 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 		} else {
 			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
 		}
-
 		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
 		transferSignatures = append(transferSignatures, sigID)
-
 	}
 
 	//check the one in the object matches the one just created
@@ -561,7 +510,6 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	if res != 0 {
 		return false, errors.New("Generated Aggregated Public Key doesnt match the one used to sign")
 	}
-
 	//Get Message
 	data, err := a.SerializeAsset()
 	if err != nil {
@@ -569,17 +517,13 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	}
 	//Retrieve the Sig
 	aggregatedSig := a.currentAsset.GetSignature()
-
 	//Verify
 	rc := crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
-
 	if rc != 0 {
 		return false, errors.New("Signature failed to Verify")
 	}
-
 	//As the Signature Verified, we know that each  Signature:[]byte("UNKNOWN") which was used to generate the aggregate Signature
 	//is valid, but currently unknown, we have enough info to do an IsValidTransfer
-
 	validTransfer, err := a.IsValidTransfer(transferType, transferSignatures)
 	if err != nil {
 		return false, errors.Wrap(err, "Fail to fullVerify asset - checking IsValidTransfer failed")
@@ -587,7 +531,6 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	if validTransfer == false {
 		return false, errors.New("Invalid transfer - insufficient signatures")
 	}
-
 	return true, nil
 }
 
@@ -596,7 +539,6 @@ func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
 	if a == nil {
 		return errors.New("assetKeyFromPayloadHash - SignAsset is nil")
 	}
-
 	data, err := a.SerializeAsset()
 	if err != nil {
 		return err
@@ -611,7 +553,6 @@ func (a *SignedAsset) setKey(key []byte) {
 	if a == nil {
 		return
 	}
-
 	a.currentAsset.Asset.ID = key
 }
 
@@ -620,7 +561,6 @@ func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SerializeAsset - SignAsset is nil")
 	}
-
 	if a.currentAsset.Asset == nil {
 		return nil, errors.New("Can't serialize nil payload")
 	}
