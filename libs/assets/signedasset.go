@@ -21,6 +21,7 @@ func Description() string {
 	return "hello"
 }
 
+//Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
@@ -52,6 +53,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	return nil
 }
 
+//Verify the Signature of the Asset (including the Payload)
 func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	if a == nil {
 		return false, errors.New("SignedAsset is nil")
@@ -350,70 +352,80 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	return matchedTrue, nil
 }
 
-/*
-SignPayload
-returns the BLS signature of the serialize payload, signed with the BLS Private key of the supplied IDDoc
-note the IDDoc must contain the seed
-*/
-func (a *SignedAsset) SignPayload(i *IDDoc) (s []byte, err error) {
-	if a == nil {
-		return nil, errors.New("SignPayload - SignedAsset is nil")
+//Sign - generic Sign Function
+func Sign(msg []byte, iddoc *IDDoc) (signature []byte, err error) {
+	if iddoc == nil {
+		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
-	if i == nil {
-		return nil, errors.New("Verify - supplied IDDoc is nil")
+	if iddoc.seed == nil {
+		return nil, errors.New("Unable to Sign IDDoc - No Seed")
 	}
-
-	data, err := a.serializePayload()
-	if err != nil {
-		return nil, errors.New("Failed to serialize payload")
-	}
-	if i.seed == nil {
-		return nil, errors.New("No Seed in Supplied IDDoc")
-	}
-	_, blsSK, err := keystore.GenerateBLSKeys(i.seed)
+	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.seed)
 	if err != nil {
 		return nil, err
 	}
-	rc, signature := crypto.BLSSign(data, blsSK)
+	rc, signature := crypto.BLSSign(msg, blsSK)
 	if rc != 0 {
-		return nil, errors.New("Failed to sign IDDoc")
+		return nil, errors.New("Failed to Sign Asset")
 	}
 	return signature, nil
 }
 
 /*
-VerifyPayload
-verifies the supplied signature with supplied IDDoc's BLS Public Key
-note the IDDoc seed is NOT required
+SignAsset
+returns the BLS signature of the serialize payload, signed with the BLS Private key of the supplied IDDoc
+note the IDDoc must contain the seed
 */
-func (a *SignedAsset) VerifyPayload(signature []byte, i *IDDoc) (verify bool, err error) {
+func (a *SignedAsset) SignAsset(i *IDDoc) (s []byte, err error) {
 	if a == nil {
-		return false, errors.New("VerifyPayload - SignedAsset is nil")
+		return nil, errors.New("SignAsset - SignedAsset is nil")
 	}
 	if i == nil {
-		return false, errors.New("VerifyPayload - supplied IDDoc is nil")
+		return nil, errors.New("Verify - supplied IDDoc is nil")
 	}
-	if signature == nil {
-		return false, errors.New("VerifyPayload - signature is nil")
-	}
-	//Message
-	data, err := a.serializePayload()
+	msg, err := a.SerializeAsset()
 	if err != nil {
-		return false, errors.New("Failed to serialize payload")
+		return nil, errors.New("Failed to serialize payload")
 	}
-	//Public Key
-	payload, err := i.Payload()
+	signature, err := Sign(msg, i)
+	return signature, err
+}
+
+//Verify - generic verify function
+func Verify(msg []byte, signature []byte, iddoc *IDDoc) (bool, error) {
+	idDocPayload, err := iddoc.Payload()
 	if err != nil {
-		return false, errors.Wrap(err, "Failed to retrieve Payload")
+		return false, err
 	}
-
-	blsPK := payload.GetBLSPublicKey()
-
-	rc := crypto.BLSVerify(data, blsPK, signature)
+	blsPK := idDocPayload.GetBLSPublicKey()
+	rc := crypto.BLSVerify(msg, blsPK, signature)
 	if rc == 0 {
 		return true, nil
 	}
 	return false, nil
+}
+
+/*
+VerifyAsset
+verifies the supplied signature with supplied IDDoc's BLS Public Key
+note the IDDoc seed is NOT required
+*/
+func (a *SignedAsset) VerifyAsset(signature []byte, i *IDDoc) (verify bool, err error) {
+	if a == nil {
+		return false, errors.New("VerifyAsset - SignedAsset is nil")
+	}
+	if i == nil {
+		return false, errors.New("VerifyAsset - supplied IDDoc is nil")
+	}
+	if signature == nil {
+		return false, errors.New("VerifyAsset - signature is nil")
+	}
+	//Message
+	msg, err := a.SerializeAsset()
+	if err != nil {
+		return false, errors.New("Failed to serialize payload")
+	}
+	return Verify(msg, signature, i)
 }
 
 /*
@@ -465,7 +477,7 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	a.PublicKey = aggregatedPublicKey
 	a.Signature = aggregatedSig
 	a.Signers = signers
-	data, err := a.serializePayload()
+	data, err := a.SerializeAsset()
 	if err != nil {
 		return errors.Wrap(err, "Fail to Aggregated Signatures")
 	}
@@ -570,7 +582,7 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 	}
 
 	//Get Message
-	data, err := a.serializePayload()
+	data, err := a.SerializeAsset()
 	if err != nil {
 		return false, errors.New("Failed to serialize payload")
 	}
@@ -604,7 +616,7 @@ func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
 		return errors.New("assetKeyFromPayloadHash - SignAsset is nil")
 	}
 
-	data, err := a.serializePayload()
+	data, err := a.SerializeAsset()
 	if err != nil {
 		return err
 	}
@@ -622,17 +634,14 @@ func (a *SignedAsset) setKey(key []byte) {
 	a.Asset.ID = key
 }
 
-/*
-serializePayload
-serialize the Assets payload (oneof) into a byte
-*/
-func (a *SignedAsset) serializePayload() (s []byte, err error) {
+// SerializeAsset
+func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	if a == nil {
-		return nil, errors.New("serializePayload - SignAsset is nil")
+		return nil, errors.New("SerializeAsset - SignAsset is nil")
 	}
 
 	if a.PBSignedAsset.Asset == nil {
-		return nil, errors.New("Can't serializa a nil payload")
+		return nil, errors.New("Can't serialize nil payload")
 	}
 	s, err = proto.Marshal(a.PBSignedAsset.Asset)
 	if err != nil {
@@ -640,3 +649,18 @@ func (a *SignedAsset) serializePayload() (s []byte, err error) {
 	}
 	return s, err
 }
+
+// // SerializeAsset
+// func (a *SignedAsset) SerializeSignedAsset() (s []byte, err error) {
+// 	if a == nil {
+// 		return nil, errors.New("SerializeSignedAsset - SignAsset is nil")
+// 	}
+// 	b := a.PBSignedAsset
+// 	c := a.PBSignedAsset.Asset
+// 	s, err = proto.Marshal(c)
+// 	s, err = proto.Marshal(b)
+// 	if err != nil {
+// 		s = nil
+// 	}
+// 	return s, err
+// }

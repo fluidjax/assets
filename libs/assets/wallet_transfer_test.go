@@ -81,10 +81,10 @@ func Test_RuleAdd(t *testing.T) {
 	w2.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
-	sigP, _ := w2.SignPayload(idP)
-	sigT1, _ := w2.SignPayload(idT1)
-	sigT2, _ := w2.SignPayload(idT2)
-	sigT3, _ := w2.SignPayload(idT3)
+	sigP, _ := w2.SignAsset(idP)
+	sigT1, _ := w2.SignAsset(idT1)
+	sigT2, _ := w2.SignAsset(idT2)
+	sigT3, _ := w2.SignAsset(idT3)
 
 	//Everything is sign by the s & Principal
 
@@ -155,10 +155,10 @@ func Test_AggregationAndVerify(t *testing.T) {
 	w2.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
-	sigP, _ := w2.SignPayload(idP)
-	sigT1, _ := w2.SignPayload(idT1)
-	sigT2, _ := w2.SignPayload(idT2)
-	sigT3, _ := w2.SignPayload(idT3)
+	sigP, _ := w2.SignAsset(idP)
+	sigT1, _ := w2.SignAsset(idT1)
+	sigT2, _ := w2.SignAsset(idT2)
+	sigT3, _ := w2.SignAsset(idT3)
 
 	//Everything is sign by the s & Principal
 
@@ -210,8 +210,8 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	w2.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
-	sigP, _ := w2.SignPayload(idP)
-	sigT1, _ := w2.SignPayload(idT1)
+	sigP, _ := w2.SignAsset(idP)
+	sigT1, _ := w2.SignAsset(idT1)
 
 	//Everything is sign by the s & Principal
 

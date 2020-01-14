@@ -31,7 +31,7 @@ message PBAsset {
 
 enum PBAssetType {
 	wallet      = 0;
-	Group     = 1;
+	Group       = 1;
 	iddoc       = 2;
 }                              
 enum PBTransferType {
@@ -42,7 +42,7 @@ enum PBTransferType {
     transferPull        = 4;
     swap                = 5;
     load                = 6;
-    GroupDefinition = 7;
+    GroupDefinition     = 7;
 }
 
 message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed

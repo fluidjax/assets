@@ -69,12 +69,17 @@ An [asset] is currently either an IDDoc, Wallet or Group
 
 ````
     [asset].Payload              - retrieve the Payload object 
-    [asset].Verify               - Verify the signed Assset
-    [asset].Sign                 - Sign asset
+    [asset].Verify               - Verify the signed PBAsset (including Payload)
+    [asset].Sign                 - Sign the PBAsset (including Payload)
     [asset].Save                 - save asset to store
     [asset].Dump                 - pretty print asset
     [asset].Key()                - get key of asset
+    [asset].SerializeAsset       - Serialize the Asset for transmission/signing
+    [asset].SerializeSignedAsset - Serialize the Signed Asset for storage
+     
 
+    Sign(data, IDDoc)            - Sign the complete Asset  with IDDoc's keys
+    Verify(data, sig, IDDoc)     - Verify the complete Asset signature with IDDoc's keys
     Load(store, key)             - retrieve SignedAsset from store
     New[asset]                   - create a new Object, pre-populate essential items
     ReBuild[asset]               - Recreate a New[asset] based on a SignedAssett from the Store
@@ -88,8 +93,5 @@ An [asset] is currently either an IDDoc, Wallet or Group
     [asset].TruthTable           - a truth table to all sucessful permutation of signatures
     [asset].AggregatedSign       - Aggregate the supplied Signatures/PubKeys and add to Asset
     [asset].FullVerify           - Fully validate if a transfer is correct and allowed on chain
-
-    [asset].SignPayload          - Sign the payload -  does this when required
-    [asset].VerifyPayload        - verify payload sig
     [asset].ParseChanges         - breakdown the changes between old & new version of Asset
 ````

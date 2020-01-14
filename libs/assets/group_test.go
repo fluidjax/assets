@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func Test_Group(t *testing.T) {
 
 	store := NewMapstore()
@@ -89,8 +88,8 @@ func Test_Determinism(t *testing.T) {
 			"t3": idT3.Key(),
 		}
 		w.ConfigureGroup(expression, participants, testDescription)
-		q1, _ := w.serializePayload()
-		q2, _ := w.serializePayload()
+		q1, _ := w.SerializeAsset()
+		q2, _ := w.SerializeAsset()
 
 		resq := bytes.Compare(q1, q2)
 		assert.True(t, resq == 0, "Two consecutives serializations yield different results")

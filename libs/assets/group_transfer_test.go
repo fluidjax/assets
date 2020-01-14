@@ -53,9 +53,9 @@ func Test_GroupRuleAdd(t *testing.T) {
 	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
-	sigT1, _ := t2.SignPayload(idT1)
-	sigT2, _ := t2.SignPayload(idT2)
-	sigT3, _ := t2.SignPayload(idT3)
+	sigT1, _ := t2.SignAsset(idT1)
+	sigT2, _ := t2.SignAsset(idT2)
+	sigT3, _ := t2.SignAsset(idT3)
 
 	//Everything is sign by the s & Principal
 
@@ -130,9 +130,9 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
-	sigT1, _ := t2.SignPayload(idT1)
-	sigT2, _ := t2.SignPayload(idT2)
-	sigT3, _ := t2.SignPayload(idT3)
+	sigT1, _ := t2.SignAsset(idT1)
+	sigT2, _ := t2.SignAsset(idT2)
+	sigT3, _ := t2.SignAsset(idT3)
 
 	//Everything is sign by the s & Principal
 
@@ -182,13 +182,13 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	t2.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
-	//sigT1, _ := t2.SignPayload(idT1)
-	sigT2, _ := t2.SignPayload(idT2)
-	sigT3, _ := t2.SignPayload(idT3)
+	//sigT1, _ := t2.SignAsset(idT1)
+	sigT2, _ := t2.SignAsset(idT2)
+	sigT3, _ := t2.SignAsset(idT3)
 
-	sigX1, _ := t2.SignPayload(idX1)
-	sigX2, _ := t2.SignPayload(idX2)
-	//sigX3, _ := t2.SignPayload(idX3)
+	sigX1, _ := t2.SignAsset(idX1)
+	sigX2, _ := t2.SignAsset(idX2)
+	//sigX3, _ := t2.SignAsset(idX3)
 
 	//Everything is sign by the s & Principal
 
@@ -238,8 +238,8 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 	t2.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
-	sigP, _ := t2.SignPayload(idP)
-	sigT1, _ := t2.SignPayload(idT1)
+	sigP, _ := t2.SignAsset(idP)
+	sigT1, _ := t2.SignAsset(idT1)
 
 	//Everything is sign by the s & Principal
 
@@ -324,9 +324,9 @@ func Test_GroupTransferParser(t *testing.T) {
 	assert.True(t, contains(unchanged, groupMember3.Key()), "Invalid Unchanged Parsing 2")
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
-	sigT1, _ := t2.SignPayload(idT1)
-	sigT2, _ := t2.SignPayload(idT2)
-	sigT3, _ := t2.SignPayload(idT3)
+	sigT1, _ := t2.SignAsset(idT1)
+	sigT2, _ := t2.SignAsset(idT2)
+	sigT3, _ := t2.SignAsset(idT3)
 
 	//Everything is sign by the s & Principal
 
