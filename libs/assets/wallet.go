@@ -29,10 +29,10 @@ func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
 	if w == nil {
 		return nil, errors.New("Wallet is nil")
 	}
-	if w.currentAsset.Asset == nil {
+	if w.CurrentAsset.Asset == nil {
 		return nil, errors.New("Wallet has no asset")
 	}
-	signatureAsset := w.currentAsset.Asset
+	signatureAsset := w.CurrentAsset.Asset
 	wallet := signatureAsset.GetWallet()
 	return wallet, nil
 }
@@ -43,15 +43,15 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
 	w = emptyWallet()
-	w.store = iddoc.store
+	w.Store = iddoc.Store
 
 	walletKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	w.currentAsset.Asset.ID = walletKey
-	w.currentAsset.Asset.Type = protobuffer.PBAssetType_wallet
-	w.currentAsset.Asset.Owner = iddoc.Key()
+	w.CurrentAsset.Asset.ID = walletKey
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.CurrentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
 	return w, nil
 }
@@ -59,13 +59,13 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 //NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
 	w = emptyWallet()
-	if previousWallet.store != nil {
-		w.store = previousWallet.store
+	if previousWallet.Store != nil {
+		w.Store = previousWallet.Store
 	}
-	w.currentAsset.Asset.ID = previousWallet.currentAsset.Asset.ID
-	w.currentAsset.Asset.Type = protobuffer.PBAssetType_wallet
-	w.currentAsset.Asset.Owner = iddoc.Key() //new owner
-	w.previousAsset = previousWallet.currentAsset
+	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.PreviousAsset = previousWallet.CurrentAsset
 	return w, nil
 }
 
@@ -78,23 +78,23 @@ func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err e
 		return nil, errors.New("ReBuildIDDoc  - key is nil")
 	}
 	w = &Wallet{}
-	w.currentAsset = sig
+	w.CurrentAsset = sig
 	w.setKey(key)
 	return w, nil
 }
 
 func emptyWallet() (w *Wallet) {
 	w = &Wallet{}
-	w.currentAsset = &protobuffer.PBSignedAsset{}
+	w.CurrentAsset = &protobuffer.PBSignedAsset{}
 	//Asset
 	asset := &protobuffer.PBAsset{}
 	asset.Type = protobuffer.PBAssetType_wallet
 	//Wallet
 	wallet := &protobuffer.PBWallet{}
 	//Compose
-	w.currentAsset.Asset = asset
+	w.CurrentAsset.Asset = asset
 	payload := &protobuffer.PBAsset_Wallet{}
 	payload.Wallet = wallet
-	w.currentAsset.Asset.Payload = payload
+	w.CurrentAsset.Asset.Payload = payload
 	return w
 }

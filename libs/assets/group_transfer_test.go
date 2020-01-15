@@ -62,14 +62,14 @@ func Test_GroupRuleAdd(t *testing.T) {
 	}
 
 	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_TrusteeGroup)
-	t1.store = idInitiator.store
+	t1.Store = idInitiator.Store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	sigT1, _ := t2.SignAsset(idT1)
@@ -119,7 +119,7 @@ func SetupTrusteeGroup(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *Group) {
 		"x3": tgT3.Key(),
 	}
 	w.ConfigureGroup(expression, participants, "Trsutee Group Test Description")
-	w.store = store
+	w.Store = store
 	w.Save()
 
 	return tgT1, tgT2, tgT3, w
@@ -139,14 +139,14 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 	}
 
 	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
-	t1.store = idP.store
+	t1.Store = idP.Store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	sigT1, _ := t2.SignAsset(idT1)
@@ -171,7 +171,7 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.previousAsset)
+	verify, err := t2.FullVerify(t2.PreviousAsset)
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 
@@ -191,14 +191,14 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	}
 
 	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
-	t1.store = idP.store
+	t1.Store = idP.Store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	//sigT1, _ := t2.SignAsset(idT1)
@@ -228,7 +228,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.previousAsset)
+	verify, err := t2.FullVerify(t2.PreviousAsset)
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 }
@@ -247,14 +247,14 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 	}
 
 	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
-	t1.store = idP.store
+	t1.Store = idP.Store
 	t1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	t2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Group with the TransferType set!
 	sigP, _ := t2.SignAsset(idP)
@@ -277,7 +277,7 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.previousAsset)
+	verify, err := t2.FullVerify(t2.PreviousAsset)
 	assert.False(t, verify, "Verify should be False")
 	assert.NotNil(t, err, "Error should describe the failure")
 }
@@ -316,14 +316,14 @@ func Test_GroupTransferParser(t *testing.T) {
 	groupPayload := t1.Payload()
 	groupPayload.Participants = *groupMembers
 
-	t1.store = idP.store
+	t1.Store = idP.Store
 	t1.AddTransfer(protobuffer.PBTransferType_transferPush, expression, participants)
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
 	t2Payload := t2.Payload()
 	t2Payload.Participants = *updatedGroupMembers
-	t2.currentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
+	t2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_transferPush
 
 	unchanged, added, deleted, err := t2.ParseChanges()
 
@@ -365,7 +365,7 @@ func Test_GroupTransferParser(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.previousAsset)
+	verify, err := t2.FullVerify(t2.PreviousAsset)
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 }

@@ -43,7 +43,7 @@ func Test_Group(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	i.store = store
+	i.Store = store
 	i.Save()
 
 	w, err := NewGroup(i, protobuffer.PBGroupType_TrusteeGroup)
@@ -58,19 +58,19 @@ func Test_Group(t *testing.T) {
 
 	b := proto.NewBuffer(nil)
 	b.SetDeterministic(true)
-	b.Marshal(w.currentAsset.Asset)
+	b.Marshal(w.CurrentAsset.Asset)
 	msg1, _ := b.DecodeRawBytes(true)
 	res1 := sha256.Sum256(msg1)
 	fmt.Println(hex.EncodeToString(res1[:]))
 
 	w.Sign(i)
 
-	assert.NotNil(t, w.currentAsset.Signature, "Signature is empty")
+	assert.NotNil(t, w.CurrentAsset.Signature, "Signature is empty")
 	res, err := w.Verify(i)
 
 	c := proto.NewBuffer(nil)
 	c.SetDeterministic(true)
-	c.Marshal(w.currentAsset.Asset)
+	c.Marshal(w.CurrentAsset.Asset)
 	msg2, _ := c.DecodeRawBytes(true)
 	res2 := sha256.Sum256(msg2)
 	fmt.Println(hex.EncodeToString(res2[:]))
@@ -79,7 +79,7 @@ func Test_Group(t *testing.T) {
 	assert.True(t, res, "Verify should be true")
 	w.Save()
 
-	retrieved, err := Load(i.store, w.Key())
+	retrieved, err := Load(i.Store, w.Key())
 	retrievedGroup := retrieved.Asset.GetGroup()
 
 	assert.Equal(t, testDescription, retrievedGroup.Description, "Load/Save failed")

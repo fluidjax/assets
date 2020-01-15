@@ -36,6 +36,11 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+type ChainPostable interface {
+	SerializeSignedAsset() ([]byte, error)
+	Key() []byte
+}
+
 // Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if a == nil {
@@ -44,14 +49,14 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if iddoc == nil {
 		return errors.New("Sign - supplied IDDoc is nil")
 	}
-	msg, err := proto.Marshal(a.currentAsset.Asset)
+	msg, err := proto.Marshal(a.CurrentAsset.Asset)
 	if err != nil {
 		return errors.Wrap(err, "Failed to Marshall Asset in Sign")
 	}
-	if iddoc.seed == nil {
+	if iddoc.Seed == nil {
 		return errors.New("Unable to Sign IDDoc - No Seed")
 	}
-	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.seed)
+	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.Seed)
 	if err != nil {
 		return err
 	}
@@ -59,7 +64,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if rc != 0 {
 		return errors.New("Failed to Sign Asset")
 	}
-	a.currentAsset.Signature = signature
+	a.CurrentAsset.Signature = signature
 	return nil
 }
 
@@ -71,7 +76,7 @@ func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	if iddoc == nil {
 		return false, errors.New("Verify - supplied IDDoc is nil")
 	}
-	msg, err := proto.Marshal(a.currentAsset.Asset)
+	msg, err := proto.Marshal(a.CurrentAsset.Asset)
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to Marshall Asset in Verify")
 	}
@@ -83,7 +88,7 @@ func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 		return false, errors.Wrap(err, "Failed to retrieve Payload")
 	}
 	blsPK := payload.GetBLSPublicKey()
-	rc := crypto.BLSVerify(msg, blsPK, a.currentAsset.Signature)
+	rc := crypto.BLSVerify(msg, blsPK, a.CurrentAsset.Signature)
 	if rc != 0 {
 		return false, errors.New("Verification of Asset failed")
 	}
@@ -95,7 +100,7 @@ func (a *SignedAsset) Key() []byte {
 	if a == nil {
 		return nil
 	}
-	return a.currentAsset.Asset.GetID()
+	return a.CurrentAsset.Asset.GetID()
 }
 
 // Save - write the entire Signed Asset to the store
@@ -103,8 +108,8 @@ func (a *SignedAsset) Save() error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
 	}
-	store := a.store
-	data, err := proto.Marshal(a.currentAsset)
+	store := a.Store
+	data, err := proto.Marshal(a.CurrentAsset)
 	if err != nil {
 		return err
 	}
@@ -166,10 +171,10 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	}
 	//Cant use enum as map key, so convert to a string
 	transferListMapString := transferType.String()
-	if a.currentAsset.Asset.Transferlist == nil {
-		a.currentAsset.Asset.Transferlist = make(map[string]*protobuffer.PBTransfer)
+	if a.CurrentAsset.Asset.Transferlist == nil {
+		a.CurrentAsset.Asset.Transferlist = make(map[string]*protobuffer.PBTransfer)
 	}
-	a.currentAsset.Asset.Transferlist[transferListMapString] = transferRule
+	a.CurrentAsset.Asset.Transferlist[transferListMapString] = transferRule
 	return nil
 }
 
@@ -186,16 +191,16 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, errors.New("IsValidTransfer - transferSignatures is 0 length")
 	}
 	transferListMapString := transferType.String()
-	previousAsset := a.previousAsset
-	if previousAsset == nil {
+	PreviousAsset := a.PreviousAsset
+	if PreviousAsset == nil {
 		return false, errors.New("No Previous Asset to change")
 	}
-	transfer := previousAsset.Asset.Transferlist[transferListMapString]
+	transfer := PreviousAsset.Asset.Transferlist[transferListMapString]
 	if transfer == nil {
 		return false, errors.New("No Transfer Found")
 	}
 	expression := transfer.Expression
-	expression, _, err := resolveExpression(a.store, expression, transfer.Participants, transferSignatures, "")
+	expression, _, err := resolveExpression(a.Store, expression, transfer.Participants, transferSignatures, "")
 	if err != nil {
 		return false, err
 	}
@@ -284,7 +289,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 		return nil, errors.New("TruthTable - SignedAsset is nil")
 	}
 	transferListMapString := transferType.String()
-	transfer := a.currentAsset.Asset.Transferlist[transferListMapString]
+	transfer := a.CurrentAsset.Asset.Transferlist[transferListMapString]
 	if transfer == nil {
 		return nil, errors.New("No Transfer Found")
 	}
@@ -292,7 +297,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	totalParticipants := len(transfer.Participants)
 	var participantArray []TransferParticipant
 	for key, idkey := range transfer.Participants {
-		idsig, err := Load(a.store, idkey)
+		idsig, err := Load(a.Store, idkey)
 		if err != nil {
 			return nil, errors.New("Failed to load iddoc")
 		}
@@ -320,7 +325,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
 			}
 		}
-		resolvedExpression, display, err := resolveExpression(a.store, expression, transfer.Participants, transferSignatures, "")
+		resolvedExpression, display, err := resolveExpression(a.Store, expression, transfer.Participants, transferSignatures, "")
 		if err != nil {
 			return nil, err
 		}
@@ -338,10 +343,10 @@ func Sign(msg []byte, iddoc *IDDoc) (signature []byte, err error) {
 	if iddoc == nil {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
-	if iddoc.seed == nil {
+	if iddoc.Seed == nil {
 		return nil, errors.New("Unable to Sign IDDoc - No Seed")
 	}
-	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.seed)
+	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.Seed)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +427,7 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	signers := make(map[string][]byte)
 	for i := 0; i < len(transferSignatures); i++ {
 		sig := transferSignatures[i].Signature
-		pubKey := transferSignatures[i].IDDoc.currentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
+		pubKey := transferSignatures[i].IDDoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
 		idkey := transferSignatures[i].IDDoc.Key()
 		abbreviation := transferSignatures[i].Abbreviation
 		signers[abbreviation] = idkey
@@ -443,9 +448,9 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 			}
 		}
 	}
-	a.currentAsset.PublicKey = aggregatedPublicKey
-	a.currentAsset.Signature = aggregatedSig
-	a.currentAsset.Signers = signers
+	a.CurrentAsset.PublicKey = aggregatedPublicKey
+	a.CurrentAsset.Signature = aggregatedSig
+	a.CurrentAsset.Signers = signers
 	data, err := a.SerializeAsset()
 	if err != nil {
 		return errors.Wrap(err, "Fail to Aggregated Signatures")
@@ -474,7 +479,7 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 			if err != nil {
 				return nil, nil, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
 			}
-			pubKey := iddoc.currentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
+			pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
 			if aggregatedPublicKey == nil {
 				aggregatedPublicKey = pubKey
 			} else {
@@ -491,21 +496,22 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 // publickeys = Aggregated the signers BLS Public Keys
 // message = Create a Serialized Payload
 // Using these fields verify the Signature in the transfer.
-func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool, error) {
+func (a *SignedAsset) FullVerify(PreviousAsset *protobuffer.PBSignedAsset) (bool, error) {
 	if a == nil {
 		return false, errors.New("FullVerify - SignAsset is nil")
 	}
-	transferType := a.currentAsset.Asset.TransferType
+	transferType := a.CurrentAsset.Asset.TransferType
 	var transferSignatures []SignatureID
 	var aggregatedPublicKey []byte
-	if previousAsset == nil {
+	if PreviousAsset == nil {
 		return false, errors.New("No Previous Asset supplied for Verify")
 	}
-	transferList := previousAsset.GetAsset().GetTransferlist()
+	transferList := PreviousAsset.GetAsset().GetTransferlist()
 	_ = transferList
+
 	//For each supplied signer re-build a PublicKey
-	for abbreviation, participantID := range a.currentAsset.Signers {
-		signedAsset, err := Load(a.store, participantID)
+	for abbreviation, participantID := range a.CurrentAsset.Signers {
+		signedAsset, err := Load(a.Store, participantID)
 		if err != nil {
 			return false, errors.New("Failed to retieve IDDoc")
 		}
@@ -513,7 +519,7 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 		if err != nil {
 			return false, errors.Wrap(err, "Fail to obtain public Key in FullVerify")
 		}
-		pubKey := iddoc.currentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
+		pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
 		if aggregatedPublicKey == nil {
 			aggregatedPublicKey = pubKey
 		} else {
@@ -525,7 +531,7 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 
 	//check the one in the object matches the one just created
 	//Todo: We could probably remove the one in the object?
-	res := bytes.Compare(aggregatedPublicKey, a.currentAsset.GetPublicKey())
+	res := bytes.Compare(aggregatedPublicKey, a.CurrentAsset.GetPublicKey())
 	if res != 0 {
 		return false, errors.New("Generated Aggregated Public Key doesnt match the one used to sign")
 	}
@@ -535,7 +541,7 @@ func (a *SignedAsset) FullVerify(previousAsset *protobuffer.PBSignedAsset) (bool
 		return false, errors.New("Failed to serialize payload")
 	}
 	//Retrieve the Sig
-	aggregatedSig := a.currentAsset.GetSignature()
+	aggregatedSig := a.CurrentAsset.GetSignature()
 	//Verify
 	rc := crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
 	if rc != 0 {
@@ -572,7 +578,7 @@ func (a *SignedAsset) setKey(key []byte) {
 	if a == nil {
 		return
 	}
-	a.currentAsset.Asset.ID = key
+	a.CurrentAsset.Asset.ID = key
 }
 
 // SerializeAsset - Serialize the Asset (PBAsset, not PBSignedAsset)
@@ -580,10 +586,10 @@ func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SerializeAsset - SignAsset is nil")
 	}
-	if a.currentAsset.Asset == nil {
+	if a.CurrentAsset.Asset == nil {
 		return nil, errors.New("Can't serialize nil payload")
 	}
-	s, err = proto.Marshal(a.currentAsset.Asset)
+	s, err = proto.Marshal(a.CurrentAsset.Asset)
 	if err != nil {
 		s = nil
 	}
@@ -595,7 +601,7 @@ func (a *SignedAsset) SerializeSignedAsset() (s []byte, err error) {
 	if a == nil {
 		return nil, errors.New("SerializeSignedAsset - SignAsset is nil")
 	}
-	s, err = proto.Marshal(a.currentAsset)
+	s, err = proto.Marshal(a.CurrentAsset)
 	if err != nil {
 		s = nil
 	}

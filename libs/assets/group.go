@@ -31,7 +31,7 @@ func (w *Group) Payload() *protobuffer.PBGroup {
 	if w == nil {
 		return nil
 	}
-	signatureAsset := w.currentAsset.Asset
+	signatureAsset := w.CurrentAsset.Asset
 	Group := signatureAsset.GetGroup()
 	return Group
 }
@@ -42,14 +42,14 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 		return nil, errors.New("NewGroup - supplied IDDoc is nil")
 	}
 	w = emptyGroup(groupType)
-	w.store = iddoc.store
+	w.Store = iddoc.Store
 	GroupKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
-	w.currentAsset.Asset.ID = GroupKey
-	w.currentAsset.Asset.Type = protobuffer.PBAssetType_Group
-	w.currentAsset.Asset.Owner = iddoc.Key()
+	w.CurrentAsset.Asset.ID = GroupKey
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
+	w.CurrentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
 	return w, nil
 }
@@ -62,17 +62,17 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	if previousGroup == nil {
 		return nil, errors.New("NewUpdateGroup - supplied previousGroup is nil")
 	}
-	p := previousGroup.currentAsset.Asset.GetGroup()
+	p := previousGroup.CurrentAsset.Asset.GetGroup()
 	previousType := p.GetType()
 
 	w = emptyGroup(previousType)
-	if previousGroup.store != nil {
-		w.store = previousGroup.store
+	if previousGroup.Store != nil {
+		w.Store = previousGroup.Store
 	}
-	w.currentAsset.Asset.ID = previousGroup.currentAsset.Asset.ID
-	w.currentAsset.Asset.Type = protobuffer.PBAssetType_Group
-	w.currentAsset.Asset.Owner = iddoc.Key() //new owner
-	w.previousAsset = previousGroup.currentAsset
+	w.CurrentAsset.Asset.ID = previousGroup.CurrentAsset.Asset.ID
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
+	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.PreviousAsset = previousGroup.CurrentAsset
 	return w, nil
 }
 
@@ -96,7 +96,7 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 	pbGroup.GroupFields["expression"] = expressionBytes
 	payload := &protobuffer.PBAsset_Group{}
 	payload.Group = pbGroup
-	w.currentAsset.Asset.Payload = payload
+	w.CurrentAsset.Asset.Payload = payload
 	return nil
 }
 
@@ -127,11 +127,11 @@ func (w *Group) ParseChanges() (unchanged, added, deleted [][]byte, err error) {
 	if w == nil {
 		return nil, nil, nil, errors.New("ParseChanges - No Asset")
 	}
-	if w.previousAsset == nil {
+	if w.PreviousAsset == nil {
 		return nil, nil, nil, errors.New("ParseChanges - No previous Asset")
 	}
 
-	switch g := w.previousAsset.GetAsset().GetPayload().(type) {
+	switch g := w.PreviousAsset.GetAsset().GetPayload().(type) {
 	case *protobuffer.PBAsset_Group:
 		//group
 		previousSet := g.Group.Participants
@@ -183,14 +183,14 @@ func ReBuildGroup(sig *protobuffer.PBSignedAsset, key []byte) (w *Group, err err
 	}
 
 	w = &Group{}
-	w.currentAsset = sig
+	w.CurrentAsset = sig
 	w.setKey(key)
 	return w, nil
 }
 
 func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	w = &Group{}
-	w.currentAsset = &protobuffer.PBSignedAsset{}
+	w.CurrentAsset = &protobuffer.PBSignedAsset{}
 	//Asset
 	asset := &protobuffer.PBAsset{}
 	asset.Type = protobuffer.PBAssetType_Group
@@ -198,9 +198,9 @@ func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	group := &protobuffer.PBGroup{}
 	group.Type = groupType
 	//Compose
-	w.currentAsset.Asset = asset
+	w.CurrentAsset.Asset = asset
 	payload := &protobuffer.PBAsset_Group{}
 	payload.Group = group
-	w.currentAsset.Asset.Payload = payload
+	w.CurrentAsset.Asset.Payload = payload
 	return w
 }

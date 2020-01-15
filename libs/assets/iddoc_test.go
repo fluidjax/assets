@@ -50,7 +50,7 @@ func Test_Serialize_IDDoc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, data, "Result should not be nil")
 
-	i.currentAsset.Asset = nil
+	i.CurrentAsset.Asset = nil
 	data, err = i.SerializeAsset()
 	assert.NotNil(t, err, "Error should not be nil")
 }
@@ -60,10 +60,10 @@ func Test_Save_Load(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	i.store = NewMapstore()
+	i.Store = NewMapstore()
 	key := i.Key()
 	i.Save()
-	retrieved, err := Load(i.store, key)
+	retrieved, err := Load(i.Store, key)
 	assert.Nil(t, err, "Error should be nil")
 	print(retrieved)
 	iddoc := retrieved.Asset.GetIddoc()
