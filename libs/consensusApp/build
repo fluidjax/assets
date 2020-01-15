@@ -1,0 +1,6 @@
+ rm -rf /tmp/example
+ rm -rf /tmp/badger
+ TMHOME="/tmp/example" tendermint init
+ sed -i.bu 's/index_all_tags\ =\ false/index_all_tags\ =\ true/' /tmp/example/config/config.toml
+ sed -i.bu 's/create_empty_blocks\ =\ true/create_empty_blocks\ =\ false/' /tmp/example/config/config.toml
+

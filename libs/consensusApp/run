@@ -1,0 +1,5 @@
+#!/bin/bash
+rm ./consensusApp
+set -e
+go build
+./consensusApp -config "/tmp/example/config/config.toml"
