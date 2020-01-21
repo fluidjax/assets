@@ -171,7 +171,7 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.PreviousAsset)
+	verify, err := t2.FullVerify()
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 
@@ -228,7 +228,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.PreviousAsset)
+	verify, err := t2.FullVerify()
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 }
@@ -277,7 +277,7 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.PreviousAsset)
+	verify, err := t2.FullVerify()
 	assert.False(t, verify, "Verify should be False")
 	assert.NotNil(t, err, "Error should describe the failure")
 }
@@ -365,7 +365,7 @@ func Test_GroupTransferParser(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check Group2 validatity based on previous Version
-	verify, err := t2.FullVerify(t2.PreviousAsset)
+	verify, err := t2.FullVerify()
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 }

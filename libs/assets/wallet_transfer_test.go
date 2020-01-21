@@ -189,7 +189,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check wallet2 validatity based on previous Version
-	verify, err := w2.FullVerify(w2.PreviousAsset)
+	verify, err := w2.FullVerify()
 	assert.True(t, verify, "Verify should be True")
 	assert.Nil(t, err, "Error should be nil")
 
@@ -237,7 +237,66 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 
 	//Check wallet2 validatity based on previous Version
-	verify, err := w2.FullVerify(w2.PreviousAsset)
+	verify, err := w2.FullVerify()
 	assert.False(t, verify, "Verify should be False")
 	assert.NotNil(t, err, "Error should describe the failure")
+}
+
+func Test_WalletTransfer(t *testing.T) {
+	store := NewMapstore()
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
+	idNewOwner, _ := NewIDDoc("NewOwner")
+	expression := "t1 + t2 + t3 > 1 & p"
+	participants := &map[string][]byte{
+		"p":  idP.Key(),
+		"t1": idT1.Key(),
+		"t2": idT2.Key(),
+		"t3": idT3.Key(),
+	}
+
+	w1, _ := NewWallet(idP)
+	w1.Store = idP.Store
+	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
+	wallet, err := w1.Payload()
+
+	//Wallet has already spent 100
+	wallet.SpentBalance = 100
+
+	//Create another Wallet based on previous, ie. AnUpdateWallet
+	w2, _ := NewUpdateWallet(w1, idNewOwner)
+
+	//send 30 BTC to idT3
+	w2.AddWalletTransfer(idT3.Key(), 30)
+	w2.AddWalletTransfer(idT3.Key(), 22)
+
+	//Change Payload to a SettlePush Type Transfer
+	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
+
+	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
+	sigP, _ := w2.SignAsset(idP)
+	sigT1, _ := w2.SignAsset(idT1)
+
+	//Everything is sign by the s & Principal
+
+	//Add sufficient Signatures
+	transferSignatures1 := []SignatureID{
+		SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+		SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+	}
+	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	assert.Nil(t, err, "Error should be nil")
+	assert.False(t, validTransfer1, "Transfer should be invalid")
+
+	//Build Aggregated Signature and insert into the releavnt Wallet Fields
+	err = w2.AggregatedSign(transferSignatures1)
+	assert.Nil(t, err, "Error should be nil")
+
+	//Check wallet2 validatity based on previous Version
+	verify, err := w2.FullVerify()
+	assert.False(t, verify, "Verify should be False")
+	assert.NotNil(t, err, "Error should describe the failure")
+
+	payload, _ := w2.Payload()
+	assert.True(t, payload.SpentBalance == 152, "Invalid total spent")
+
 }

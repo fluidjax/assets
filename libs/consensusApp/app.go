@@ -2,15 +2,15 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/dgraph-io/badger"
-	"github.com/mr-tron/base58"
 	"github.com/tendermint/abci/example/code"
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/qredo/assets/libs/assets"
-	cmn "github.com/tendermint/tendermint/libs/kv"
+	"github.com/tendermint/tendermint/libs/kv"
 )
 
 //KVStoreApplication -
@@ -42,46 +42,65 @@ func (KVStoreApplication) SetOption(req abcitypes.RequestSetOption) abcitypes.Re
 func (app *KVStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	// payload, err := decodeTX(req.Tx)
 
+	print("hello")
+	calcTXHash := sha256.Sum256(req.Tx)
+	print("Hash:", hex.EncodeToString(calcTXHash[:]))
+
+	events := []abcitypes.Event{
+		{
+			Type: "transfer",
+			Attributes: kv.Pairs{
+				kv.Pair{Key: []byte("sender"), Value: []byte("Chris")},
+				kv.Pair{Key: []byte("recipient"), Value: []byte("Alice")},
+				kv.Pair{Key: []byte("balance"), Value: []byte("101")},
+			},
+		},
+	}
+	return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: events}
+
 	// if err != nil {
 	// 	print("Invalid Transaction - ignore")
 	// 	return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
 	// }
 
-	calcTXHash := sha256.Sum256(req.Tx)
-	calcTXHashBase58 := base58.Encode(calcTXHash[:])
+	// calcTXHash := sha256.Sum256(req.Tx)
+	// calcTXHashBase58 := base58.Encode(calcTXHash[:])
 
-	print("Calc hash = %s", calcTXHashBase58)
+	// print("Calc hash = ", calcTXHashBase58)
 
-	var atts []cmn.Pair
+	// var atts []cmn.Pair
 
-	// //Add the tags
-	// for k, v := range payload.Key() {
-	// 	atts = append(atts, cmn.Pair{Key: []byte(k), Value: []byte(v)})
+	// // //Add the tags
+	// // for k, v := range payload.Key() {
+	// // 	atts = append(atts, cmn.Pair{Key: []byte(k), Value: []byte(v)})
+	// // }
+
+	// // //Add all the recipients
+	// // for _, v := range payload.AdditionalRecipientCID {
+	// // 	atts = append(atts, cmn.Pair{Key: []byte("recipient"), Value: []byte(v)})
+	// // }
+
+	// //Add the TX hash
+	// // atts = append(atts, cmn.Pair{Key: []byte("sender"), Value: []byte(payload.SenderCID)})
+	// // atts = append(atts, cmn.Pair{Key: []byte("recipient"), Value: []byte(payload.RecipientCID)})
+	// // atts = append(atts, cmn.Pair{Key: []byte("txhash"), Value: []byte(TXHash)})
+	// // atts = append(atts, cmn.Pair{Key: []byte("txtype"), Value: []byte(strconv.Itoa(int(payload.TXType)))})
+	// atts = append(atts, cmn.Pair{Key: []byte("key"), Value: []byte(calcTXHash[:])})
+	// atts = append(atts, cmn.Pair{Key: []byte("key58"), Value: []byte(calcTXHashBase58)})
+	// atts = append(atts, cmn.Pair{Key: []byte("hello"), Value: []byte("bye")})
+	// atts = append(atts, cmn.Pair{Key: []byte("A"), Value: []byte("B")})
+
+	// events := []types.Event{
+	// 	{
+	// 		Type:       "tag", // curl "localhost:26657/tx_search?query=\"tag.key58='9Hi8MpLNNQiha7eH6bejKs6HhdvKyc9Mt7yMxw4bP5rP'\""
+	// 		Attributes: atts,
+	// 	},
 	// }
 
-	// //Add all the recipients
-	// for _, v := range payload.AdditionalRecipientCID {
-	// 	atts = append(atts, cmn.Pair{Key: []byte("recipient"), Value: []byte(v)})
-	// }
+	// //fmt.Printf("\n\n****** BLOCK %v %v\n", payload.Processor, payload.RecipientCID)
 
-	//Add the TX hash
-	// atts = append(atts, cmn.Pair{Key: []byte("sender"), Value: []byte(payload.SenderCID)})
-	// atts = append(atts, cmn.Pair{Key: []byte("recipient"), Value: []byte(payload.RecipientCID)})
-	// atts = append(atts, cmn.Pair{Key: []byte("txhash"), Value: []byte(TXHash)})
-	// atts = append(atts, cmn.Pair{Key: []byte("txtype"), Value: []byte(strconv.Itoa(int(payload.TXType)))})
-	atts = append(atts, cmn.Pair{Key: []byte("key"), Value: []byte(calcTXHash[:])})
-	atts = append(atts, cmn.Pair{Key: []byte("key58"), Value: []byte(calcTXHashBase58)})
-	events := []types.Event{
-		{
-			Type:       "tag", // curl "localhost:26657/tx_search?query=\"tag.recipient='QmT4y4MtV5mvPHkFjfUQYQ7h1WvAagMy2GTJCn2bF8DQb7'\""
-			Attributes: atts,
-		},
-	}
-
-	//fmt.Printf("\n\n****** BLOCK %v %v\n", payload.Processor, payload.RecipientCID)
-
-	return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: events}
-	//return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: nil}
+	// return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: events}
+	// //return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: nil}
 
 }
 
@@ -93,9 +112,12 @@ func (app *KVStoreApplication) Commit() abcitypes.ResponseCommit {
 
 //Query -
 func (app *KVStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
-	resQuery.Log = "exists"
-	resQuery.Value = []byte("helloo")
-	return
+	// resQuery.Log = "exists"
+	// resQuery.Value = []byte("helloo")
+	// return
+
+	print("\nXXXX", reqQuery.Data)
+
 	resQuery.Key = reqQuery.Data
 	err := app.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(reqQuery.Data)
@@ -136,7 +158,8 @@ func (KVStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.Resp
 }
 
 func (app *KVStoreApplication) isValid(tx []byte) (code uint32) {
-
+	print("is valid")
+	return 0
 	_, err := decodeTX(tx)
 	if err != nil {
 		return 1

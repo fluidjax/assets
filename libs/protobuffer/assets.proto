@@ -9,22 +9,23 @@ option (gogoproto.stable_marshaler_all) = true;
 
 message PBSignedAsset{
     bytes Signature            = 1;
-    bytes PublicKey            = 2;
-    map<string, bytes> Signers = 3;
+    bytes PublicKey            = 2;  //This is assist a verify(), and should not be relied upon (as its not signed)
+    map<string, bytes> Signers = 3;  //This is assist a verify(), and should not be relied upon (as its not signed)
     PBAsset Asset              = 4;
 }
 
 message PBAsset {
-	PBAssetType Type                = 1;            //Type of Asset
-	bytes ID                        = 2;            //unique ID of asset
-    bytes Owner                     = 3;            //IDDoc of owner            
-    PBTransferType TransferType     = 4;            //Which transfer used to get to this version
+	PBAssetType Type                      = 1;            //Type of Asset
+	bytes ID                              = 2;            //unique ID of asset
+    bytes Owner                           = 3;            //IDDoc of owner            
+    int64 Index                           = 4;            //Incrementing index (start 0), for Asset + it's updates                        
+    PBTransferType TransferType           = 5;            //Which transfer used to get to this version
+    map<string, PBTransfer> Transferlist  = 6;
     oneof Payload {                                 //Definiton of the asset
-        PBWallet Wallet             = 5;
-        PBGroup Group               = 6;
-        PBIDDoc Iddoc               = 7;
+        PBWallet Wallet                   = 15;
+        PBGroup Group                     = 16;
+        PBIDDoc Iddoc                     = 17;
     }
-    map<string, PBTransfer> Transferlist = 8;
 }
 
 
@@ -53,14 +54,22 @@ message PBTransfer {                  //Defined for each Transfer type an expres
 
 //Asset Definitons
 message PBWallet {
-    string Description      = 1;
-    bytes principal         = 2;
-	bytes creditor          = 3;
-	bytes initiator         = 4;
-	bytes address           = 5;
-    bytes counterparty      = 6;
-    bytes transactionHash   = 7;
+    string currency                 = 1;
+    int64 spentBalance              = 2; //total of all outgoing spends = previous + sum of Asset Transfer
+    repeated PBWalletTransfer WalletTransfers   = 3;
+    string Description              = 11;
+    bytes principal                 = 12;
+	bytes creditor                  = 13;
+	bytes initiator                 = 14;
+	bytes address                   = 15;
+    bytes counterparty              = 16;
+    bytes transactionHash           = 17;
 }
+
+message PBWalletTransfer {
+    bytes to            = 1; //send the transfer to IDDoc
+    int64 amount        = 2; //the amount of the transfer
+} 
 
 
 message PBGroup {

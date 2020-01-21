@@ -1,54 +1,44 @@
 package tendermint
 
-import (
-	"encoding/base64"
-	"testing"
+// func Test_PostTX(t *testing.T) {
+// 	i, err := assets.NewIDDoc("")
+// 	assert.Nil(t, err, "Error should be nil")
+// 	err = i.Sign(i)
 
-	"github.com/qredo/assets/libs/assets"
-	"github.com/qredo/assets/libs/datastore"
-	"github.com/qredo/assets/libs/logger"
-	"github.com/stretchr/testify/assert"
-)
+// 	//serialize the whole transaction
+// 	serializedTX, err := i.SerializeSignedAsset()
+// 	assert.Nil(t, err, "Error should be nil")
+// 	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX)
 
-func Test_PostTX(t *testing.T) {
-	i, err := assets.NewIDDoc("")
-	assert.Nil(t, err, "Error should be nil")
-	err = i.Sign(i)
+// 	txid, err := PostTx(base64EncodedTX, "127.0.0.1:26657")
+// 	assert.Nil(t, err, "Error should be nil")
 
-	//serialize the whole transaction
-	serializedTX, err := i.SerializeSignedAsset()
-	assert.Nil(t, err, "Error should be nil")
-	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX)
+// 	print(txid)
+// }
 
-	txid, err := PostTx(base64EncodedTX, "127.0.0.1:26657")
-	assert.Nil(t, err, "Error should be nil")
+// func Test_NodeConnector(t *testing.T) {
 
-	print(txid)
-}
+// 	dsBackend, err := datastore.NewBoltBackend("datastore.dat")
+// 	assert.Nil(t, err, "Error should be nil")
+// 	assert.NotNil(t, dsBackend, "store should not be nil")
 
-func Test_NodeConnector(t *testing.T) {
+// 	store, err := datastore.NewStore(datastore.WithBackend(dsBackend), datastore.WithCodec(datastore.NewGOBCodec()))
+// 	assert.Nil(t, err, "Error should be nil")
+// 	assert.NotNil(t, store, "store should not be nil")
 
-	dsBackend, err := datastore.NewBoltBackend("datastore.dat")
-	assert.Nil(t, err, "Error should be nil")
-	assert.NotNil(t, dsBackend, "store should not be nil")
+// 	logger, err := logger.NewLogger("text", "info")
+// 	assert.Nil(t, err, "Error should be nil")
+// 	assert.NotNil(t, logger, "logger should not be nil")
 
-	store, err := datastore.NewStore(datastore.WithBackend(dsBackend), datastore.WithCodec(datastore.NewGOBCodec()))
-	assert.Nil(t, err, "Error should be nil")
-	assert.NotNil(t, store, "store should not be nil")
+// 	nc, err := NewNodeConnector("127.0.0.1:26657", "NODEID", store, logger)
+// 	assert.NotNil(t, nc, "tmConnector should not be nil")
+// 	assert.Nil(t, err, "Error should be nil")
 
-	logger, err := logger.NewLogger("text", "info")
-	assert.Nil(t, err, "Error should be nil")
-	assert.NotNil(t, logger, "logger should not be nil")
+// 	//Build IDDoc
+// 	i, err := assets.NewIDDoc("chris")
+// 	assert.Nil(t, err, "Error should be nil")
+// 	i.Sign(i)
 
-	nc, err := NewNodeConnector("127.0.0.1:26657", "NODEID", store, logger)
-	assert.NotNil(t, nc, "tmConnector should not be nil")
-	assert.Nil(t, err, "Error should be nil")
+// 	nc.PostTx(i)
 
-	//Build IDDoc
-	i, err := assets.NewIDDoc("chris")
-	assert.Nil(t, err, "Error should be nil")
-	i.Sign(i)
-
-	nc.PostTx(i)
-
-}
+// }

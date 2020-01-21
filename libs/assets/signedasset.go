@@ -496,17 +496,18 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 // publickeys = Aggregated the signers BLS Public Keys
 // message = Create a Serialized Payload
 // Using these fields verify the Signature in the transfer.
-func (a *SignedAsset) FullVerify(PreviousAsset *protobuffer.PBSignedAsset) (bool, error) {
+func (a *SignedAsset) FullVerify() (bool, error) {
+	previousAsset := a.PreviousAsset
 	if a == nil {
 		return false, errors.New("FullVerify - SignAsset is nil")
 	}
 	transferType := a.CurrentAsset.Asset.TransferType
 	var transferSignatures []SignatureID
 	var aggregatedPublicKey []byte
-	if PreviousAsset == nil {
+	if previousAsset == nil {
 		return false, errors.New("No Previous Asset supplied for Verify")
 	}
-	transferList := PreviousAsset.GetAsset().GetTransferlist()
+	transferList := previousAsset.GetAsset().GetTransferlist()
 	_ = transferList
 
 	//For each supplied signer re-build a PublicKey
@@ -558,6 +559,7 @@ func (a *SignedAsset) FullVerify(PreviousAsset *protobuffer.PBSignedAsset) (bool
 	}
 	return true, nil
 }
+
 
 // assetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
 func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
