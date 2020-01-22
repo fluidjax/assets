@@ -43,7 +43,7 @@ func Test_TruthTable(t *testing.T) {
 		"t2": idT2.Key(),
 		"t3": idT3.Key(),
 	}
-	w1, _ := NewWallet(idP)
+	w1, _ := NewWallet(idP, "BTC")
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 	//Create another based on previous, ie. AnUpdateWallet
 	res, err := w1.TruthTable(protobuffer.PBTransferType_settlePush)
@@ -85,7 +85,7 @@ func Test_RuleAdd(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	w1, _ := NewWallet(idP)
+	w1, _ := NewWallet(idP, "BTC")
 	w1.Store = idP.Store
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
@@ -154,7 +154,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 		"t2": idT2.Key(),
 		"t3": idT3.Key(),
 	}
-	w1, _ := NewWallet(idP)
+	w1, _ := NewWallet(idP, "BTC")
 	w1.Store = idP.Store
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
@@ -207,7 +207,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	w1, _ := NewWallet(idP)
+	w1, _ := NewWallet(idP, "BTC")
 	w1.Store = idP.Store
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
@@ -254,7 +254,7 @@ func Test_WalletTransfer(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	w1, _ := NewWallet(idP)
+	w1, _ := NewWallet(idP, "BTC")
 	w1.Store = idP.Store
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 	wallet, err := w1.Payload()

@@ -33,7 +33,7 @@ func Test_Wallet_Signing(t *testing.T) {
 	i.Sign(i)
 	i.Store = NewMapstore()
 	i.Save()
-	w, err := NewWallet(i)
+	w, err := NewWallet(i, "BTC")
 
 	sig1, err := w.SignAsset(i)
 	payload, err := w.SerializeAsset()
@@ -54,7 +54,7 @@ func Test_Wallet(t *testing.T) {
 	i.Sign(i)
 	i.Store = NewMapstore()
 	i.Save()
-	w, err := NewWallet(i)
+	w, err := NewWallet(i, "BTC")
 	walletContents, _ := w.Payload()
 	walletContents.Description = testDescription
 	w.Sign(i)
@@ -69,7 +69,7 @@ func Test_Wallet(t *testing.T) {
 }
 
 func Test_Wallet_Empty(t *testing.T) {
-	w, err := NewWallet(nil)
+	w, err := NewWallet(nil, "BTC")
 	assert.NotNil(t, err, "Error should not be nil")
 	_, err = w.Payload()
 	assert.NotNil(t, err, "Error should not be nil")

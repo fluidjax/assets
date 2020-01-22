@@ -112,7 +112,7 @@ func (w *Wallet) FullVerify() (bool, error) {
 }
 
 //NewWallet - Setup a new IDDoc
-func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
+func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
 	if iddoc == nil {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
@@ -127,6 +127,13 @@ func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
+
+	currentPayload, err := w.Payload()
+	if err != nil {
+		return nil, err
+	}
+	currentPayload.Currency = currency
+
 	return w, nil
 }
 
