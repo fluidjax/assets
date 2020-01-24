@@ -1,7 +1,7 @@
 package tendermint
 
 import (
-	"fmt"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -49,11 +49,18 @@ func PostTx(base64EncodedTX string, host string) (txID string, err error) {
 		return "", errors.Errorf("Post to blockchain node status %v: %v", resp.StatusCode, respErr)
 	}
 
-	if b, err := ioutil.ReadAll(resp.Body); err != nil {
-		fmt.Println(b)
-	} else {
-		fmt.Println(string(b))
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
 	}
+	var f interface{}
+	err2 := json.Unmarshal(b, &f)
+	if err2 != nil {
+		return
+	}
+	data := f.(map[string]interface{})
+	result := data["result"].(map[string]interface{})
+	txID = result["hash"].(string)
 
 	return
 }

@@ -464,11 +464,11 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 }
 
 // buildSigKeys - Aggregated the signatures and public keys for all Participants
-func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
+func buildSigKeys(store *StoreInterface, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
 	//For each supplied signer re-build a PublicKey
 	for _, abbreviation := range signers {
 		participantID := currentTransfer.Participants[abbreviation]
-		signedAsset, err := Load(store, participantID)
+		signedAsset, err := Load(*store, participantID)
 		if err != nil {
 			return nil, nil, errors.New("Failed to retieve IDDoc")
 		}

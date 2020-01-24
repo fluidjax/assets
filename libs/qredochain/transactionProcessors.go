@@ -171,8 +171,7 @@ func (app *KVStoreApplication) VerifyIDDoc(iddoc *assets.IDDoc) bool {
 		return false
 	}
 
-	if payload.Descriptor == nil ||
-		payload.AuthenticationReference == "" ||
+	if payload.AuthenticationReference == "" ||
 		payload.BeneficiaryECPublicKey == nil ||
 		payload.SikePublicKey == nil ||
 		payload.BLSPublicKey == nil {
