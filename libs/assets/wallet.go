@@ -146,6 +146,8 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.CurrentAsset.Asset.Index = previousWallet.CurrentAsset.Asset.Index + 1
+
 	w.PreviousAsset = previousWallet.CurrentAsset
 	previousPayload, err := w.PreviousPayload()
 	if err != nil {

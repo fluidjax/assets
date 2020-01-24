@@ -3,14 +3,15 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/dgraph-io/badger"
+	"github.com/gogo/protobuf/proto"
+	"github.com/qredo/assets/libs/assets"
+	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/tendermint/abci/example/code"
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/qredo/assets/libs/assets"
-	"github.com/tendermint/tendermint/libs/kv"
 )
 
 //KVStoreApplication -
@@ -38,25 +39,89 @@ func (KVStoreApplication) SetOption(req abcitypes.RequestSetOption) abcitypes.Re
 	return abcitypes.ResponseSetOption{}
 }
 
+func decodeTX(data []byte) (*protobuffer.PBSignedAsset, error) {
+	signedAsset := &protobuffer.PBSignedAsset{}
+
+	err := proto.Unmarshal(data, signedAsset)
+	if err != nil {
+		return nil, err
+	}
+	return signedAsset, nil
+}
+
 //DeliverTx -
 func (app *KVStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	// payload, err := decodeTX(req.Tx)
 
-	print("hello")
-	calcTXHash := sha256.Sum256(req.Tx)
-	print("Hash:", hex.EncodeToString(calcTXHash[:]))
-
-	events := []abcitypes.Event{
-		{
-			Type: "transfer",
-			Attributes: kv.Pairs{
-				kv.Pair{Key: []byte("sender"), Value: []byte("Chris")},
-				kv.Pair{Key: []byte("recipient"), Value: []byte("Alice")},
-				kv.Pair{Key: []byte("balance"), Value: []byte("101")},
-			},
-		},
+	//Get AssetID
+	signedAsset, err := decodeTX(req.Tx)
+	if err != nil {
+		return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
 	}
-	return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: events}
+	txHashA := sha256.Sum256(req.Tx)
+	txHash := txHashA[:]
+
+	fmt.Printf("HASH: %s \n ", hex.EncodeToString(txHash))
+
+	assetID := signedAsset.Asset.GetID()
+	if assetID == nil {
+		return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
+	}
+
+	//Process the Transaction
+	switch signedAsset.Asset.GetType() {
+	case protobuffer.PBAssetType_wallet:
+		wallet, err := assets.ReBuildWallet(signedAsset, assetID)
+		if err != nil {
+			return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
+		}
+		
+
+		app.processWallet(wallet, req.Tx, txHash)
+	case protobuffer.PBAssetType_iddoc:
+		iddoc, err := assets.ReBuildIDDoc(signedAsset, assetID)
+		if err != nil {
+			return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
+		}
+		return app.processIDDoc(iddoc, req.Tx, txHash)
+	case protobuffer.PBAssetType_Group:
+		group, err := assets.ReBuildGroup(signedAsset, assetID)
+		if err != nil {
+			return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
+		}
+		app.processGroup(group)
+	}
+
+	return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
+
+	// print("Hash:", hex.EncodeToString(calcTXHash[:]))
+
+	// events := []abcitypes.Event{
+	// 	{
+	// 		Type: "transfer",
+	// 		Attributes: kv.Pairs{
+	// 			kv.Pair{Key: []byte("sender"), Value: []byte("Chris")},
+	// 			kv.Pair{Key: []byte("recipient"), Value: []byte("Alice")},
+	// 			kv.Pair{Key: []byte("balance"), Value: []byte("101")},
+	// 		},
+	// 	},
+	// }
+
+	// key := []byte("hello")
+	// // // // check if the same key=value already exists
+	// err := app.db.View(func(txn *badger.Txn) error {
+	// 	item, err := txn.Get(key)
+	// 	print(item)
+	// 	if err == badger.ErrKeyNotFound {
+	// 		print("key not found")
+	// 	}
+	// 	if err == nil {
+	// 		print("key found")
+	// 	}
+	// 	return nil
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// if err != nil {
 	// 	print("Invalid Transaction - ignore")
@@ -204,9 +269,4 @@ func (app *KVStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.R
 	//code := app.isValid(req.Tx)
 	return abcitypes.ResponseCheckTx{Code: 0, GasWanted: 0}
 	//	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
-}
-
-func decodeTX(data []byte) (assets.SignedAsset, error) {
-	payload := assets.SignedAsset{}
-	return payload, nil
 }

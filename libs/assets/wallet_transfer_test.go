@@ -267,7 +267,7 @@ func Test_WalletTransfer(t *testing.T) {
 
 	//send 30 BTC to idT3
 	w2.AddWalletTransfer(idT3.Key(), 30)
-	w2.AddWalletTransfer(idT3.Key(), 22)
+	w2.AddWalletTransfer(idT2.Key(), 22)
 
 	//Change Payload to a SettlePush Type Transfer
 	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
