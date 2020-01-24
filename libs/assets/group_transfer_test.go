@@ -30,7 +30,7 @@ import (
 
 func Test_GroupTruthTable(t *testing.T) {
 	store := NewMapstore()
-	idInitiator, idT1, idT2, idT3 := SetupIDDocs(store)
+	idInitiator, idT1, idT2, idT3 := SetupIDDocs(&store)
 	expression := "t1 + t2 + t3 > 1 "
 	participants := &map[string][]byte{
 		"t1": idT1.Key(),
@@ -51,7 +51,7 @@ func Test_GroupTruthTable(t *testing.T) {
 
 func Test_GroupRuleAdd(t *testing.T) {
 	store := NewMapstore()
-	idInitiator, idT1, idT2, idT3 := SetupIDDocs(store)
+	idInitiator, idT1, idT2, idT3 := SetupIDDocs(&store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "t1 + t2 + t3 > 1 "
@@ -107,7 +107,7 @@ func Test_GroupRuleAdd(t *testing.T) {
 	assert.True(t, validTransfer1, "Transfer should be valid")
 }
 
-func SetupTrusteeGroup(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *Group) {
+func SetupTrusteeGroup(store *StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *Group) {
 	tgInitiator, tgT1, tgT2, tgT3 := SetupIDDocs(store)
 
 	w, _ := NewGroup(tgInitiator, protobuffer.PBGroupType_TrusteeGroup)
@@ -127,7 +127,7 @@ func SetupTrusteeGroup(store *Mapstore) (*IDDoc, *IDDoc, *IDDoc, *Group) {
 
 func Test_GroupAggregationAndVerify(t *testing.T) {
 	store := NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
 
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
@@ -179,8 +179,8 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 
 func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 	store := NewMapstore()
-	idP, _, idT2, idT3 := SetupIDDocs(store)
-	idX1, idX2, _, Group := SetupTrusteeGroup(store)
+	idP, _, idT2, idT3 := SetupIDDocs(&store)
+	idX1, idX2, _, Group := SetupTrusteeGroup(&store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "tg1 + t2 + t3 > 1"
@@ -235,7 +235,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 
 func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 	store := NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
 
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
@@ -284,9 +284,9 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 
 func Test_GroupTransferParser(t *testing.T) {
 	store := NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(store)
-	_, groupMember1, groupMember2, groupMember3 := SetupIDDocs(store)
-	_, groupMember4, groupMember5, _ := SetupIDDocs(store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
+	_, groupMember1, groupMember2, groupMember3 := SetupIDDocs(&store)
+	_, groupMember4, groupMember5, _ := SetupIDDocs(&store)
 
 	expression := "t1 + t2 + t3 > 1"
 	idNewOwner, _ := NewIDDoc("NewOwner")

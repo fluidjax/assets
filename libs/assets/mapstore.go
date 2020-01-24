@@ -35,7 +35,7 @@ type StoreInterface interface {
 }
 
 //NewMapstore -
-func NewMapstore() *Mapstore {
+func NewMapstore() StoreInterface {
 	m := &Mapstore{}
 	m.Store = make(map[string][]byte)
 	return m

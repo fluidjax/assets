@@ -108,17 +108,18 @@ func (a *SignedAsset) Save() error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
 	}
-	store := a.Store
+	store := *a.Store
 	data, err := proto.Marshal(a.CurrentAsset)
 	if err != nil {
 		return err
 	}
 	store.Save(a.Key(), data)
+
 	return nil
 }
 
 // Load - read a SignedAsset from the store
-func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
+func Load(store StoreInterface, key []byte) (*protobuffer.PBSignedAsset, error) {
 	val, err := store.Load(key)
 	if err != nil {
 		return nil, err
@@ -200,7 +201,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, errors.New("No Transfer Found")
 	}
 	expression := transfer.Expression
-	expression, _, err := resolveExpression(a.Store, expression, transfer.Participants, transferSignatures, "")
+	expression, _, err := resolveExpression(*a.Store, expression, transfer.Participants, transferSignatures, "")
 	if err != nil {
 		return false, err
 	}
@@ -213,7 +214,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 // participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 // transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 // recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
-func resolveExpression(store *Mapstore, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
+func resolveExpression(store StoreInterface, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	if expression == "" {
 		return "", "", errors.New("resolveExpression - expression is empty")
 	}
@@ -297,7 +298,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	totalParticipants := len(transfer.Participants)
 	var participantArray []TransferParticipant
 	for key, idkey := range transfer.Participants {
-		idsig, err := Load(a.Store, idkey)
+		idsig, err := Load(*a.Store, idkey)
 		if err != nil {
 			return nil, errors.New("Failed to load iddoc")
 		}
@@ -325,7 +326,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
 			}
 		}
-		resolvedExpression, display, err := resolveExpression(a.Store, expression, transfer.Participants, transferSignatures, "")
+		resolvedExpression, display, err := resolveExpression(*a.Store, expression, transfer.Participants, transferSignatures, "")
 		if err != nil {
 			return nil, err
 		}
@@ -512,7 +513,7 @@ func (a *SignedAsset) FullVerify() (bool, error) {
 
 	//For each supplied signer re-build a PublicKey
 	for abbreviation, participantID := range a.CurrentAsset.Signers {
-		signedAsset, err := Load(a.Store, participantID)
+		signedAsset, err := Load(*a.Store, participantID)
 		if err != nil {
 			return false, errors.New("Failed to retieve IDDoc")
 		}

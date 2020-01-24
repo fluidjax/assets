@@ -31,7 +31,8 @@ func Test_Wallet_Signing(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	i.Store = NewMapstore()
+	store := NewMapstore()
+	i.Store = &store
 	i.Save()
 	w, err := NewWallet(i, "BTC")
 
@@ -52,7 +53,8 @@ func Test_Wallet(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	i.Store = NewMapstore()
+	store := NewMapstore()
+	i.Store = &store
 	i.Save()
 	w, err := NewWallet(i, "BTC")
 	walletContents, _ := w.Payload()
@@ -63,7 +65,7 @@ func Test_Wallet(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, res, "Verify should be true")
 	w.Save()
-	retrieved, err := Load(i.Store, w.Key())
+	retrieved, err := Load(*i.Store, w.Key())
 	retrievedWallet := retrieved.Asset.GetWallet()
 	assert.Equal(t, testDescription, retrievedWallet.Description, "Load/Save failed")
 }
