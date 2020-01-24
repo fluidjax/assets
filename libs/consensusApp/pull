@@ -1,1 +1,0 @@
-curl -s 'localhost:26657/abci_query?data="A"'

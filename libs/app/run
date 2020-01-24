@@ -1,0 +1,5 @@
+#!/bin/bash
+rm ./app
+set -e
+go build
+./app -config "/tmp/example/config/config.toml"

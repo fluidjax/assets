@@ -113,13 +113,13 @@ func (a *SignedAsset) Save() error {
 	if err != nil {
 		return err
 	}
-	store.save(a.Key(), data)
+	store.Save(a.Key(), data)
 	return nil
 }
 
 // Load - read a SignedAsset from the store
 func Load(store *Mapstore, key []byte) (*protobuffer.PBSignedAsset, error) {
-	val, err := store.load(key)
+	val, err := store.Load(key)
 	if err != nil {
 		return nil, err
 	}

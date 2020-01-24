@@ -28,10 +28,10 @@ type Mapstore struct {
 	Store map[string][]byte
 }
 
-//MapstoreInterface -
-type MapstoreInterface interface {
-	load([]byte) []byte
-	save([]byte, []byte)
+//StoreInterface -
+type StoreInterface interface {
+	Load([]byte) ([]byte, error)
+	Save([]byte, []byte) error
 }
 
 //NewMapstore -
@@ -41,12 +41,12 @@ func NewMapstore() *Mapstore {
 	return m
 }
 
-func (m *Mapstore) load(key []byte) ([]byte, error) {
+func (m *Mapstore) Load(key []byte) ([]byte, error) {
 	val := m.Store[hex.EncodeToString(key)]
 	return val, nil
 }
 
-func (m *Mapstore) save(key []byte, data []byte) error {
+func (m *Mapstore) Save(key []byte, data []byte) error {
 	m.Store[hex.EncodeToString(key)] = data
 	return nil
 
