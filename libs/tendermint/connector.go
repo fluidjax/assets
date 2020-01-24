@@ -94,29 +94,6 @@ func (nc *NodeConnector) PostTx(asset assets.ChainPostable) (txID string, err er
 
 		return "", errors.Errorf("Post to blockchain node status %v: %v", resp.StatusCode, respErr)
 	}
-
 	nc.log.Debug("Post to chain: Asset %v", asset.Key())
-
-	//Used for dumping transactions to a file, for testing
-	//dumpDataToDiskForTesting(tx.TXHash, serializedTX, tx.TXType)
-
 	return
 }
-
-// GetTx retreives a transaction by hash
-// func (nc *NodeConnector) GetTx(txHash string) (*protobuffer.Si, error) {
-// 	query := fmt.Sprintf("tag.txhash='%s'", txHash)
-// 	result, err := nc.tmClient.TxSearch(query, true, 1, 1)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if len(result.Txs) == 0 {
-// 		return nil, errors.Errorf("Document not found: %v", txHash)
-// 	}
-
-// 	tx := &protobuffer.TX{}
-// 	if err := proto.Unmarshal(result.Txs[0].Tx, tx); err != nil {
-// 		return nil, err
-// 	}
-// 	return tx, nil
-// }

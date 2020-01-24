@@ -101,3 +101,6 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 	i.setKey(key)
 	return i, nil
 }
+
+
+

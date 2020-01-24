@@ -473,7 +473,7 @@ func buildSigKeys(store *Mapstore, signers []string, currentTransfer *protobuffe
 		}
 		switch signedAsset.GetAsset().GetPayload().(type) {
 		case *protobuffer.PBAsset_Group:
-			print("recurse")
+			//print("recurse")
 		case *protobuffer.PBAsset_Iddoc:
 			iddoc, err := ReBuildIDDoc(signedAsset, participantID)
 			if err != nil {
@@ -559,7 +559,6 @@ func (a *SignedAsset) FullVerify() (bool, error) {
 	}
 	return true, nil
 }
-
 
 // assetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
 func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {

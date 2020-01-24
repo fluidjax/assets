@@ -65,11 +65,9 @@ func Test_WalletPostTX(t *testing.T) {
 
 	_, err = PostTx(base64EncodedTX2, "127.0.0.1:26657")
 	assert.Nil(t, err, "Error should be nil")
-
 }
 
 func Test_NodeConnector(t *testing.T) {
-
 	dsBackend, err := datastore.NewBoltBackend("datastore.dat")
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, dsBackend, "store should not be nil")
@@ -90,7 +88,5 @@ func Test_NodeConnector(t *testing.T) {
 	i, err := assets.NewIDDoc("chris")
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-
 	nc.PostTx(i)
-
 }

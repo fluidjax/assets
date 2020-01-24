@@ -1,15 +1,9 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-
 	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
-	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/tendermint/abci/example/code"
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
@@ -51,135 +45,30 @@ func decodeTX(data []byte) (*protobuffer.PBSignedAsset, error) {
 
 //DeliverTx -
 func (app *KVStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-
-	//Get AssetID
-	signedAsset, err := decodeTX(req.Tx)
-	if err != nil {
-		return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-	}
-	txHashA := sha256.Sum256(req.Tx)
-	txHash := txHashA[:]
-
-	fmt.Printf("HASH: %s \n ", hex.EncodeToString(txHash))
-
-	assetID := signedAsset.Asset.GetID()
-	if assetID == nil {
-		return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-	}
-
-	//Process the Transaction
-	switch signedAsset.Asset.GetType() {
-	case protobuffer.PBAssetType_wallet:
-		wallet, err := assets.ReBuildWallet(signedAsset, assetID)
-		if err != nil {
-			return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-		}
-		
-
-		app.processWallet(wallet, req.Tx, txHash)
-	case protobuffer.PBAssetType_iddoc:
-		iddoc, err := assets.ReBuildIDDoc(signedAsset, assetID)
-		if err != nil {
-			return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-		}
-		return app.processIDDoc(iddoc, req.Tx, txHash)
-	case protobuffer.PBAssetType_Group:
-		group, err := assets.ReBuildGroup(signedAsset, assetID)
-		if err != nil {
-			return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-		}
-		app.processGroup(group)
-	}
-
-	return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-
-	// print("Hash:", hex.EncodeToString(calcTXHash[:]))
-
-	// events := []abcitypes.Event{
-	// 	{
-	// 		Type: "transfer",
-	// 		Attributes: kv.Pairs{
-	// 			kv.Pair{Key: []byte("sender"), Value: []byte("Chris")},
-	// 			kv.Pair{Key: []byte("recipient"), Value: []byte("Alice")},
-	// 			kv.Pair{Key: []byte("balance"), Value: []byte("101")},
-	// 		},
-	// 	},
-	// }
-
-	// key := []byte("hello")
-	// // // // check if the same key=value already exists
-	// err := app.db.View(func(txn *badger.Txn) error {
-	// 	item, err := txn.Get(key)
-	// 	print(item)
-	// 	if err == badger.ErrKeyNotFound {
-	// 		print("key not found")
-	// 	}
-	// 	if err == nil {
-	// 		print("key found")
-	// 	}
-	// 	return nil
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// if err != nil {
-	// 	print("Invalid Transaction - ignore")
-	// 	return types.ResponseDeliverTx{Code: code.CodeTypeEncodingError, Events: nil}
-	// }
-
-	// calcTXHash := sha256.Sum256(req.Tx)
-	// calcTXHashBase58 := base58.Encode(calcTXHash[:])
-
-	// print("Calc hash = ", calcTXHashBase58)
-
-	// var atts []cmn.Pair
-
-	// // //Add the tags
-	// // for k, v := range payload.Key() {
-	// // 	atts = append(atts, cmn.Pair{Key: []byte(k), Value: []byte(v)})
-	// // }
-
-	// // //Add all the recipients
-	// // for _, v := range payload.AdditionalRecipientCID {
-	// // 	atts = append(atts, cmn.Pair{Key: []byte("recipient"), Value: []byte(v)})
-	// // }
-
-	// //Add the TX hash
-	// // atts = append(atts, cmn.Pair{Key: []byte("sender"), Value: []byte(payload.SenderCID)})
-	// // atts = append(atts, cmn.Pair{Key: []byte("recipient"), Value: []byte(payload.RecipientCID)})
-	// // atts = append(atts, cmn.Pair{Key: []byte("txhash"), Value: []byte(TXHash)})
-	// // atts = append(atts, cmn.Pair{Key: []byte("txtype"), Value: []byte(strconv.Itoa(int(payload.TXType)))})
-	// atts = append(atts, cmn.Pair{Key: []byte("key"), Value: []byte(calcTXHash[:])})
-	// atts = append(atts, cmn.Pair{Key: []byte("key58"), Value: []byte(calcTXHashBase58)})
-	// atts = append(atts, cmn.Pair{Key: []byte("hello"), Value: []byte("bye")})
-	// atts = append(atts, cmn.Pair{Key: []byte("A"), Value: []byte("B")})
-
-	// events := []types.Event{
-	// 	{
-	// 		Type:       "tag", // curl "localhost:26657/tx_search?query=\"tag.key58='9Hi8MpLNNQiha7eH6bejKs6HhdvKyc9Mt7yMxw4bP5rP'\""
-	// 		Attributes: atts,
-	// 	},
-	// }
-
-	// //fmt.Printf("\n\n****** BLOCK %v %v\n", payload.Processor, payload.RecipientCID)
-
-	// return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: events}
-	// //return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: nil}
-
+	code := app.processTX(req.Tx, false)
+	return types.ResponseDeliverTx{Code: code, Events: nil}
 }
 
 //Commit -
 func (app *KVStoreApplication) Commit() abcitypes.ResponseCommit {
+	// Persist the application state.
+	// Return an (optional) Merkle root hash of the application state
+	// ResponseCommit.Data is included as the Header.AppHash in the next block
+	// it may be empty
+	// Later calls to Query can return proofs about the application state anchored in this Merkle root hash
+	// Note developers can return whatever they want here (could be nothing, or a constant string, etc.), so
+	//		 long as it is deterministic - it must not be a function of anything that did not come from the
+	//		 BeginBlock/DeliverTx/EndBlock methods.
+
 	app.currentBatch.Commit()
 	return abcitypes.ResponseCommit{Data: []byte{}}
 }
 
 //Query -
 func (app *KVStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
-	// resQuery.Log = "exists"
-	// resQuery.Value = []byte("helloo")
-	// return
+	// Query for data from the application at current or past height.
+	// Optionally return Merkle proof.
+	// Merkle proof includes self-describing type field to support many types of Merkle trees and encoding formats.
 
 	print("\nXXXX", reqQuery.Data)
 
@@ -213,6 +102,11 @@ func (KVStoreApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.Re
 
 //BeginBlock -
 func (app *KVStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+	// 	Signals the beginning of a new block. Called prior to any DeliverTxs.
+	// The header contains the height, timestamp, and more - it exactly matches the Tendermint block header.
+	//			 We may seek to generalize this in the future.
+	// The LastCommitInfo and ByzantineValidators can be used to determine rewards and punishments for the validators.
+	//			 NOTE validators here do not include pubkeys.
 	app.currentBatch = app.db.NewTransaction(true)
 	return abcitypes.ResponseBeginBlock{}
 }
@@ -222,51 +116,15 @@ func (KVStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.Resp
 	return abcitypes.ResponseEndBlock{}
 }
 
-func (app *KVStoreApplication) isValid(tx []byte) (code uint32) {
-	print("is valid")
-	return 0
-	_, err := decodeTX(tx)
-	if err != nil {
-		return 1
-	}
-	return 0
-	// return 0
-	// print("check is valid")
-	// // check format
-	// parts := bytes.Split(tx, []byte("="))
-	// if len(parts) != 2 {
-	// 	return 1
-	// }
-
-	// key, value := parts[0], parts[1]
-
-	// // check if the same key=value already exists
-	// err := app.db.View(func(txn *badger.Txn) error {
-	// 	item, err := txn.Get(key)
-	// 	if err != nil && err != badger.ErrKeyNotFound {
-	// 		return err
-	// 	}
-	// 	if err == nil {
-	// 		return item.Value(func(val []byte) error {
-	// 			if bytes.Equal(val, value) {
-	// 				code = 2
-	// 			}
-	// 			return nil
-	// 		})
-	// 	}
-
-	// 	return nil
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// return code
-}
-
 //CheckTx -
 func (app *KVStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
-	//code := app.isValid(req.Tx)
-	return abcitypes.ResponseCheckTx{Code: 0, GasWanted: 0}
-	//	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
+	// Technically optional - not involved in processing blocks.
+	// Guardian of the mempool: every node runs CheckTx before letting a transaction into its local mempool.
+	// The transaction may come from an external user or another node
+	// CheckTx need not execute the transaction in full, but rather a light-weight yet stateful validation,
+	//					like checking signatures and account balances, but not running code in a virtual machine.
+	// Transactions where ResponseCheckTx.Code != 0 will be rejected - they will not be broadcast to other nodes or included in a proposal block.
+	// Tendermint attributes no other value to the response code
+	code := app.processTX(req.Tx, true)
+	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
 }
