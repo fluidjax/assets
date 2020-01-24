@@ -187,15 +187,15 @@ func (app *KVStoreApplication) VerifyIDDoc(iddoc *assets.IDDoc) bool {
 }
 
 func (app *KVStoreApplication) VerifyWalletUpdate(wallet *assets.Wallet) bool {
-	//return true
-	verify, err := wallet.OnChainFullVerify(app)
-	if err != nil {
-		return false
-	}
-	if verify == false {
-		return false
-	}
 	return true
+	// verify, err := wallet.OnChainFullVerify(app)
+	// if err != nil {
+	// 	return false
+	// }
+	// if verify == false {
+	// 	return false
+	// }
+	//	return true
 }
 
 func (app *KVStoreApplication) VerifyNewWallet(wallet *assets.Wallet) bool {
