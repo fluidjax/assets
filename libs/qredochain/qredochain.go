@@ -68,3 +68,13 @@ func NewTendermint(app abci.Application, configFile string) (*nm.Node, error) {
 
 	return node, nil
 }
+
+//This is to implement the StoreInterface
+func (app *KVStoreApplication) Load(key []byte) ([]byte, error) {
+	return app.Get(key)
+}
+
+func (app *KVStoreApplication) Save(key []byte, data []byte) error {
+	return app.Set(key, data)
+
+}

@@ -36,7 +36,7 @@ var (
 
 func Test_TruthTable(t *testing.T) {
 	store := store.NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
 		"p":  idP.Key(),
@@ -53,21 +53,21 @@ func Test_TruthTable(t *testing.T) {
 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
 }
 
-func SetupIDDocs(store *store.StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
+func SetupIDDocs(store store.StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 	idP, _ := NewIDDoc("Primary")
-	idP.Store = store
+	idP.DataStore = store
 	idP.Save()
 
 	idT1, _ := NewIDDoc("1")
-	idT1.Store = store
+	idT1.DataStore = store
 	idT1.Save()
 
 	idT2, _ := NewIDDoc("2")
-	idT2.Store = store
+	idT2.DataStore = store
 	idT2.Save()
 
 	idT3, _ := NewIDDoc("3")
-	idT3.Store = store
+	idT3.DataStore = store
 	idT3.Save()
 
 	return idP, idT1, idT2, idT3
@@ -75,7 +75,7 @@ func SetupIDDocs(store *store.StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 
 func Test_RuleAdd(t *testing.T) {
 	store := store.NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
 	expression := "t1 + t2 + t3 > 1 & p"
@@ -87,7 +87,7 @@ func Test_RuleAdd(t *testing.T) {
 	}
 
 	w1, _ := NewWallet(idP, "BTC")
-	w1.Store = idP.Store
+	w1.DataStore = idP.DataStore
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
@@ -146,7 +146,7 @@ func Test_RuleAdd(t *testing.T) {
 
 func Test_AggregationAndVerify(t *testing.T) {
 	store := store.NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
@@ -156,7 +156,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 	w1, _ := NewWallet(idP, "BTC")
-	w1.Store = idP.Store
+	w1.DataStore = idP.DataStore
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
@@ -198,7 +198,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 
 func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	store := store.NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
@@ -209,7 +209,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 	}
 
 	w1, _ := NewWallet(idP, "BTC")
-	w1.Store = idP.Store
+	w1.DataStore = idP.DataStore
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
@@ -245,7 +245,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 
 func Test_WalletTransfer(t *testing.T) {
 	store := store.NewMapstore()
-	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
+	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
@@ -256,7 +256,7 @@ func Test_WalletTransfer(t *testing.T) {
 	}
 
 	w1, _ := NewWallet(idP, "BTC")
-	w1.Store = idP.Store
+	w1.DataStore = idP.DataStore
 	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
 	wallet, err := w1.Payload()
 

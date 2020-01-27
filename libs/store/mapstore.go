@@ -1,3 +1,6 @@
+//Mapstore is a fast simply memory based storage of key values
+//Use for testing  and in-memory caching
+
 package store
 
 import (

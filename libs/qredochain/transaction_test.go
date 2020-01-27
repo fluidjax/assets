@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/qredo/assets/libs/assets"
-	"github.com/qredo/assets/libs/tendermint"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +18,7 @@ func Test_LoadSave(t *testing.T) {
 	serializedTX1, err := i.SerializeSignedAsset()
 	assert.Nil(t, err, "Error should be nil")
 	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX1)
-	txid, err := tendermint.PostTx(base64EncodedTX, "127.0.0.1:26657")
+	txid, err := PostTx(base64EncodedTX, "127.0.0.1:26657")
 
 	assert.Nil(t, err, "Error should be nil", err)
 

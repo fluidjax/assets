@@ -42,7 +42,7 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 		return nil, errors.New("NewGroup - supplied IDDoc is nil")
 	}
 	w = emptyGroup(groupType)
-	w.Store = iddoc.Store
+	w.DataStore = iddoc.DataStore
 	GroupKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
@@ -66,8 +66,8 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	previousType := p.GetType()
 
 	w = emptyGroup(previousType)
-	if previousGroup.Store != nil {
-		w.Store = previousGroup.Store
+	if previousGroup.DataStore != nil {
+		w.DataStore = previousGroup.DataStore
 	}
 	w.CurrentAsset.Asset.ID = previousGroup.CurrentAsset.Asset.ID
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group

@@ -1,0 +1,13 @@
+Internal list of stuff to TODO:
+
+KV Datastore
+    Testing:    in memory cache of 
+    App:        Query API
+                Badger local save/load of TX 
+    External    Post Transaction
+                Query
+
+
+Query:  
+    always a kv lookup
+    Wildcards

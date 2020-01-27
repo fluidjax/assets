@@ -117,7 +117,7 @@ func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
 	w = emptyWallet()
-	w.Store = iddoc.Store
+	w.DataStore = iddoc.DataStore
 
 	walletKey, err := RandomBytes(32)
 	if err != nil {
@@ -140,8 +140,8 @@ func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
 //NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
 	w = emptyWallet()
-	if previousWallet.Store != nil {
-		w.Store = previousWallet.Store
+	if previousWallet.DataStore != nil {
+		w.DataStore = previousWallet.DataStore
 	}
 	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet

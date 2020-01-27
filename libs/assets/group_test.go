@@ -36,7 +36,7 @@ func Test_Group(t *testing.T) {
 
 	//var store *StoreInterface
 	store := store.NewMapstore()
-	idInitiator, idT1, idT2, idT3 := SetupIDDocs(&store)
+	idInitiator, idT1, idT2, idT3 := SetupIDDocs(store)
 
 	_ = idInitiator
 
@@ -45,7 +45,7 @@ func Test_Group(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	i.Store = &store
+	i.DataStore = store
 	i.Save()
 
 	w, err := NewGroup(i, protobuffer.PBGroupType_TrusteeGroup)
@@ -81,7 +81,7 @@ func Test_Group(t *testing.T) {
 	assert.True(t, res, "Verify should be true")
 	w.Save()
 
-	retrieved, err := Load(*i.Store, w.Key())
+	retrieved, err := Load(i.DataStore, w.Key())
 	retrievedGroup := retrieved.Asset.GetGroup()
 
 	assert.Equal(t, testDescription, retrievedGroup.Description, "Load/Save failed")
@@ -92,7 +92,7 @@ func Test_Group(t *testing.T) {
 // Fix is to use a fork of proto buffers https://github.com/gogo/protobuf
 func Test_Determinism(t *testing.T) {
 	store := store.NewMapstore()
-	_, idT1, idT2, idT3 := SetupIDDocs(&store)
+	_, idT1, idT2, idT3 := SetupIDDocs(store)
 	testName := "ABC!23"
 	testDescription := "ZXC#@!"
 	i, err := NewIDDoc(testName)

@@ -62,10 +62,10 @@ func Test_Save_Load(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
 	store := store.NewMapstore()
-	i.Store = &store
+	i.DataStore = store
 	key := i.Key()
 	i.Save()
-	retrieved, err := Load(*i.Store, key)
+	retrieved, err := Load(i.DataStore, key)
 	assert.Nil(t, err, "Error should be nil")
 	print(retrieved)
 	iddoc := retrieved.Asset.GetIddoc()

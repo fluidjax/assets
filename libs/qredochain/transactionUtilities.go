@@ -11,14 +11,17 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+type TransactionCode uint32
+
 const (
-	CodeTypeOK            uint32 = 0
-	CodeTypeEncodingError uint32 = 1
-	CodeTypeBadNonce      uint32 = 2
-	CodeTypeUnauthorized  uint32 = 3
-	CodeAlreadyExists     uint32 = 4
-	CodeDatabaseFail      uint32 = 5
-	CodeFailVerfication   uint32 = 6
+	CodeTypeOK            TransactionCode = 0
+	CodeTypeEncodingError                 = 1
+	CodeTypeBadNonce                      = 2
+	CodeTypeUnauthorized                  = 3
+	CodeAlreadyExists                     = 4
+	CodeDatabaseFail                      = 5
+	CodeFailVerfication                   = 6
+	CodeTypeHTTPError                     = 7
 )
 
 func dumpMessage(t int, msg string) {

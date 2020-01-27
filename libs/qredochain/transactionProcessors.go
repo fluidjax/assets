@@ -38,24 +38,27 @@ func (app *KVStoreApplication) processTX(tx []byte, lightWeight bool) uint32 {
 		if err != nil {
 			return code.CodeTypeEncodingError
 		}
-		return app.processWallet(wallet, tx, txHash, lightWeight)
+		code :=  app.processWallet(wallet, tx, txHash, lightWeight)
+		return uint32(code)
 	case protobuffer.PBAssetType_iddoc:
 		iddoc, err := assets.ReBuildIDDoc(signedAsset, assetID)
 		if err != nil {
 			return code.CodeTypeEncodingError
 		}
-		return app.processIDDoc(iddoc, tx, txHash, lightWeight)
+		code:= app.processIDDoc(iddoc, tx, txHash, lightWeight)
+		return uint32(code)
 	case protobuffer.PBAssetType_Group:
 		group, err := assets.ReBuildGroup(signedAsset, assetID)
 		if err != nil {
 			return code.CodeTypeEncodingError
 		}
-		return app.processGroup(group, lightWeight)
+		code :=  app.processGroup(group, lightWeight)
+		return uint32(code)
 	}
 	return code.CodeTypeEncodingError
 }
 
-func (app *KVStoreApplication) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) uint32 {
+func (app *KVStoreApplication) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) TransactionCode {
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
 		dumpMessage(2, "Fail to add IDDoc - tx already in chain")
@@ -83,7 +86,7 @@ func (app *KVStoreApplication) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte
 	return CodeTypeOK
 }
 
-func (app *KVStoreApplication) processWallet(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) uint32 {
+func (app *KVStoreApplication) processWallet(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) TransactionCode {
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
 		dumpMessage(2, "Fail to add wallet - tx already in chain\n")
@@ -147,7 +150,7 @@ func (app *KVStoreApplication) processWallet(wallet *assets.Wallet, rawAsset []b
 	return CodeTypeOK
 }
 
-func (app *KVStoreApplication) processGroup(group *assets.Group, lightWeight bool) uint32 {
+func (app *KVStoreApplication) processGroup(group *assets.Group, lightWeight bool) TransactionCode {
 	fmt.Printf("Process an Group\n")
 	return CodeFailVerfication
 }

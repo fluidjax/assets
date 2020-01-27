@@ -130,12 +130,3 @@ func (app *KVStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.R
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
 }
 
-//This is to implement the StoreInterface
-func (app *KVStoreApplication) Load(key []byte) ([]byte, error) {
-	return app.Get(key)
-}
-
-func (app *KVStoreApplication) Save(key []byte, data []byte) error {
-	return app.Set(key, data)
-
-}

@@ -37,7 +37,6 @@ import (
 	"github.com/qredo/assets/libs/store"
 )
 
-
 // Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if a == nil {
@@ -69,6 +68,12 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	if a == nil {
 		return false, errors.New("SignedAsset is nil")
+	}
+	if a.CurrentAsset == nil {
+		return false, errors.New("CurrentAsset is nil")
+	}
+	if a.CurrentAsset.Signature == nil {
+		return false, errors.New("Asset is unsigned")
 	}
 	if iddoc == nil {
 		return false, errors.New("Verify - supplied IDDoc is nil")
@@ -105,7 +110,7 @@ func (a *SignedAsset) Save() error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
 	}
-	store := *a.Store
+	store := a.DataStore
 	data, err := proto.Marshal(a.CurrentAsset)
 	if err != nil {
 		return err
@@ -198,7 +203,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, errors.New("No Transfer Found")
 	}
 	expression := transfer.Expression
-	expression, _, err := resolveExpression(*a.Store, expression, transfer.Participants, transferSignatures, "")
+	expression, _, err := resolveExpression(a.DataStore, expression, transfer.Participants, transferSignatures, "")
 	if err != nil {
 		return false, err
 	}
@@ -295,7 +300,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	totalParticipants := len(transfer.Participants)
 	var participantArray []TransferParticipant
 	for key, idkey := range transfer.Participants {
-		idsig, err := Load(*a.Store, idkey)
+		idsig, err := Load(a.DataStore, idkey)
 		if err != nil {
 			return nil, errors.New("Failed to load iddoc")
 		}
@@ -323,7 +328,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
 			}
 		}
-		resolvedExpression, display, err := resolveExpression(*a.Store, expression, transfer.Participants, transferSignatures, "")
+		resolvedExpression, display, err := resolveExpression(a.DataStore, expression, transfer.Participants, transferSignatures, "")
 		if err != nil {
 			return nil, err
 		}
@@ -510,7 +515,7 @@ func (a *SignedAsset) FullVerify() (bool, error) {
 
 	//For each supplied signer re-build a PublicKey
 	for abbreviation, participantID := range a.CurrentAsset.Signers {
-		signedAsset, err := Load(*a.Store, participantID)
+		signedAsset, err := Load(a.DataStore, participantID)
 		if err != nil {
 			return false, errors.New("Failed to retieve IDDoc")
 		}

@@ -1,14 +1,14 @@
 package main
 
+//This is a wrapper app that simply starts the Qredochain server
+
 import (
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-
 	"github.com/dgraph-io/badger"
-
 	"github.com/qredo/assets/libs/qredochain"
 )
 

@@ -43,8 +43,8 @@ type IDDoc struct {
 
 //SignedAsset - Asset/Previous Asset Wrapper, holding temporary objects (seed) & previousVersions
 type SignedAsset struct {
-	CurrentAsset  *protobuffer.PBSignedAsset
-	Store         *store.StoreInterface //Reference to object store (map or blockchain)
+	CurrentAsset *protobuffer.PBSignedAsset
+	//Store         *store.StoreInterface //Reference to object store (map or blockchain)
 	DataStore     store.StoreInterface
 	Seed          []byte                     //If available a seed to generate keys for object
 	PreviousAsset *protobuffer.PBSignedAsset //Reference to (if any) previous object with the same key
