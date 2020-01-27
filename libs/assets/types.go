@@ -19,7 +19,10 @@ under the License.
 
 package assets
 
-import "github.com/qredo/assets/libs/protobuffer"
+import (
+	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
+)
 
 //Core Heirachcy
 
@@ -41,7 +44,8 @@ type IDDoc struct {
 //SignedAsset - Asset/Previous Asset Wrapper, holding temporary objects (seed) & previousVersions
 type SignedAsset struct {
 	CurrentAsset  *protobuffer.PBSignedAsset
-	Store         *StoreInterface            //Reference to object store (map or blockchain)
+	Store         *store.StoreInterface //Reference to object store (map or blockchain)
+	DataStore     store.StoreInterface
 	Seed          []byte                     //If available a seed to generate keys for object
 	PreviousAsset *protobuffer.PBSignedAsset //Reference to (if any) previous object with the same key
 }

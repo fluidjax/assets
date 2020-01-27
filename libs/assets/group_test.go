@@ -28,13 +28,14 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Group(t *testing.T) {
 
 	//var store *StoreInterface
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idInitiator, idT1, idT2, idT3 := SetupIDDocs(&store)
 
 	_ = idInitiator
@@ -90,7 +91,7 @@ func Test_Group(t *testing.T) {
 // This bug manifests when serializing maps, - their order when serialized is not guaranteed.
 // Fix is to use a fork of proto buffers https://github.com/gogo/protobuf
 func Test_Determinism(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	_, idT1, idT2, idT3 := SetupIDDocs(&store)
 	testName := "ABC!23"
 	testDescription := "ZXC#@!"

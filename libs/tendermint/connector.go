@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/datastore"
 	"github.com/qredo/assets/libs/logger"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
@@ -19,6 +18,11 @@ const (
 	nodeConnectionTimeout = time.Second * 10
 	txChanSize            = 1000
 )
+
+type ChainPostable interface {
+	SerializeSignedAsset() ([]byte, error)
+	Key() []byte
+}
 
 type NodeConnector struct {
 	nodeID     string
@@ -54,7 +58,7 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 }
 
 // PostTx posts a transaction to the chain and returns the transaction ID
-func (nc *NodeConnector) PostTx(asset assets.ChainPostable) (txID string, err error) {
+func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, err error) {
 	// //serialize the whole transaction
 	serializedTX, err := asset.SerializeSignedAsset()
 	if err != nil {

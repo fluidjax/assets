@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//Create an external blockchain to run these tests.
 func Test_LoadSave(t *testing.T) {
 	i, err := assets.NewIDDoc("1st Ref")
 	assert.Nil(t, err, "Error should be nil")
@@ -19,8 +20,9 @@ func Test_LoadSave(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX1)
 	txid, err := tendermint.PostTx(base64EncodedTX, "127.0.0.1:26657")
-	print(txid)
 
-	
+	assert.Nil(t, err, "Error should be nil", err)
+
+	print(txid)
 
 }

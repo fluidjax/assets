@@ -1,6 +1,7 @@
 package store
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 )
 
@@ -17,12 +18,13 @@ func NewMapstore() StoreInterface {
 }
 
 func (m *Mapstore) Load(key []byte) ([]byte, error) {
-	val := m.Store[hex.EncodeToString(key)]
+	keyhash := sha256.Sum256(key)
+	val := m.Store[hex.EncodeToString(keyhash[:])]
 	return val, nil
 }
 
 func (m *Mapstore) Save(key []byte, data []byte) error {
-	m.Store[hex.EncodeToString(key)] = data
+	keyhash := sha256.Sum256(key)
+	m.Store[hex.EncodeToString(keyhash[:])] = data
 	return nil
-
 }

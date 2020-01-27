@@ -34,12 +34,9 @@ import (
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 )
 
-type ChainPostable interface {
-	SerializeSignedAsset() ([]byte, error)
-	Key() []byte
-}
 
 // Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {
@@ -119,7 +116,7 @@ func (a *SignedAsset) Save() error {
 }
 
 // Load - read a SignedAsset from the store
-func Load(store StoreInterface, key []byte) (*protobuffer.PBSignedAsset, error) {
+func Load(store store.StoreInterface, key []byte) (*protobuffer.PBSignedAsset, error) {
 	val, err := store.Load(key)
 	if err != nil {
 		return nil, err
@@ -214,7 +211,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 // participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 // transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 // recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
-func resolveExpression(store StoreInterface, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
+func resolveExpression(store store.StoreInterface, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	if expression == "" {
 		return "", "", errors.New("resolveExpression - expression is empty")
 	}
@@ -464,7 +461,7 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 }
 
 // buildSigKeys - Aggregated the signatures and public keys for all Participants
-func buildSigKeys(store *StoreInterface, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
+func buildSigKeys(store *store.StoreInterface, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
 	//For each supplied signer re-build a PublicKey
 	for _, abbreviation := range signers {
 		participantID := currentTransfer.Participants[abbreviation]

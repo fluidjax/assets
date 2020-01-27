@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +32,7 @@ func Test_Wallet_Signing(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	store := NewMapstore()
+	store := store.NewMapstore()
 	i.Store = &store
 	i.Save()
 	w, err := NewWallet(i, "BTC")
@@ -53,7 +54,7 @@ func Test_Wallet(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	store := NewMapstore()
+	store := store.NewMapstore()
 	i.Store = &store
 	i.Save()
 	w, err := NewWallet(i, "BTC")

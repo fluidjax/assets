@@ -25,11 +25,12 @@ import (
 	"testing"
 
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_GroupTruthTable(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idInitiator, idT1, idT2, idT3 := SetupIDDocs(&store)
 	expression := "t1 + t2 + t3 > 1 "
 	participants := &map[string][]byte{
@@ -50,7 +51,7 @@ func Test_GroupTruthTable(t *testing.T) {
 }
 
 func Test_GroupRuleAdd(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idInitiator, idT1, idT2, idT3 := SetupIDDocs(&store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
@@ -107,7 +108,7 @@ func Test_GroupRuleAdd(t *testing.T) {
 	assert.True(t, validTransfer1, "Transfer should be valid")
 }
 
-func SetupTrusteeGroup(store *StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *Group) {
+func SetupTrusteeGroup(store *store.StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *Group) {
 	tgInitiator, tgT1, tgT2, tgT3 := SetupIDDocs(store)
 
 	w, _ := NewGroup(tgInitiator, protobuffer.PBGroupType_TrusteeGroup)
@@ -126,7 +127,7 @@ func SetupTrusteeGroup(store *StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *Group) {
 }
 
 func Test_GroupAggregationAndVerify(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
 
 	idNewOwner, _ := NewIDDoc("NewOwner")
@@ -178,7 +179,7 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 }
 
 func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idP, _, idT2, idT3 := SetupIDDocs(&store)
 	idX1, idX2, _, Group := SetupTrusteeGroup(&store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
@@ -234,7 +235,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 }
 
 func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
 
 	idNewOwner, _ := NewIDDoc("NewOwner")
@@ -283,7 +284,7 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 }
 
 func Test_GroupTransferParser(t *testing.T) {
-	store := NewMapstore()
+	store := store.NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(&store)
 	_, groupMember1, groupMember2, groupMember3 := SetupIDDocs(&store)
 	_, groupMember4, groupMember5, _ := SetupIDDocs(&store)

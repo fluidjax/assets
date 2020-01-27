@@ -18,9 +18,10 @@ var _ abcitypes.Application = (*KVStoreApplication)(nil)
 
 //NewKVStoreApplication -
 func NewKVStoreApplication(db *badger.DB) *KVStoreApplication {
-	return &KVStoreApplication{
+	kv := &KVStoreApplication{
 		db: db,
 	}
+	return kv
 }
 
 //Info -
@@ -127,4 +128,14 @@ func (app *KVStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.R
 	// Tendermint attributes no other value to the response code
 	code := app.processTX(req.Tx, true)
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
+}
+
+//This is to implement the StoreInterface
+func (app *KVStoreApplication) Load(key []byte) ([]byte, error) {
+	return app.Get(key)
+}
+
+func (app *KVStoreApplication) Save(key []byte, data []byte) error {
+	return app.Set(key, data)
+
 }
