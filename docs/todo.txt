@@ -1,13 +1,34 @@
 Internal list of stuff to TODO:
 
 KV Datastore
-    Testing:    in memory cache of 
-    App:        Query API
-                Badger local save/load of TX 
-    External    Post Transaction
-                Query
+    Testing:        in memory cache of 
+    Internal:X      Search ?
+             X      Badger local save/load of TX 
+    External:X      Post Transaction
+                    Query
+
+
+Tuesday Query
 
 
 Query:  
     always a kv lookup
     Wildcards
+
+
+
+
+    App -            Command line app wrapper
+    Assets -        Assets
+    Boolparser
+    crypto          BLS Add/AES 
+    cryptowallet    BIP44/
+    datastore       
+    keystore
+    logger
+    protobuffer
+    qredochain
+    store
+
+
+

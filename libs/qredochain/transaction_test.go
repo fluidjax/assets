@@ -2,6 +2,7 @@ package qredochain
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"testing"
 
 	"github.com/qredo/assets/libs/assets"
@@ -23,5 +24,9 @@ func Test_LoadSave(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil", err)
 
 	print(txid)
+	txidHash, _ := hex.DecodeString(txid)
+	a, b := app.Load(txidHash)
+	print(a)
+	print(b)
 
 }

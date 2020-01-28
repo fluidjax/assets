@@ -68,6 +68,11 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX)
 
 	// // TODO: use net/rpc
+
+	//broadcast_tx_commit - broadcast and wait until its in a new block
+	//broadcast_tx_async  - broadcast and return - no checks
+	//broadcast_tx_sync   - broadcast and wait for CheckTx result
+
 	body := strings.NewReader(`{
 		"jsonrpc": "2.0",
 		"id": "anything",

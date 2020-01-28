@@ -15,7 +15,7 @@ import (
 )
 
 func Test_ChainPutGet(t *testing.T) {
-	StartTestChain()
+	//StartTestChain() //included in TestMain()
 
 	i, err := assets.NewIDDoc("1st Ref")
 	i.DataStore = app
@@ -36,6 +36,9 @@ func Test_ChainPutGet(t *testing.T) {
 	//Make a test transaction
 	app.currentBatch = app.db.NewTransaction(true)
 	err = app.Save(testKey, testData)
+
+	//testKey, _ = hex.DecodeString("B8F4D3CBFFFFD9D4D12A69AD8236F2A1295B4DCEBE018C7D6307FF7FAABD0CF9")
+
 	assert.Nil(t, err, "Save returned error")
 	app.currentBatch.Commit()
 

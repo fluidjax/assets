@@ -5,11 +5,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/dgraph-io/badger"
+	"github.com/qredo/assets/libs/qredochain"
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/dgraph-io/badger"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 var configFile string
@@ -27,7 +27,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
-	app := qredochain.NewKVStoreApplication(db)
+	app := qredochain.NewQredoChain(db)
 
 	flag.Parse()
 

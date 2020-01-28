@@ -1,6 +1,7 @@
 package qredochain
 
 import (
+	"encoding/hex"
 	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -8,29 +9,29 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
 
-//KVStoreApplication -
-type KVStoreApplication struct {
+//QredoChain -
+type QredoChain struct {
 	db           *badger.DB
 	currentBatch *badger.Txn
 }
 
-var _ abcitypes.Application = (*KVStoreApplication)(nil)
+var _ abcitypes.Application = (*QredoChain)(nil)
 
-//NewKVStoreApplication -
-func NewKVStoreApplication(db *badger.DB) *KVStoreApplication {
-	kv := &KVStoreApplication{
+//NewQredoChain -
+func NewQredoChain(db *badger.DB) *QredoChain {
+	kv := &QredoChain{
 		db: db,
 	}
 	return kv
 }
 
 //Info -
-func (KVStoreApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
+func (QredoChain) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
 	return abcitypes.ResponseInfo{}
 }
 
 //SetOption -
-func (KVStoreApplication) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
+func (QredoChain) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
 	return abcitypes.ResponseSetOption{}
 }
 
@@ -45,13 +46,14 @@ func decodeTX(data []byte) (*protobuffer.PBSignedAsset, error) {
 }
 
 //DeliverTx -
-func (app *KVStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+	print("*********************")
 	code := app.processTX(req.Tx, false)
 	return types.ResponseDeliverTx{Code: code, Events: nil}
 }
 
 //Commit -
-func (app *KVStoreApplication) Commit() abcitypes.ResponseCommit {
+func (app *QredoChain) Commit() abcitypes.ResponseCommit {
 	// Persist the application state.
 	// Return an (optional) Merkle root hash of the application state
 	// ResponseCommit.Data is included as the Header.AppHash in the next block
@@ -66,16 +68,20 @@ func (app *KVStoreApplication) Commit() abcitypes.ResponseCommit {
 }
 
 //Query -
-func (app *KVStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
+func (app *QredoChain) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
 	// Query for data from the application at current or past height.
 	// Optionally return Merkle proof.
-	// Merkle proof includes self-describing type field to support many types of Merkle trees and encoding formats.
+	// Merkle proof includes self-describing type field to support many types of Merkle trees
+	//	and encoding formats.
 
 	print("\nXXXX", reqQuery.Data)
+	key, _ := hex.DecodeString(string(reqQuery.Data))
 
 	resQuery.Key = reqQuery.Data
 	err := app.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(reqQuery.Data)
+		//item, err := txn.Get(reqQuery.Data)
+		item, err := txn.Get(key)
+
 		if err != nil && err != badger.ErrKeyNotFound {
 			return err
 		}
@@ -84,7 +90,8 @@ func (app *KVStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery 
 		} else {
 			return item.Value(func(val []byte) error {
 				resQuery.Log = "exists"
-				resQuery.Value = val
+				valHex := hex.EncodeToString(val)
+				resQuery.Value = []byte(valHex)
 				return nil
 			})
 		}
@@ -97,12 +104,12 @@ func (app *KVStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery 
 }
 
 //InitChain -
-func (KVStoreApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
+func (QredoChain) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
 	return abcitypes.ResponseInitChain{}
 }
 
 //BeginBlock -
-func (app *KVStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+func (app *QredoChain) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
 	// 	Signals the beginning of a new block. Called prior to any DeliverTxs.
 	// The header contains the height, timestamp, and more - it exactly matches the Tendermint block header.
 	//			 We may seek to generalize this in the future.
@@ -113,12 +120,12 @@ func (app *KVStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcit
 }
 
 //EndBlock -
-func (KVStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+func (QredoChain) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
 	return abcitypes.ResponseEndBlock{}
 }
 
 //CheckTx -
-func (app *KVStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+func (app *QredoChain) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
 	// Technically optional - not involved in processing blocks.
 	// Guardian of the mempool: every node runs CheckTx before letting a transaction into its local mempool.
 	// The transaction may come from an external user or another node
@@ -129,4 +136,3 @@ func (app *KVStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.R
 	code := app.processTX(req.Tx, true)
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
 }
-

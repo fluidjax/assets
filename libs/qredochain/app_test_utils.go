@@ -17,7 +17,7 @@ import (
 
 var done chan bool
 var ready chan bool
-var app *KVStoreApplication
+var app *QredoChain
 var tnode *node.Node
 
 func ShutDown() {
@@ -34,7 +34,7 @@ func InitiateChain() {
 		os.Exit(1)
 	}
 	defer db.Close()
-	app = NewKVStoreApplication(db)
+	app = NewQredoChain(db)
 
 	flag.Parse()
 

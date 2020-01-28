@@ -39,7 +39,7 @@ func dumpMessage(t int, msg string) {
 	}
 }
 
-func (app *KVStoreApplication) GetIDDoc(assetID []byte) (*assets.IDDoc, error) {
+func (app *QredoChain) GetIDDoc(assetID []byte) (*assets.IDDoc, error) {
 	key, err := app.Get(assetID)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (app *KVStoreApplication) GetIDDoc(assetID []byte) (*assets.IDDoc, error) {
 	return assets.ReBuildIDDoc(msg, key)
 }
 
-func (app *KVStoreApplication) GetWallet(assetID []byte) (*assets.Wallet, error) {
+func (app *QredoChain) GetWallet(assetID []byte) (*assets.Wallet, error) {
 	key, err := app.Get(assetID)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (app *KVStoreApplication) GetWallet(assetID []byte) (*assets.Wallet, error)
 	return assets.ReBuildWallet(msg, key)
 }
 
-func (app *KVStoreApplication) GetGroup(assetID []byte) (*assets.Group, error) {
+func (app *QredoChain) GetGroup(assetID []byte) (*assets.Group, error) {
 	key, err := app.Get(assetID)
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (app *KVStoreApplication) GetGroup(assetID []byte) (*assets.Group, error) {
 	return assets.ReBuildGroup(msg, key)
 }
 
-func (app *KVStoreApplication) Get(key []byte) ([]byte, error) {
+func (app *QredoChain) Get(key []byte) ([]byte, error) {
 	var res []byte
 	err := app.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(key)
@@ -110,13 +110,13 @@ func (app *KVStoreApplication) Get(key []byte) ([]byte, error) {
 	return res, err
 }
 
-func (app *KVStoreApplication) Set(key []byte, data []byte) error {
+func (app *QredoChain) Set(key []byte, data []byte) error {
 	txn := app.currentBatch
 	err := txn.Set(key, data)
 	return err
 }
 
-func (app *KVStoreApplication) exists(key []byte) bool {
+func (app *QredoChain) exists(key []byte) bool {
 	item, _ := app.Get(key)
 	return item != nil
 }

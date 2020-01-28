@@ -11,7 +11,7 @@ import (
 	"github.com/tendermint/abci/example/code"
 )
 
-func (app *KVStoreApplication) processTX(tx []byte, lightWeight bool) uint32 {
+func (app *QredoChain) processTX(tx []byte, lightWeight bool) uint32 {
 	// 	The workhorse of the application - non-optional.
 	// 	Execute the transaction in full.
 	// 	ResponseDeliverTx.Code == 0 only if the transaction is fully valid.
@@ -24,6 +24,8 @@ func (app *KVStoreApplication) processTX(tx []byte, lightWeight bool) uint32 {
 	//Make TX Hash
 	txHashA := sha256.Sum256(tx)
 	txHash := txHashA[:]
+
+	fmt.Println("txHash = ", txHash[:])
 
 	//Retrieve the Asset ID
 	assetID := signedAsset.Asset.GetID()
@@ -38,27 +40,27 @@ func (app *KVStoreApplication) processTX(tx []byte, lightWeight bool) uint32 {
 		if err != nil {
 			return code.CodeTypeEncodingError
 		}
-		code :=  app.processWallet(wallet, tx, txHash, lightWeight)
+		code := app.processWallet(wallet, tx, txHash, lightWeight)
 		return uint32(code)
 	case protobuffer.PBAssetType_iddoc:
 		iddoc, err := assets.ReBuildIDDoc(signedAsset, assetID)
 		if err != nil {
 			return code.CodeTypeEncodingError
 		}
-		code:= app.processIDDoc(iddoc, tx, txHash, lightWeight)
+		code := app.processIDDoc(iddoc, tx, txHash, lightWeight)
 		return uint32(code)
 	case protobuffer.PBAssetType_Group:
 		group, err := assets.ReBuildGroup(signedAsset, assetID)
 		if err != nil {
 			return code.CodeTypeEncodingError
 		}
-		code :=  app.processGroup(group, lightWeight)
+		code := app.processGroup(group, lightWeight)
 		return uint32(code)
 	}
 	return code.CodeTypeEncodingError
 }
 
-func (app *KVStoreApplication) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) TransactionCode {
+func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) TransactionCode {
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
 		dumpMessage(2, "Fail to add IDDoc - tx already in chain")
@@ -78,15 +80,20 @@ func (app *KVStoreApplication) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte
 
 	//Add pointer from AssetID to the txHash of the Object
 	if lightWeight == false {
-		err := app.Set(iddoc.Key(), txHash)
+		err := app.Set(txHash, rawAsset)
 		if err != nil {
 			return CodeDatabaseFail
 		}
+		err = app.Set(iddoc.Key(), txHash)
+		if err != nil {
+			return CodeDatabaseFail
+		}
+
 	}
 	return CodeTypeOK
 }
 
-func (app *KVStoreApplication) processWallet(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) TransactionCode {
+func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) TransactionCode {
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
 		dumpMessage(2, "Fail to add wallet - tx already in chain\n")
@@ -128,6 +135,12 @@ func (app *KVStoreApplication) processWallet(wallet *assets.Wallet, rawAsset []b
 	}
 
 	if lightWeight == false {
+
+		err := app.Set(txHash, rawAsset)
+		if err != nil {
+			return CodeDatabaseFail
+		}
+
 		//Write the Pointer Key
 		// ABCDE.0 = txHash
 		pointerKey := KeySuffix(wallet.Key(), newAssetIndexString)
@@ -150,12 +163,12 @@ func (app *KVStoreApplication) processWallet(wallet *assets.Wallet, rawAsset []b
 	return CodeTypeOK
 }
 
-func (app *KVStoreApplication) processGroup(group *assets.Group, lightWeight bool) TransactionCode {
+func (app *QredoChain) processGroup(group *assets.Group, lightWeight bool) TransactionCode {
 	fmt.Printf("Process an Group\n")
 	return CodeFailVerfication
 }
 
-func (app *KVStoreApplication) VerifyIDDoc(iddoc *assets.IDDoc) bool {
+func (app *QredoChain) VerifyIDDoc(iddoc *assets.IDDoc) bool {
 	//Check signature
 	verify, err := iddoc.Verify(iddoc)
 	if err != nil {
@@ -188,7 +201,7 @@ func (app *KVStoreApplication) VerifyIDDoc(iddoc *assets.IDDoc) bool {
 	return true
 }
 
-func (app *KVStoreApplication) VerifyWalletUpdate(wallet *assets.Wallet) bool {
+func (app *QredoChain) VerifyWalletUpdate(wallet *assets.Wallet) bool {
 	return true
 	// verify, err := wallet.OnChainFullVerify(app)
 	// if err != nil {
@@ -200,7 +213,7 @@ func (app *KVStoreApplication) VerifyWalletUpdate(wallet *assets.Wallet) bool {
 	//	return true
 }
 
-func (app *KVStoreApplication) VerifyNewWallet(wallet *assets.Wallet) bool {
+func (app *QredoChain) VerifyNewWallet(wallet *assets.Wallet) bool {
 
 	// signers := wallet.CurrentAsset.Signers
 	// if signers == nil || len(signers) == 0 || len(signers) > 1 {
@@ -229,10 +242,13 @@ func (app *KVStoreApplication) VerifyNewWallet(wallet *assets.Wallet) bool {
 	return true
 }
 
-func (app *KVStoreApplication) VerifyGroupUpdate(iddoc *assets.Group) bool {
+func (app *QredoChain) VerifyGroupUpdate(iddoc *assets.Group) bool {
 	return true
 }
 
-func (app *KVStoreApplication) VerifyNewGroup(iddoc *assets.Group) bool {
+func (app *QredoChain) VerifyNewGroup(iddoc *assets.Group) bool {
 	return true
 }
+
+// func (app *QredoChain) processQuery(iddoc *assets.Group) bool {
+// }

@@ -70,11 +70,11 @@ func NewTendermint(app abci.Application, configFile string) (*nm.Node, error) {
 }
 
 //This is to implement the StoreInterface
-func (app *KVStoreApplication) Load(key []byte) ([]byte, error) {
+func (app *QredoChain) Load(key []byte) ([]byte, error) {
 	return app.Get(key)
 }
 
-func (app *KVStoreApplication) Save(key []byte, data []byte) error {
+func (app *QredoChain) Save(key []byte, data []byte) error {
 	return app.Set(key, data)
 
 }
