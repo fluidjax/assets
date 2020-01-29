@@ -2,6 +2,8 @@ package qredochain
 
 import (
 	"encoding/hex"
+	"fmt"
+
 	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -47,9 +49,12 @@ func decodeTX(data []byte) (*protobuffer.PBSignedAsset, error) {
 
 //DeliverTx -
 func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	print("*********************")
-	code := app.processTX(req.Tx, false)
-	return types.ResponseDeliverTx{Code: code, Events: nil}
+	code, events := app.processTX(req.Tx, false)
+	fmt.Println("----------------------------------------------------")
+	fmt.Println(events)
+	fmt.Println("----------------------------------------------------")
+
+	return types.ResponseDeliverTx{Code: code, Events: events}
 }
 
 //Commit -
@@ -64,6 +69,31 @@ func (app *QredoChain) Commit() abcitypes.ResponseCommit {
 	//		 BeginBlock/DeliverTx/EndBlock methods.
 
 	app.currentBatch.Commit()
+
+	print("--------COMMIT-----------------------------------------------------\n")
+	app.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchSize = 10
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			print("Inside loop")
+			item := it.Item()
+			k := item.Key()
+			err := item.Value(func(v []byte) error {
+
+				fmt.Printf("key=%s, value=%s\n", hex.EncodeToString(k), hex.EncodeToString(v))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	print("--------COMMIT END-----------------------------------------------------\n")
+
 	return abcitypes.ResponseCommit{Data: []byte{}}
 }
 
@@ -133,6 +163,6 @@ func (app *QredoChain) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 	//					like checking signatures and account balances, but not running code in a virtual machine.
 	// Transactions where ResponseCheckTx.Code != 0 will be rejected - they will not be broadcast to other nodes or included in a proposal block.
 	// Tendermint attributes no other value to the response code
-	code := app.processTX(req.Tx, true)
+	code, _ := app.processTX(req.Tx, true)
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
 }

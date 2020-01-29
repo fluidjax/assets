@@ -112,3 +112,18 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 	code = TransactionCode(codef64)
 	return txID, code, err
 }
+
+func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
+	//query := fmt.Sprintf("tag.txid='%s'", txHash)
+	query := "tag.myname='chris'"
+	print("QUERY:", query, "\n")
+	result, err := nc.tmClient.TxSearch(query, true, 1, 1)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Txs) == 0 {
+		return nil, errors.Errorf("Document not found: %v", txHash)
+	}
+
+	return result.Txs[0].Tx, nil
+}

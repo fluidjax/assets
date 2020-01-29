@@ -1,4 +1,18 @@
 Internal list of stuff to TODO:
+    Plan -
+        GUI API 
+        Asset
+        Chain
+        Balances
+
+
+
+    Diagram
+        Wall
+        https://www.lucidchart.com/documents/edit/7d8d0378-d694-4ecb-af44-5117f39c6943
+
+
+
 
 KV Datastore
     Testing:        in memory cache of 
