@@ -17,6 +17,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tendermint/abci v0.12.0
 	github.com/tendermint/tendermint v0.33.0
+	github.com/tendermint/tm-db v0.4.0
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/bbolt v1.3.3
 )
