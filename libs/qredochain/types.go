@@ -26,17 +26,11 @@ var (
 
 	ProtocolVersion version.Protocol  = 0x1
 	_               types.Application = (*Qredochain)(nil)
-	_               types.Application = (*Application)(nil)
 )
 
 const (
 	ValidatorSetChangePrefix string = "val:"
 )
-
-type Application struct {
-	types.BaseApplication
-	state State
-}
 
 type State struct {
 	db      dbm.DB
@@ -46,7 +40,8 @@ type State struct {
 }
 
 type Qredochain struct {
-	app                *Application
+	types.BaseApplication
+	state              State
 	ValUpdates         []types.ValidatorUpdate
 	valAddrToPubKeyMap map[string]types.PubKey
 	logger             log.Logger

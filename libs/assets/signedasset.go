@@ -22,6 +22,7 @@ package assets
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -610,4 +611,17 @@ func (a *SignedAsset) SerializeSignedAsset() (s []byte, err error) {
 		s = nil
 	}
 	return s, err
+}
+
+// Hash is for debugging
+func (a *SignedAsset) Hash() string {
+	if a == nil {
+		return ""
+	}
+	data, err := a.SerializeAsset()
+	if err != nil {
+		return ""
+	}
+	result := sha256.Sum256(data)
+	return hex.EncodeToString(result[:])
 }

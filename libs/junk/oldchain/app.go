@@ -50,10 +50,6 @@ func decodeTX(data []byte) (*protobuffer.PBSignedAsset, error) {
 //DeliverTx -
 func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	code, events := app.processTX(req.Tx, false)
-	fmt.Println("----------------------------------------------------")
-	fmt.Println(events)
-	fmt.Println("----------------------------------------------------")
-
 	return types.ResponseDeliverTx{Code: code, Events: events}
 }
 

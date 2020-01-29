@@ -7,7 +7,6 @@ import (
 
 	"github.com/tendermint/tendermint/abci/example/code"
 	"github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/kv"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/version"
@@ -18,14 +17,17 @@ func (app *Qredochain) SetLogger(l log.Logger) {
 }
 
 func (app *Qredochain) Info(req types.RequestInfo) types.ResponseInfo {
-	res := app.app.Info(req)
-	res.LastBlockHeight = app.app.state.Height
-	res.LastBlockAppHash = app.app.state.AppHash
-	return res
+	return types.ResponseInfo{
+		Data:             fmt.Sprintf("{\"size\":%v}", app.state.Size),
+		Version:          version.ABCIVersion,
+		AppVersion:       ProtocolVersion.Uint64(),
+		LastBlockHeight:  app.state.Height,
+		LastBlockAppHash: app.state.AppHash,
+	}
 }
 
 func (app *Qredochain) SetOption(req types.RequestSetOption) types.ResponseSetOption {
-	return app.app.SetOption(req)
+	return app.SetOption(req)
 }
 
 // tx is either "val:pubkey!power" or "key=value" or just arbitrary bytes
@@ -37,36 +39,90 @@ func (app *Qredochain) DeliverTx(req types.RequestDeliverTx) types.ResponseDeliv
 		// and in app.ValUpdates
 		return app.execValidatorTx(req.Tx)
 	}
-
-	// otherwise, update the key-value store
-	return app.app.DeliverTx(req)
+	code, events := app.processTX(req.Tx, false)
+	if code == 0 {
+		app.state.Size++
+	}
+	return types.ResponseDeliverTx{Code: code, Events: events}
 }
 
 func (app *Qredochain) CheckTx(req types.RequestCheckTx) types.ResponseCheckTx {
-	return app.app.CheckTx(req)
+	return types.ResponseCheckTx{Code: code.CodeTypeOK, GasWanted: 1}
 }
 
 // Commit will panic if InitChain was not called
 func (app *Qredochain) Commit() types.ResponseCommit {
-	return app.app.Commit()
+	// Using a memdb - just return the big endian size of the db
+	appHash := make([]byte, 8)
+	binary.PutVarint(appHash, app.state.Size)
+	app.state.AppHash = appHash
+	app.state.Height++
+	saveState(app.state)
+	return types.ResponseCommit{Data: nil}
 }
 
 // When path=/val and data={validator address}, returns the validator update (types.ValidatorUpdate) varint encoded.
 // For any other path, returns an associated value or nil if missing.
 func (app *Qredochain) Query(reqQuery types.RequestQuery) (resQuery types.ResponseQuery) {
 	switch reqQuery.Path {
-	case "/val":
-		key := []byte("val:" + string(reqQuery.Data))
-		value, err := app.app.state.db.Get(key)
+	case "V": //V = get Value
+		value, err := app.state.db.Get(reqQuery.Data)
 		if err != nil {
-			panic(err)
+			resQuery.Code = 1
+			return
+		}
+
+		resQuery.Key = reqQuery.Data
+		resQuery.Value = value
+		return
+	case "I": //I = indirect value
+		txid, err := app.state.db.Get(reqQuery.Data)
+		if err != nil {
+			resQuery.Code = 1
+			return
+		}
+		value, err := app.state.db.Get(txid)
+		if err != nil {
+			resQuery.Code = 1
+			return
 		}
 
 		resQuery.Key = reqQuery.Data
 		resQuery.Value = value
 		return
 	default:
-		return app.app.Query(reqQuery)
+		// Returns an associated value or nil if missing.
+		if reqQuery.Prove {
+			value, err := app.state.db.Get(prefixKey(reqQuery.Data))
+			if err != nil {
+				panic(err)
+			}
+			if value == nil {
+				resQuery.Log = "does not exist"
+			} else {
+				resQuery.Log = "exists"
+			}
+			resQuery.Index = -1 // TODO make Proof return index
+			resQuery.Key = reqQuery.Data
+			resQuery.Value = value
+
+			return
+		}
+
+		resQuery.Key = reqQuery.Data
+		value, err := app.state.db.Get(prefixKey(reqQuery.Data))
+		if err != nil {
+			panic(err)
+		}
+		if value == nil {
+			resQuery.Log = "does not exist"
+		} else {
+			resQuery.Log = "exists"
+		}
+		resQuery.Value = value
+
+		return resQuery
+
 	}
 }
 
@@ -84,6 +140,7 @@ func (app *Qredochain) InitChain(req types.RequestInitChain) types.ResponseInitC
 // Track the block hash and header information
 func (app *Qredochain) BeginBlock(req types.RequestBeginBlock) types.ResponseBeginBlock {
 	// reset valset changes
+
 	app.ValUpdates = make([]types.ValidatorUpdate, 0)
 
 	for _, ev := range req.ByzantineValidators {
@@ -111,7 +168,7 @@ func (app *Qredochain) EndBlock(req types.RequestEndBlock) types.ResponseEndBloc
 // update validators
 
 func (app *Qredochain) Validators() (validators []types.ValidatorUpdate) {
-	itr, err := app.app.state.db.Iterator(nil, nil)
+	itr, err := app.state.db.Iterator(nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -126,89 +183,4 @@ func (app *Qredochain) Validators() (validators []types.ValidatorUpdate) {
 		}
 	}
 	return
-}
-
-func (app *Application) Info(req types.RequestInfo) (resInfo types.ResponseInfo) {
-	return types.ResponseInfo{
-		Data:             fmt.Sprintf("{\"size\":%v}", app.state.Size),
-		Version:          version.ABCIVersion,
-		AppVersion:       ProtocolVersion.Uint64(),
-		LastBlockHeight:  app.state.Height,
-		LastBlockAppHash: app.state.AppHash,
-	}
-}
-
-// tx is either "key=value" or just arbitrary bytes
-func (app *Application) DeliverTx(req types.RequestDeliverTx) types.ResponseDeliverTx {
-	var key, value []byte
-	parts := bytes.Split(req.Tx, []byte("="))
-	if len(parts) == 2 {
-		key, value = parts[0], parts[1]
-	} else {
-		key, value = req.Tx, req.Tx
-	}
-
-	app.state.db.Set(prefixKey(key), value)
-	app.state.db.Set([]byte("hello"), []byte("chris"))
-	app.state.Size++
-
-	events := []types.Event{
-		{
-			Type: "app",
-			Attributes: []kv.Pair{
-				{Key: []byte("creator"), Value: []byte("Cosmoshi Netowoko")},
-				{Key: []byte("key"), Value: key},
-			},
-		},
-	}
-
-	return types.ResponseDeliverTx{Code: code.CodeTypeOK, Events: events}
-}
-
-func (app *Application) CheckTx(req types.RequestCheckTx) types.ResponseCheckTx {
-	return types.ResponseCheckTx{Code: code.CodeTypeOK, GasWanted: 1}
-}
-
-func (app *Application) Commit() types.ResponseCommit {
-	// Using a memdb - just return the big endian size of the db
-	appHash := make([]byte, 8)
-	binary.PutVarint(appHash, app.state.Size)
-	app.state.AppHash = appHash
-	app.state.Height++
-	saveState(app.state)
-	return types.ResponseCommit{Data: appHash}
-}
-
-// Returns an associated value or nil if missing.
-func (app *Application) Query(reqQuery types.RequestQuery) (resQuery types.ResponseQuery) {
-	if reqQuery.Prove {
-		value, err := app.state.db.Get(prefixKey(reqQuery.Data))
-		if err != nil {
-			panic(err)
-		}
-		if value == nil {
-			resQuery.Log = "does not exist"
-		} else {
-			resQuery.Log = "exists"
-		}
-		resQuery.Index = -1 // TODO make Proof return index
-		resQuery.Key = reqQuery.Data
-		resQuery.Value = value
-
-		return
-	}
-
-	resQuery.Key = reqQuery.Data
-	value, err := app.state.db.Get(prefixKey(reqQuery.Data))
-	if err != nil {
-		panic(err)
-	}
-	if value == nil {
-		resQuery.Log = "does not exist"
-	} else {
-		resQuery.Log = "exists"
-	}
-	resQuery.Value = value
-
-	return resQuery
 }

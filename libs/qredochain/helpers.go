@@ -77,13 +77,7 @@ func prefixKey(key []byte) []byte {
 
 //---------------------------------------------------
 
-func NewApplication() *Application {
-	state := loadState(dbm.NewMemDB())
-	return &Application{state: state}
-}
-
 func NewQredochain(dbDir string) *Qredochain {
-
 	name := "kvstore"
 	db, err := dbm.NewGoLevelDB(name, dbDir)
 	if err != nil {
@@ -93,7 +87,7 @@ func NewQredochain(dbDir string) *Qredochain {
 	state := loadState(db)
 
 	return &Qredochain{
-		app:                &Application{state: state},
+		state:              state,
 		valAddrToPubKeyMap: make(map[string]types.PubKey),
 		logger:             log.NewNopLogger(),
 	}
@@ -151,7 +145,7 @@ func (app *Qredochain) updateValidator(v types.ValidatorUpdate) types.ResponseDe
 
 	if v.Power == 0 {
 		// remove validator
-		hasKey, err := app.app.state.db.Has(key)
+		hasKey, err := app.state.db.Has(key)
 		if err != nil {
 			panic(err)
 		}
@@ -161,7 +155,7 @@ func (app *Qredochain) updateValidator(v types.ValidatorUpdate) types.ResponseDe
 				Code: code.CodeTypeUnauthorized,
 				Log:  fmt.Sprintf("Cannot remove non-existent validator %s", pubStr)}
 		}
-		app.app.state.db.Delete(key)
+		app.state.db.Delete(key)
 		delete(app.valAddrToPubKeyMap, string(pubkey.Address()))
 	} else {
 		// add or update validator
@@ -171,7 +165,7 @@ func (app *Qredochain) updateValidator(v types.ValidatorUpdate) types.ResponseDe
 				Code: code.CodeTypeEncodingError,
 				Log:  fmt.Sprintf("Error encoding validator: %v", err)}
 		}
-		app.app.state.db.Set(key, value.Bytes())
+		app.state.db.Set(key, value.Bytes())
 		app.valAddrToPubKeyMap[string(pubkey.Address())] = v.PubKey
 	}
 
@@ -180,6 +174,3 @@ func (app *Qredochain) updateValidator(v types.ValidatorUpdate) types.ResponseDe
 
 	return types.ResponseDeliverTx{Code: code.CodeTypeOK}
 }
-
-
-

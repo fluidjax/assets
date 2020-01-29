@@ -1,10 +1,14 @@
 package qredochain
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/assets"
+	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,9 +34,31 @@ func Test_IDOC(t *testing.T) {
 	txid, errorCode, err := nc.PostTx(i)
 	fmt.Println(txid)
 	assert.True(t, errorCode == CodeTypeOK, "Error should be nil", err)
+	time.Sleep(2 * time.Second)
 
-	data, err := nc.GetTx(txid)
-	assert.NotNil(t, data, "Data should not be nil", err)
+	//Get from the Node using ABCIQuery
+	txidBytes, _ := hex.DecodeString(txid)
+	data, err := nc.tmClient.ABCIQuery("V", txidBytes)
+
+	//Check its good
+	msg := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data.Response.GetValue(), msg)
+	assert.Nil(t, err, "Error should be nil", err)
+	i2, err := assets.ReBuildIDDoc(msg, i.Key())
+	assert.True(t, i.Hash() == i2.Hash(), "Keys dont match")
+
+	//Get from the Node using indirect Asset ID
+	data2, err := nc.tmClient.ABCIQuery("I", i.Key())
+	err = proto.Unmarshal(data2.Response.GetValue(), msg)
+	assert.Nil(t, err, "Error should be nil", err)
+	assert.True(t, i.Hash() == i2.Hash(), "Keys dont match")
+
+	// fmt.Println(hex.EncodeToString(data.Response.GetKey()))
+	// fmt.Println(hex.EncodeToString(data.Response.GetValue()))
+	// fmt.Println(hex.EncodeToString(txidBytes))
+	// fmt.Println(hex.EncodeToString(i.Key()))
+
+	// assert.NotNil(t, data, "Data should not be nil", err)
 
 	// err = app.db.View(func(txn *badger.Txn) error {
 	// 	opts := badger.DefaultIteratorOptions

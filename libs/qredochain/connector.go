@@ -111,8 +111,8 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 }
 
 func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
-	//query := fmt.Sprintf("tag.txid='%s'", txHash)
-	query := "tag.myname='chris'"
+	query := fmt.Sprintf("tag.txid='%s'", txHash)
+
 	print("QUERY:", query, "\n")
 	result, err := nc.tmClient.TxSearch(query, true, 1, 1)
 	if err != nil {
