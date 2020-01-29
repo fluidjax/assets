@@ -24,10 +24,14 @@ var (
 	stateKey        = []byte("stateKey")
 	kvPairPrefixKey = []byte("kvPairKey:")
 
-	ProtocolVersion version.Protocol = 0x1
+	ProtocolVersion version.Protocol  = 0x1
+	_               types.Application = (*Qredochain)(nil)
+	_               types.Application = (*Application)(nil)
 )
 
-var _ types.Application = (*Application)(nil)
+const (
+	ValidatorSetChangePrefix string = "val:"
+)
 
 type Application struct {
 	types.BaseApplication
@@ -41,21 +45,9 @@ type State struct {
 	AppHash []byte `json:"app_hash"`
 }
 
-const (
-	ValidatorSetChangePrefix string = "val:"
-)
-
-//-----------------------------------------
-
-var _ types.Application = (*Qredochain)(nil)
-
 type Qredochain struct {
-	app *Application
-
-	// validator set
-	ValUpdates []types.ValidatorUpdate
-
+	app                *Application
+	ValUpdates         []types.ValidatorUpdate
 	valAddrToPubKeyMap map[string]types.PubKey
-
-	logger log.Logger
+	logger             log.Logger
 }

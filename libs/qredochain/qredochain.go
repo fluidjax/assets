@@ -98,6 +98,7 @@ func (app *Qredochain) BeginBlock(req types.RequestBeginBlock) types.ResponseBeg
 			})
 		}
 	}
+
 	return types.ResponseBeginBlock{}
 }
 
@@ -148,6 +149,7 @@ func (app *Application) DeliverTx(req types.RequestDeliverTx) types.ResponseDeli
 	}
 
 	app.state.db.Set(prefixKey(key), value)
+	app.state.db.Set([]byte("hello"), []byte("chris"))
 	app.state.Size++
 
 	events := []types.Event{
