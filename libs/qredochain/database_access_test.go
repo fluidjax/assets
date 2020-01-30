@@ -24,6 +24,7 @@ func Test_IDOC(t *testing.T) {
 
 	//Post TX - Remote (note the 2 second wait for chain to create block)
 	i, txid, serializedIDDoc, err := buildTestIDDoc(t, nc)
+
 	assert.Nil(t, err, "Error should be nil", err)
 
 	//Tendermint DB - Local Search
@@ -48,10 +49,27 @@ func Test_IDOC(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil", err)
 	compareAssets(t, ltx, serializedIDDoc, i.Key())
 
+	//Tags Remote
+	tresq, terr := nc.TxSearch("tag.qredo_test_tag='abc'", false, 1, 1)
+	assert.Nil(t, terr, "Error should be nil", terr)
+	assert.True(t, len(tresq.Txs) == 1, "Should have 1 matching tag")
+	tresq2, terr2 := nc.TxSearch("tag.qredo_test_tag='notfound'", false, 1, 1)
+	assert.Nil(t, terr2, "Error should be nil", terr2)
+	assert.True(t, len(tresq2.Txs) == 0, "Should have 1 matching tag")
+
+	//Tags Local
+	tlresq, tlerr := core.TxSearch(nil, "tag.qredo_test_tag='abc'", false, 1, 1)
+	assert.Nil(t, tlerr, "Error should be nil", tlerr)
+	assert.True(t, len(tlresq.Txs) == 1, "Should have 1 matching tag")
+	tlresq2, tlerr2 := core.TxSearch(nil, "tag.qredo_test_tag='notfound'", false, 1, 1)
+	assert.Nil(t, tlerr2, "Error should be nil", tlerr2)
+	assert.True(t, len(tlresq2.Txs) == 0, "Should have 1 matching tag")
+
 }
 
 func buildTestIDDoc(t *testing.T, nc *NodeConnector) (*assets.IDDoc, string, []byte, error) {
 	i, err := assets.NewIDDoc("testdoc")
+	i.AddTag("qredo_test_tag", []byte("abc"))
 	i.Sign(i)
 	serializedIDDoc, err := i.SerializeSignedAsset()
 	assert.Nil(t, err, "Error should be nil", err)

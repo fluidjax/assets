@@ -97,31 +97,29 @@ func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash
 			return CodeDatabaseFail, nil
 		}
 
-		events = []types.Event{
-			{
-				Type: "tag",
-				Attributes: []kv.Pair{
-					{Key: []byte("myname"), Value: []byte("chris")},
-					//{Key: []byte("assetid"), Value: iddoc.Key()},
-					//{Key: []byte("txid"), Value: []byte(hex.EncodeToString(txHash))}, //txid is hex string  but all tags need to be byte array
-				},
-			},
+		var attributes []kv.Pair
+		for key, value := range iddoc.CurrentAsset.Asset.Tags {
+			kvpair := kv.Pair{Key: []byte(key), Value: value}
+			attributes = append(attributes, kvpair)
+			// []kv.Pair{
+			// 	{Key: []byte("myname"), Value: []byte("chris")},
+			// 	//{Key: []byte("assetid"), Value: iddoc.Key()},
+			// 	//{Key: []byte("txid"), Value: []byte(hex.EncodeToString(txHash))}, //txid is hex string  but all tags need to be byte array
+			// },
+
 		}
 
-		// err := app.Set(txHash, rawAsset)
-		// if err != nil {
-		// 	return CodeDatabaseFail, nil
-		// }
-		// err = app.Set(iddoc.Key(), txHash)
-		// if err != nil {
-		// 	return CodeDatabaseFail, nil
-		// }
-
+		events = []types.Event{
+			{
+				Type:       "tag",
+				Attributes: attributes,
+			},
+		}
 	}
 
-	// print("----Events---------------------------------------\n")
-	// print(events)
-	// print("---- End Events---------------------------------------\n")
+	print("----Events---------------------------------------\n")
+	print(events)
+	print("---- End Events---------------------------------------\n")
 
 	return CodeTypeOK, events
 }

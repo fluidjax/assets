@@ -625,3 +625,11 @@ func (a *SignedAsset) Hash() string {
 	result := sha256.Sum256(data)
 	return hex.EncodeToString(result[:])
 }
+
+func (a *SignedAsset) AddTag(key string, value []byte) {
+	if a.CurrentAsset.Asset.Tags == nil {
+		a.CurrentAsset.Asset.Tags = map[string][]byte{}
+	}
+	a.CurrentAsset.Asset.Tags[key] = value
+
+}

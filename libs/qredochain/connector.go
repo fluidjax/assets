@@ -133,3 +133,43 @@ func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
 
 	return result.Txs[0].Tx, nil
 }
+
+// func (nc *NodeConnector) subscribeAndQueue(ctx context.Context, txQueue chan *protobuffer.TX) error {
+// 	query := "tag.recipient='" + nc.nodeID + "'"
+
+// 	out, err := nc.tmClient.Subscribe(context.Background(), "", query, 1000)
+// 	if err != nil {
+// 		return errors.Wrapf(err, "Failed to subscribe to query %s", query)
+// 	}
+
+// 	go func() {
+// 		for {
+// 			select {
+// 			case result := <-out:
+// 				tx := result.Data.(tmtypes.EventDataTx).Tx
+// 				incomingTX := &protobuffer.TX{}
+// 				err := proto.Unmarshal(tx, incomingTX)
+// 				incomingTX.Height = result.Data.(tmtypes.EventDataTx).Height
+// 				incomingTX.Index = result.Data.(tmtypes.EventDataTx).Index
+
+// 				if err != nil {
+// 					nc.log.Debug("IGNORED TX - Invalid!")
+// 					break
+// 				}
+
+// 				//check if this node is in receipient list
+// 				if incomingTX.RecipientCID != nc.nodeID {
+// 					nc.log.Debug("IGNORED TX! Recipient not match the query! (%v != %v)", incomingTX.RecipientCID, nc.nodeID)
+// 					break
+// 				}
+
+// 				//Add into the waitingQueue for later processing
+// 				txQueue <- incomingTX
+// 			case <-ctx.Done():
+// 				return
+// 			}
+// 		}
+// 	}()
+
+// 	return nil
+// }
