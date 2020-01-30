@@ -87,8 +87,13 @@ func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash
 	if lightWeight == false {
 		//Set the Tags
 
-		err := app.Set(txHash, rawAsset)
-		if err != nil {
+		err1 := app.Set(txHash, rawAsset)
+		if err1 != nil {
+			return CodeDatabaseFail, nil
+		}
+
+		err2 := app.Set(iddoc.Key(), txHash)
+		if err2 != nil {
 			return CodeDatabaseFail, nil
 		}
 
@@ -114,9 +119,9 @@ func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash
 
 	}
 
-	print("----Events---------------------------------------\n")
-	print(events)
-	print("---- End Events---------------------------------------\n")
+	// print("----Events---------------------------------------\n")
+	// print(events)
+	// print("---- End Events---------------------------------------\n")
 
 	return CodeTypeOK, events
 }

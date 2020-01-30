@@ -1,7 +1,6 @@
 package qredochain
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/dgraph-io/badger"
@@ -70,29 +69,29 @@ func (app *QredoChain) Commit() abcitypes.ResponseCommit {
 
 	app.currentBatch.Commit()
 
-	print("--------COMMIT-----------------------------------------------------\n")
-	app.db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 10
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			print("Inside loop")
-			item := it.Item()
-			k := item.Key()
-			err := item.Value(func(v []byte) error {
+	// print("--------COMMIT-----------------------------------------------------\n")
+	// app.db.View(func(txn *badger.Txn) error {
+	// 	opts := badger.DefaultIteratorOptions
+	// 	opts.PrefetchSize = 10
+	// 	it := txn.NewIterator(opts)
+	// 	defer it.Close()
+	// 	for it.Rewind(); it.Valid(); it.Next() {
+	// 		print("Inside loop")
+	// 		item := it.Item()
+	// 		k := item.Key()
+	// 		err := item.Value(func(v []byte) error {
 
-				fmt.Printf("key=%s, value=%s\n", hex.EncodeToString(k), hex.EncodeToString(v))
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	// 			fmt.Printf("key=%s, value=%s\n", hex.EncodeToString(k), hex.EncodeToString(v))
+	// 			return nil
+	// 		})
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// 	return nil
+	// })
 
-	print("--------COMMIT END-----------------------------------------------------\n")
+	// print("--------COMMIT END-----------------------------------------------------\n")
 
 	return abcitypes.ResponseCommit{Data: []byte{}}
 }
@@ -104,31 +103,63 @@ func (app *QredoChain) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitype
 	// Merkle proof includes self-describing type field to support many types of Merkle trees
 	//	and encoding formats.
 
-	print("\nXXXX", reqQuery.Data)
-	key, _ := hex.DecodeString(string(reqQuery.Data))
+	switch reqQuery.Path {
+	case "V": //V = get Value
+		err := app.db.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(reqQuery.Data)
 
-	resQuery.Key = reqQuery.Data
-	err := app.db.View(func(txn *badger.Txn) error {
-		//item, err := txn.Get(reqQuery.Data)
-		item, err := txn.Get(key)
-
-		if err != nil && err != badger.ErrKeyNotFound {
-			return err
+			if err != nil && err != badger.ErrKeyNotFound {
+				return err
+			}
+			if err == badger.ErrKeyNotFound {
+				resQuery.Log = "does not exist"
+			} else {
+				return item.Value(func(val []byte) error {
+					resQuery.Log = "exists"
+					//valHex := hex.EncodeToString(val)
+					resQuery.Value = []byte(val)
+					return nil
+				})
+			}
+			return nil
+		})
+		if err != nil {
+			resQuery.Code = 1
+			return
 		}
-		if err == badger.ErrKeyNotFound {
-			resQuery.Log = "does not exist"
-		} else {
-			return item.Value(func(val []byte) error {
-				resQuery.Log = "exists"
-				valHex := hex.EncodeToString(val)
-				resQuery.Value = []byte(valHex)
-				return nil
+	case "I": //I = indirect value
+
+		err := app.db.View(func(txn *badger.Txn) error {
+			//item, err := txn.Get(reqQuery.Data)
+			txid, err := txn.Get(reqQuery.Data)
+			if err != nil && err != badger.ErrKeyNotFound {
+				resQuery.Code = 1
+				return err
+			}
+
+			err2 := txid.Value(func(val []byte) error {
+				indirectValue, err3 := txn.Get(val)
+				if err3 != nil && err3 != badger.ErrKeyNotFound {
+					return err3
+				}
+				return indirectValue.Value(func(ival []byte) error {
+					resQuery.Log = "exists"
+					resQuery.Value = []byte(ival)
+					return nil
+				})
+
 			})
+			if err2 != nil {
+				resQuery.Code = 1
+				return err2
+			}
+			return nil
+		})
+		if err != nil {
+			resQuery.Code = 1
+			return
 		}
-		return nil
-	})
-	if err != nil {
-		panic(err)
+
 	}
 	return
 }
