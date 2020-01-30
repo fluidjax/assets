@@ -12,6 +12,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/rpc/core"
+	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
 )
 
 // This single Test , checks that access to both the Tendermint underlying KV database and
@@ -65,6 +66,25 @@ func Test_IDOC(t *testing.T) {
 	assert.Nil(t, tlerr2, "Error should be nil", tlerr2)
 	assert.True(t, len(tlresq2.Txs) == 0, "Should have 1 matching tag")
 
+	//Local Post
+	i3, txid3, serializedIDDoc3, _ := buildTestIDDocLocal(t)
+	txidBytes3, _ := hex.DecodeString(txid3)
+	retID3, err6 := app.Get(txidBytes3)
+	assert.Nil(t, err6, "Error should be nil", err6)
+	compareAssets(t, retID3, serializedIDDoc3, i3.Key())
+}
+
+func buildTestIDDocLocal(t *testing.T) (*assets.IDDoc, string, []byte, error) {
+	i, err := assets.NewIDDoc("testdoc2")
+	i.AddTag("qredo_test_tag2", []byte("abc2"))
+	i.Sign(i)
+	serializedIDDoc, err := i.SerializeSignedAsset()
+	assert.Nil(t, err, "Error should be nil", err)
+
+	result, err := core.BroadcastTxCommit(&rpctypes.Context{}, serializedIDDoc)
+	assert.Nil(t, err, "Error should be nil", err)
+	time.Sleep(2 * time.Second)
+	return i, result.Hash.String(), serializedIDDoc, nil
 }
 
 func buildTestIDDoc(t *testing.T, nc *NodeConnector) (*assets.IDDoc, string, []byte, error) {
