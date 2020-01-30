@@ -14,55 +14,36 @@ import (
 	"github.com/tendermint/tendermint/rpc/core"
 )
 
-//Test the QredoChain app
-//Start an App instance on standard port, and wait for it to complete initialization
-//Perform test and terminate
-//These are external tests, that is other process such as Nodes querying the QredoChain for values.
-//The external process can only access the chain via REST and have no access to badger.
-
-func TestMain(m *testing.M) {
-	StartTestChain()
-	code := m.Run()
-	time.Sleep(2 * time.Second)
-	ShutDown()
-	os.Exit(code)
-}
-
+// This single Test , checks that access to both the Tendermint underlying KV database and
+// The Badger QredoChain Consensus database is accessible both
+// locally (non RPC, nc connectors)
+// and Remotely using http, connectors.
 func Test_IDOC(t *testing.T) {
 	//Initialize a Node
 	nc := StartTestConnectionNode(t)
 
-	//Data Sources
-	//Tendermint DB
-	//Badger Consensus DB
-
-	//REMOTE (nc)
-	//Create an IDDoc, Post to Network connector
-	//add to chain, and wait 2 seconds for the block
+	//Post TX - Remote (note the 2 second wait for chain to create block)
 	i, txid, serializedIDDoc, err := buildTestIDDoc(t, nc)
 	assert.Nil(t, err, "Error should be nil", err)
 
-	//Tendermint DB
-	//LOCAL TxSearch - Get the TXID from the internal db using tx_search
+	//Tendermint DB - Local Search
 	query := fmt.Sprintf("tx.hash='%v'", txid)
 	res, err := core.TxSearch(nil, query, true, 1, 30)
 	compareAssets(t, res.Txs[0].Tx, serializedIDDoc, i.Key())
 
-	//Remote TXSearch
+	//Tendermint DB - Remote Search
 	rquery := fmt.Sprintf("tx.hash='%s'", txid)
 	resq, err := nc.TxSearch(rquery, false, 1, 1)
 	compareAssets(t, resq.Txs[0].Tx, serializedIDDoc, i.Key())
 
-	//Badger Consensus DB -
-	//REMOTE (NC) - Query ABCI
-	//Get from the Node using ABCIQuery
+	//Badger Consensus DB - Remote search
 	txidBytes, _ := hex.DecodeString(txid)
 	data, err := nc.tmClient.ABCIQuery("V", txidBytes)
 	compareAssets(t, data.Response.GetValue(), serializedIDDoc, i.Key())
 	data2, err := nc.tmClient.ABCIQuery("I", i.Key())
 	compareAssets(t, data2.Response.GetValue(), serializedIDDoc, i.Key())
 
-	//LOCAL from Badger
+	//Badger Consensus DB - Local Search
 	ltx, err := app.Get(txidBytes)
 	assert.Nil(t, err, "Error should be nil", err)
 	compareAssets(t, ltx, serializedIDDoc, i.Key())
@@ -98,4 +79,12 @@ func compareAssets(t *testing.T, a1, a2, key []byte) {
 	assert.Nil(t, err4, "Error should be nil", err4)
 
 	assert.True(t, i1.Hash() == i2.Hash(), "Keys dont match")
+}
+
+func TestMain(m *testing.M) {
+	StartTestChain()
+	code := m.Run()
+	time.Sleep(2 * time.Second)
+	ShutDown()
+	os.Exit(code)
 }
