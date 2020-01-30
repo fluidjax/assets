@@ -28,7 +28,7 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 	txHashA := sha256.Sum256(tx)
 	txHash := txHashA[:]
 
-	fmt.Println("txHash = ", txHash[:])
+	//fmt.Println("txHash = ", txHash[:])
 
 	//Retrieve the Asset ID
 	assetID := signedAsset.Asset.GetID()
@@ -66,13 +66,13 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) (TransactionCode, []abcitypes.Event) {
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
-		dumpMessage(2, "Fail to add IDDoc - tx already in chain")
+		dumpMessage(2, "Fail to add IDDoc - tx already in Consensus Database")
 		return CodeAlreadyExists, nil
 	}
 
 	//IDDoc is immutable so if this AssetID already has a value we can't update it.
 	if app.exists(iddoc.Key()) == true {
-		dumpMessage(2, "Fail to add IDDoc - already exists")
+		dumpMessage(2, "Fail to add IDDoc - in Consensus Database")
 		return CodeAlreadyExists, nil
 	}
 

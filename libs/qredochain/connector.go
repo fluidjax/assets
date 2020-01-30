@@ -13,6 +13,7 @@ import (
 	"github.com/qredo/assets/libs/datastore"
 	"github.com/qredo/assets/libs/logger"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 const (
@@ -56,6 +57,11 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 		},
 		tmClient: tmClient,
 	}, nil
+}
+
+func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, numPerPage int) (resultRaw *ctypes.ResultTxSearch, err error) {
+	resultRaw, err = nc.tmClient.TxSearch(query, prove, currentPage, numPerPage)
+	return resultRaw, err
 }
 
 // PostTx posts a transaction to the chain and returns the transaction ID

@@ -29,8 +29,47 @@ func TestMain(m *testing.M) {
 }
 
 func Test_IDOC(t *testing.T) {
-	//Bring up a Node
+	//Initialize a Node
 	nc := StartTestConnectionNode(t)
+
+	//Data Sources
+	//Tendermint DB
+	//Badger Consensus DB
+
+	//REMOTE (nc)
+	//Create an IDDoc, Post to Network connector
+	//add to chain, and wait 2 seconds for the block
+	i, txid, serializedIDDoc, err := buildTestIDDoc(t, nc)
+	assert.Nil(t, err, "Error should be nil", err)
+
+	//Tendermint DB
+	//LOCAL TxSearch - Get the TXID from the internal db using tx_search
+	query := fmt.Sprintf("tx.hash='%v'", txid)
+	res, err := core.TxSearch(nil, query, true, 1, 30)
+	compareAssets(t, res.Txs[0].Tx, serializedIDDoc, i.Key())
+
+	//Remote TXSearch
+	rquery := fmt.Sprintf("tx.hash='%s'", txid)
+	resq, err := nc.TxSearch(rquery, false, 1, 1)
+	compareAssets(t, resq.Txs[0].Tx, serializedIDDoc, i.Key())
+
+	//Badger Consensus DB -
+	//REMOTE (NC) - Query ABCI
+	//Get from the Node using ABCIQuery
+	txidBytes, _ := hex.DecodeString(txid)
+	data, err := nc.tmClient.ABCIQuery("V", txidBytes)
+	compareAssets(t, data.Response.GetValue(), serializedIDDoc, i.Key())
+	data2, err := nc.tmClient.ABCIQuery("I", i.Key())
+	compareAssets(t, data2.Response.GetValue(), serializedIDDoc, i.Key())
+
+	//LOCAL from Badger
+	ltx, err := app.Get(txidBytes)
+	assert.Nil(t, err, "Error should be nil", err)
+	compareAssets(t, ltx, serializedIDDoc, i.Key())
+
+}
+
+func buildTestIDDoc(t *testing.T, nc *NodeConnector) (*assets.IDDoc, string, []byte, error) {
 	i, err := assets.NewIDDoc("testdoc")
 	i.Sign(i)
 	serializedIDDoc, err := i.SerializeSignedAsset()
@@ -40,66 +79,7 @@ func Test_IDOC(t *testing.T) {
 	fmt.Println(txid)
 	assert.True(t, errorCode == CodeTypeOK, "Error should be nil", err)
 	time.Sleep(2 * time.Second)
-
-	//Get from the Node using ABCIQuery
-	txidBytes, _ := hex.DecodeString(txid)
-	data, err := nc.tmClient.ABCIQuery("V", txidBytes)
-
-	//Check its goodA
-	compareAssets(t, data.Response.GetValue(), serializedIDDoc, i.Key())
-
-	// msg := &protobuffer.PBSignedAsset{}
-	// err = proto.Unmarshal(data.Response.GetValue(), msg)
-	// assert.Nil(t, err, "Error should be nil", err)
-	// i2, err := assets.ReBuildIDDoc(msg, i.Key())
-	// assert.True(t, i.Hash() == i2.Hash(), "Keys dont match")
-
-	//Get from the Node using indirect Asset ID
-	data2, err := nc.tmClient.ABCIQuery("I", i.Key())
-
-	compareAssets(t, data2.Response.GetValue(), serializedIDDoc, i.Key())
-
-	// err = proto.Unmarshal(data2.Response.GetValue(), msg)
-	// assert.Nil(t, err, "Error should be nil", err)
-	// assert.True(t, i.Hash() == i2.Hash(), "Keys dont match")
-
-	//Get the TXID from the internal db using tx_search
-	query := fmt.Sprintf("tx.hash='%v'", txid)
-	res, err := core.TxSearch(nil, query, true, 1, 30)
-	print(res)
-
-	// nc := StartTestConnectionNode(t)
-	// i, err := assets.NewIDDoc("testdoc")
-	// i.Sign(i)
-	// txid, errorCode, err := nc.PostTx(i)
-	// fmt.Println(txid)
-	// assert.True(t, errorCode == CodeTypeOK, "Error should be nil", err)
-
-	// data, err := nc.GetTx(txid)
-	// assert.NotNil(t, data, "Data should not be nil", err)
-
-	// err = app.db.View(func(txn *badger.Txn) error {
-	// 	opts := badger.DefaultIteratorOptions
-	// 	opts.PrefetchSize = 10
-	// 	it := txn.NewIterator(opts)
-	// 	defer it.Close()
-	// 	for it.Rewind(); it.Valid(); it.Next() {
-	// 		print("Inside loop")
-	// 		item := it.Item()
-	// 		k := item.Key()
-	// 		err := item.Value(func(v []byte) error {
-
-	// 			fmt.Printf("key=%s, value=%s\n", hex.EncodeToString(k), hex.EncodeToString(v))
-	// 			return nil
-	// 		})
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// 	return nil
-	// })
-	// assert.Nil(t, err, "Error should be nil", err)
-
+	return i, txid, serializedIDDoc, nil
 }
 
 func compareAssets(t *testing.T, a1, a2, key []byte) {
