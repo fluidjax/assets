@@ -21,7 +21,7 @@ message PBAsset {
     int64 Index                           = 4;            //Incrementing index (start 0), for Asset + it's updates                        
     PBTransferType TransferType           = 5;            //Which transfer used to get to this version
     map<string, PBTransfer> Transferlist  = 6;
-    map<string,bytes> Tags                 = 7; 
+    map<string,bytes> Tags                = 7; 
     oneof Payload {                                 //Definiton of the asset
         PBWallet Wallet                   = 15;
         PBGroup Group                     = 16;

@@ -15,7 +15,7 @@ import (
 	rpctypes "github.com/tendermint/tendermint/rpc/lib/types"
 )
 
-// This single Test , checks that access to both the Tendermint underlying KV database and
+// Test checks that access to both the Tendermint underlying KV database and
 // The Badger QredoChain Consensus database is accessible both
 // locally (non RPC, nc connectors)
 // and Remotely using http, connectors.
@@ -40,9 +40,9 @@ func Test_IDOC(t *testing.T) {
 
 	//Badger Consensus DB - Remote search
 	txidBytes, _ := hex.DecodeString(txid)
-	data, err := nc.tmClient.ABCIQuery("V", txidBytes)
+	data, err := nc.TmClient.ABCIQuery("V", txidBytes)
 	compareAssets(t, data.Response.GetValue(), serializedIDDoc, i.Key())
-	data2, err := nc.tmClient.ABCIQuery("I", i.Key())
+	data2, err := nc.TmClient.ABCIQuery("I", i.Key())
 	compareAssets(t, data2.Response.GetValue(), serializedIDDoc, i.Key())
 
 	//Badger Consensus DB - Local Search
@@ -72,6 +72,10 @@ func Test_IDOC(t *testing.T) {
 	retID3, err6 := app.Get(txidBytes3)
 	assert.Nil(t, err6, "Error should be nil", err6)
 	compareAssets(t, retID3, serializedIDDoc3, i3.Key())
+}
+
+func Test_Subscribe(t *testing.T) {
+
 }
 
 func buildTestIDDocLocal(t *testing.T) (*assets.IDDoc, string, []byte, error) {

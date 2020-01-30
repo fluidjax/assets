@@ -80,9 +80,12 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 
 	//Compose
 	i.CurrentAsset.Asset = asset
+	asset.Tags = make(map[string][]byte)
 	Payload := &protobuffer.PBAsset_Iddoc{}
 	Payload.Iddoc = iddoc
+
 	i.CurrentAsset.Asset.Payload = Payload
+
 	i.assetKeyFromPayloadHash()
 	return i, nil
 }
@@ -101,6 +104,3 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 	i.setKey(key)
 	return i, nil
 }
-
-
-

@@ -36,7 +36,4 @@ func Test_External_Query(t *testing.T) {
 
 	assert.Nil(t, err, "Error should be nil", err)
 	assert.NotNil(t, txid, "TXID shouldnt be nil", err)
-
 }
-
-

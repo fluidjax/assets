@@ -16,6 +16,19 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
+type TransactionCode uint32
+
+const (
+	CodeTypeOK            TransactionCode = 0
+	CodeTypeEncodingError                 = 1
+	CodeTypeBadNonce                      = 2
+	CodeTypeUnauthorized                  = 3
+	CodeAlreadyExists                     = 4
+	CodeDatabaseFail                      = 5
+	CodeFailVerfication                   = 6
+	CodeTypeHTTPError                     = 7
+)
+
 const (
 	nodeConnectionTimeout = time.Second * 10
 	txChanSize            = 1000
@@ -27,12 +40,12 @@ type ChainPostable interface {
 }
 
 type NodeConnector struct {
-	nodeID     string
-	tmNodeAddr string
-	httpClient *http.Client
-	tmClient   *tmclient.HTTP
-	log        *logger.Logger
-	store      *datastore.Store
+	NodeID     string
+	TmNodeAddr string
+	HttpClient *http.Client
+	TmClient   *tmclient.HTTP
+	Log        *logger.Logger
+	Store      *datastore.Store
 }
 
 // NewNodeConnector constructs a new Tendermint NodeConnector
@@ -48,19 +61,19 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 		return nil, errors.Wrap(err, "Start tendermint client")
 	}
 	return &NodeConnector{
-		tmNodeAddr: tmNodeAddr,
-		nodeID:     nodeID,
-		log:        log,
-		store:      store,
-		httpClient: &http.Client{
+		TmNodeAddr: tmNodeAddr,
+		NodeID:     nodeID,
+		Log:        log,
+		Store:      store,
+		HttpClient: &http.Client{
 			Timeout: nodeConnectionTimeout,
 		},
-		tmClient: tmClient,
+		TmClient: tmClient,
 	}, nil
 }
 
 func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, numPerPage int) (resultRaw *ctypes.ResultTxSearch, err error) {
-	resultRaw, err = nc.tmClient.TxSearch(query, prove, currentPage, numPerPage)
+	resultRaw, err = nc.TmClient.TxSearch(query, prove, currentPage, numPerPage)
 	return resultRaw, err
 }
 
@@ -86,7 +99,7 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 		"params": {
 			"tx": "` + base64EncodedTX + `"}
 	}`)
-	url := "http://" + nc.tmNodeAddr
+	url := "http://" + nc.TmNodeAddr
 
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
@@ -94,7 +107,7 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 	}
 	req.Header.Set("Content-Type", "text/plain;")
 
-	resp, err := nc.httpClient.Do(req)
+	resp, err := nc.HttpClient.Do(req)
 	if err != nil {
 		return "", CodeTypeHTTPError, errors.Wrap(err, "post to blockchain node")
 	}
@@ -123,7 +136,7 @@ func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
 	//query := fmt.Sprintf("tag.txid='%s'", txHash)
 	query := "tag.myname='chris'"
 	print("QUERY:", query, "\n")
-	result, err := nc.tmClient.TxSearch(query, true, 1, 1)
+	result, err := nc.TmClient.TxSearch(query, true, 1, 1)
 	if err != nil {
 		return nil, err
 	}

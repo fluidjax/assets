@@ -59,6 +59,9 @@ func PostTx(base64EncodedTX string, host string) (txID string, err error) {
 		return
 	}
 	data := f.(map[string]interface{})
+	if data["result"] == nil {
+		return "", errors.New("Failed to decode response")
+	}
 	result := data["result"].(map[string]interface{})
 	txID = result["hash"].(string)
 

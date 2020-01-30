@@ -63,7 +63,8 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 	return code.CodeTypeEncodingError, nil
 }
 
-func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) (TransactionCode, []abcitypes.Event) {
+func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
 		dumpMessage(2, "Fail to add IDDoc - tx already in Consensus Database")
@@ -81,50 +82,22 @@ func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash
 		return CodeFailVerfication, nil
 	}
 
-	var events []types.Event
-
 	//Add pointer from AssetID to the txHash of the Object
 	if lightWeight == false {
-		//Set the Tags
-
 		err1 := app.Set(txHash, rawAsset)
 		if err1 != nil {
 			return CodeDatabaseFail, nil
 		}
-
 		err2 := app.Set(iddoc.Key(), txHash)
 		if err2 != nil {
 			return CodeDatabaseFail, nil
 		}
-
-		var attributes []kv.Pair
-		for key, value := range iddoc.CurrentAsset.Asset.Tags {
-			kvpair := kv.Pair{Key: []byte(key), Value: value}
-			attributes = append(attributes, kvpair)
-			// []kv.Pair{
-			// 	{Key: []byte("myname"), Value: []byte("chris")},
-			// 	//{Key: []byte("assetid"), Value: iddoc.Key()},
-			// 	//{Key: []byte("txid"), Value: []byte(hex.EncodeToString(txHash))}, //txid is hex string  but all tags need to be byte array
-			// },
-
-		}
-
-		events = []types.Event{
-			{
-				Type:       "tag",
-				Attributes: attributes,
-			},
-		}
+		events = processTags(iddoc.CurrentAsset.Asset.Tags)
 	}
-
-	print("----Events---------------------------------------\n")
-	print(events)
-	print("---- End Events---------------------------------------\n")
-
 	return CodeTypeOK, events
 }
 
-func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) (TransactionCode, []abcitypes.Event) {
+func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
 	if app.exists(txHash) {
 		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
 		dumpMessage(2, "Fail to add wallet - tx already in chain\n")
@@ -190,13 +163,16 @@ func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txH
 		if err != nil {
 			return CodeDatabaseFail, nil
 		}
+
+		events = processTags(wallet.CurrentAsset.Asset.Tags)
 	}
-	return CodeTypeOK, nil
+	return CodeTypeOK, events
 }
 
-func (app *QredoChain) processGroup(group *assets.Group, lightWeight bool) (TransactionCode, []abcitypes.Event) {
+func (app *QredoChain) processGroup(group *assets.Group, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
 	fmt.Printf("Process an Group\n")
-	return CodeFailVerfication, nil
+
+	return CodeFailVerfication, events
 }
 
 func (app *QredoChain) VerifyIDDoc(iddoc *assets.IDDoc) bool {
@@ -283,3 +259,18 @@ func (app *QredoChain) VerifyNewGroup(iddoc *assets.Group) bool {
 
 // func (app *QredoChain) processQuery(iddoc *assets.Group) bool {
 // }
+
+func processTags(tags map[string][]byte) []types.Event {
+	var attributes []kv.Pair
+	for key, value := range tags {
+		kvpair := kv.Pair{Key: []byte(key), Value: value}
+		attributes = append(attributes, kvpair)
+	}
+	events := []types.Event{
+		{
+			Type:       "tag",
+			Attributes: attributes,
+		},
+	}
+	return events
+}
