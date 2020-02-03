@@ -69,7 +69,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	i.CurrentAsset = &x
 	//Asset
 	asset := &protobuffer.PBAsset{}
-	asset.Type = protobuffer.PBAssetType_iddoc
+	asset.Type = protobuffer.PBAssetType_Iddoc
 
 	//IDDoc
 	iddoc := &protobuffer.PBIDDoc{}

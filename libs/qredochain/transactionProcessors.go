@@ -38,14 +38,14 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 
 	//Process the Transaction
 	switch signedAsset.Asset.GetType() {
-	case protobuffer.PBAssetType_wallet:
+	case protobuffer.PBAssetType_Wallet:
 		wallet, err := assets.ReBuildWallet(signedAsset, assetID)
 		if err != nil {
 			return code.CodeTypeEncodingError, nil
 		}
 		code, events := app.processWallet(wallet, tx, txHash, lightWeight)
 		return uint32(code), events
-	case protobuffer.PBAssetType_iddoc:
+	case protobuffer.PBAssetType_Iddoc:
 		iddoc, err := assets.ReBuildIDDoc(signedAsset, assetID)
 		if err != nil {
 			return code.CodeTypeEncodingError, nil

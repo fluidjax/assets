@@ -45,9 +45,9 @@ func Test_TruthTable(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 	w1, _ := NewWallet(idP, "BTC")
-	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
 	//Create another based on previous, ie. AnUpdateWallet
-	res, err := w1.TruthTable(protobuffer.PBTransferType_settlePush)
+	res, err := w1.TruthTable(protobuffer.PBTransferType_SettlePush)
 	assert.Nil(t, err, "Truth table return should be nil")
 	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
@@ -88,13 +88,13 @@ func Test_RuleAdd(t *testing.T) {
 
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_SettlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)
@@ -109,7 +109,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
 		SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: nil},
 	}
-	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.True(t, validTransfer1, "Transfer should be valid")
 
 	//Fail not enough threshold
@@ -119,7 +119,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: nil},
 		SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
 	}
-	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid")
 
 	//Fail no principal
@@ -129,7 +129,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
 		SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
 	}
-	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid")
 
 	//Pass too many correct
@@ -139,7 +139,7 @@ func Test_RuleAdd(t *testing.T) {
 		SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
 		SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
 	}
-	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, validTransfer1, "Transfer should be valid")
 }
@@ -157,13 +157,13 @@ func Test_AggregationAndVerify(t *testing.T) {
 	}
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_SettlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)
@@ -181,7 +181,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 		SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
 	}
 
-	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, validTransfer1, "Transfer is invalid boolean doesn't return true")
 
@@ -210,13 +210,13 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_SettlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)
@@ -229,7 +229,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 		SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
 		SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
 	}
-	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, validTransfer1, "Transfer should be invalid")
 
@@ -257,7 +257,7 @@ func Test_WalletTransfer(t *testing.T) {
 
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_settlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
 	wallet, err := w1.Payload()
 
 	//Wallet has already spent 100
@@ -271,7 +271,7 @@ func Test_WalletTransfer(t *testing.T) {
 	w2.AddWalletTransfer(idT2.Key(), 22)
 
 	//Change Payload to a SettlePush Type Transfer
-	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_settlePush
+	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_SettlePush
 
 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
 	sigP, _ := w2.SignAsset(idP)
@@ -284,7 +284,7 @@ func Test_WalletTransfer(t *testing.T) {
 		SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
 		SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
 	}
-	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_settlePush, transferSignatures1)
+	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, validTransfer1, "Transfer should be invalid")
 

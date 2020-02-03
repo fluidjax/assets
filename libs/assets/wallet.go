@@ -124,7 +124,7 @@ func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
 		return nil, errors.New("Fail to generate random key")
 	}
 	w.CurrentAsset.Asset.ID = walletKey
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
 	w.assetKeyFromPayloadHash()
 
@@ -144,7 +144,7 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 		w.DataStore = previousWallet.DataStore
 	}
 	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
 	w.CurrentAsset.Asset.Index = previousWallet.CurrentAsset.Asset.Index + 1
 
@@ -181,7 +181,7 @@ func emptyWallet() (w *Wallet) {
 	w.CurrentAsset = &protobuffer.PBSignedAsset{}
 	//Asset
 	asset := &protobuffer.PBAsset{}
-	asset.Type = protobuffer.PBAssetType_wallet
+	asset.Type = protobuffer.PBAssetType_Wallet
 	//Wallet
 	wallet := &protobuffer.PBWallet{}
 	//Compose
