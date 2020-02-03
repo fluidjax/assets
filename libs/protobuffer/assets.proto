@@ -31,18 +31,18 @@ message PBAsset {
 
 
 enum PBAssetType {
-	wallet      = 0;
+	Wallet      = 0;
 	Group       = 1;
-	iddoc       = 2;
+	Iddoc       = 2;
 }                              
 enum PBTransferType {
-    unspecified         = 0;
-    settlePush          = 1;
-    settlePull          = 2;
-    transferPush        = 3;
-    transferPull        = 4;
-    swap                = 5;
-    load                = 6;
+    Unspecified         = 0;
+    SettlePush          = 1;
+    SettlePull          = 2;
+    TransferPush        = 3;
+    TransferPull        = 4;
+    Swap                = 5;
+    Load                = 6;
     GroupDefinition     = 7;
 }
 
@@ -55,21 +55,21 @@ message PBTransfer {                  //Defined for each Transfer type an expres
 
 //Asset Definitons
 message PBWallet {
-    string currency                 = 1;
-    int64 spentBalance              = 2; //total of all outgoing spends = previous + sum of Asset Transfer
+    string Currency                 = 1;
+    int64 SpentBalance              = 2; //total of all outgoing spends = previous + sum of Asset Transfer
     repeated PBWalletTransfer WalletTransfers   = 3;
     string Description              = 11;
-    bytes principal                 = 12;
-	bytes creditor                  = 13;
-	bytes initiator                 = 14;
-	bytes address                   = 15;
-    bytes counterparty              = 16;
-    bytes transactionHash           = 17;
+    bytes Principal                 = 12;
+	bytes Creditor                  = 13;
+	bytes Initiator                 = 14;
+	bytes Address                   = 15;
+    bytes Counterparty              = 16;
+    bytes TransactionHash           = 17;
 }
 
 message PBWalletTransfer {
-    bytes to            = 1; //send the transfer to IDDoc
-    int64 amount        = 2; //the amount of the transfer
+    bytes To            = 1; //send the transfer to IDDoc
+    int64 Amount        = 2; //the amount of the transfer
 } 
 
 
@@ -100,14 +100,14 @@ message PBIDDoc {
 //Contains a public key, used to generate a crypto currency address
 message PBAssetCommitment {
     bytes ID                    = 1;    // Asset ID
-    bytes pubKey                = 2;    //signature of the transactionHash
+    bytes PubKey                = 2;    //signature of the transactionHash
 }
 
 
 //MPC Signs the transactionHash and returns signature for later tx composition and broadcast
 message PBAssetTransferSignature {
     bytes ID                    = 1;    // Asset ID
-    bytes signature             = 2;    //signature of the transactionHash
+    bytes Signature             = 2;    //signature of the transactionHash
 }
 
 
@@ -131,3 +131,5 @@ message PBUnderlyingTransaction {
     string Address                      = 5; // Address money was sent to.
     bytes AssetID                       = 6; // Credits this Asset ID
 }
+
+

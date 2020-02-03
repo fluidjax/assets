@@ -1,3 +1,32 @@
+Overview of Stuff to do:
+    UnderlyingTransactions watcher
+    daemon which watches the Bitcoin chain, and generates PBUnderlyingTransaction with proofs
+    Bitcoin Wallet add new watch addresses      
+
+
+Consensus App
+    Add an IDDOC
+    Retrieve an IDDoc
+    Create a Wallet
+    Transfer/Update a Wallet
+
+
+    Add a Bitcoin UnderlyingTransaction
+        Watch Address
+        When UTXO create PBUnderlyingTransaction with Proof
+
+
+    Get Current Balance of a Wallet
+      Get Current Balance of wallet - ie. spentbalance (is total of all transfer in and out)
+      Add all open PBUnderlyingTransaction (i.e. not spent)
+
+
+
+
+
+
+
+
 Internal list of stuff to TODO:
     Plan -
         GUI API 
