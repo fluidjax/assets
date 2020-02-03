@@ -45,7 +45,7 @@ type NodeConnector struct {
 	HttpClient *http.Client
 	TmClient   *tmclient.HTTP
 	Log        *logger.Logger
-	Store      *datastore.Store
+	//Store      *datastore.Store
 }
 
 // NewNodeConnector constructs a new Tendermint NodeConnector
@@ -64,7 +64,7 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 		TmNodeAddr: tmNodeAddr,
 		NodeID:     nodeID,
 		Log:        log,
-		Store:      store,
+		//	Store:      store,
 		HttpClient: &http.Client{
 			Timeout: nodeConnectionTimeout,
 		},
