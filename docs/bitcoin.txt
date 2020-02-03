@@ -1,6 +1,40 @@
 
-# PROOF
+Process
 
+
+>Issue New Addres 
+myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh
+>Add to account
+b importaddress myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh "" false false
+b setaccount myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh aaa
+
+//b listtransactions aaa #returns 0 transactions as its new
+//Add money to address
+//tx = 26d5ed3f0566ddfa99837d994564b93d6598ed17f198a848227600d7266ae413
+//b gettxout 26d5ed3f0566ddfa99837d994564b93d6598ed17f198a848227600d7266ae413 0 true
+
+b listaccounts 3 true
+
+
+bc=`b getblockcount`
+conf=`expr $bc - 6`
+bh=`b getblockhash $conf`
+b listsinceblock $conf
+b listsinceblock $bh 6 true
+
+
+
+
+
+Spin up a new Watcher
+  1) Add all addresses to the wallet and rescan from string
+
+Wallet 
+  1) Add addresses to the 'Qredo' wallet
+
+Periodically 
+  1) Get latest block height
+  2) If the height has changed, get the 
 
 
 Wnen we create an asset we issue a Public Key
@@ -40,7 +74,7 @@ Proof using Bitgo node
 //List transactions we are watching since block 000000000000002ac37b80c3b4d8cb1dcf3aa67a7885747b1809601ec80b8c2e
 //With at least 1 confirmations
 //Include watch only
- 
+
 b listsinceblock 000000000000002ac37b80c3b4d8cb1dcf3aa67a7885747b1809601ec80b8c2e 1 true
 
 
@@ -80,3 +114,45 @@ Header #0:
 
   # Address Monitor
   z
+
+
+
+
+b getaddressbalance '{"addresses": ["myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh"]}'
+b getaddressdeltas '{"addresses": ["myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh"]}'
+b getaddressutxos '{"addresses": ["myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh"]}'
+
+
+
+getaccount "bitcoinaddress"           - which account is it in
+getaccountaddress "account"
+getaddressesbyaccount "account"       - list addresses for acount
+getbalance ( "account" minconf includeWatchonly )   - balance for account with confirmations & watch only
+getnewaddress ( "account" )
+getrawchangeaddress
+getreceivedbyaccount "account" ( minconf )
+getreceivedbyaddress "bitcoinaddress" ( minconf )
+gettransaction "txid" ( includeWatchonly )
+getunconfirmedbalance
+getwalletinfo
+importaddress "address" ( "label" rescan p2sh )
+importprivkey "bitcoinprivkey" ( "label" rescan )
+importpubkey "pubkey" ( "label" rescan )
+importwallet "filename"
+keypoolrefill ( newsize )
+listaccounts ( minconf includeWatchonly)       show accounts, with 
+listaddressgroupings
+listlockunspent
+listreceivedbyaccount ( minconf includeempty includeWatchonly)
+listreceivedbyaddress ( minconf includeempty includeWatchonly)
+listsinceblock ( "blockhash" target-confirmations includeWatchonly)
+listtransactions ( "account" count from includeWatchonly)
+listunspent ( minconf maxconf  ["address",...] )
+lockunspent unlock [{"txid":"txid","vout":n},...]
+move "fromaccount" "toaccount" amount ( minconf "comment" )
+sendfrom "fromaccount" "tobitcoinaddress" amount ( minconf "comment" "comment-to" )
+sendmany "fromaccount" {"address":amount,...} ( minconf "comment" ["address",...] )
+sendtoaddress "bitcoinaddress" amount ( "comment" "comment-to" subtractfeefromamount )
+setaccount "bitcoinaddress" "account"
+settxfee amount
+signmessage "bitcoinaddress" "message"
