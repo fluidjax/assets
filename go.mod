@@ -7,9 +7,10 @@ require (
 	github.com/btcsuite/btcutil v1.0.1
 	github.com/dgraph-io/badger v1.6.0
 	github.com/fatih/color v1.9.0 // indirect
+	github.com/gcash/bchd v0.15.2
 	github.com/go-kit/kit v0.9.0
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/protobuf v1.3.3
+	github.com/golang/protobuf v1.3.2
 	github.com/gookit/color v1.2.2
 	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
 	github.com/pkg/errors v0.9.1
@@ -20,3 +21,5 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/bbolt v1.3.3
 )
+
+replace github.com/btcsuite/btcd => github.com/qredo/btcd v0.21.1

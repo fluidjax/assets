@@ -59,8 +59,22 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 		}
 		code, events := app.processGroup(group, lightWeight)
 		return uint32(code), events
+	case protobuffer.PBAssetType_Underlying:
+		underlying, err := assets.ReBuildUnderlying(signedAsset, assetID)
+		if err != nil {
+			return code.CodeTypeEncodingError, nil
+		}
+		code, events := app.processUnderlying(underlying, lightWeight)
+		return uint32(code), events
+
 	}
 	return code.CodeTypeEncodingError, nil
+}
+
+func (app *QredoChain) processUnderlying(underlying *assets.Underlying, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	//TODO: Implement checks for Underlying transactions
+	fmt.Printf("Process an Underlying\n")
+	return CodeTypeOK, events
 }
 
 func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {

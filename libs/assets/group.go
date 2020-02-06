@@ -118,7 +118,7 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 	}
 
 	added := {DDDD, EEEE}
-	deleyed := {AAAA}
+	deleted := {AAAA}
 	unchanged := {BBBB,CCCC}
 
 	Allows a GUI to easily display to the end user what changes they need to agree too.

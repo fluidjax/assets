@@ -26,6 +26,71 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//NewWallet - Setup a new Wallet
+func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
+	if iddoc == nil {
+		return nil, errors.New("Sign - supplied IDDoc is nil")
+	}
+	w = emptyWallet()
+	w.DataStore = iddoc.DataStore
+
+	walletKey, err := RandomBytes(32)
+	if err != nil {
+		return nil, errors.New("Fail to generate random key")
+	}
+	w.CurrentAsset.Asset.ID = walletKey
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
+	w.CurrentAsset.Asset.Owner = iddoc.Key()
+	w.assetKeyFromPayloadHash()
+
+	currentPayload, err := w.Payload()
+	if err != nil {
+		return nil, err
+	}
+	currentPayload.Currency = currency
+
+	return w, nil
+}
+
+//NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
+func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
+	w = emptyWallet()
+	if previousWallet.DataStore != nil {
+		w.DataStore = previousWallet.DataStore
+	}
+	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
+	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.CurrentAsset.Asset.Index = previousWallet.CurrentAsset.Asset.Index + 1
+
+	w.PreviousAsset = previousWallet.CurrentAsset
+	previousPayload, err := w.PreviousPayload()
+	if err != nil {
+		return nil, err
+	}
+	currentPayload, err := w.Payload()
+	if err != nil {
+		return nil, err
+	}
+	currentPayload.SpentBalance = previousPayload.SpentBalance
+
+	return w, nil
+}
+
+//ReBuildWallet an existing Wallet from it's on chain PBSignedAsset
+func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err error) {
+	if sig == nil {
+		return nil, errors.New("ReBuildIDDoc  - sig is nil")
+	}
+	if key == nil {
+		return nil, errors.New("ReBuildIDDoc  - key is nil")
+	}
+	w = &Wallet{}
+	w.CurrentAsset = sig
+	w.setKey(key)
+	return w, nil
+}
+
 //Payload - return the wallet Payload object
 func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
 	if w == nil {
@@ -109,71 +174,6 @@ func (w *Wallet) FullVerify() (bool, error) {
 	}
 
 	return w.SignedAsset.FullVerify()
-}
-
-//NewWallet - Setup a new IDDoc
-func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
-	if iddoc == nil {
-		return nil, errors.New("Sign - supplied IDDoc is nil")
-	}
-	w = emptyWallet()
-	w.DataStore = iddoc.DataStore
-
-	walletKey, err := RandomBytes(32)
-	if err != nil {
-		return nil, errors.New("Fail to generate random key")
-	}
-	w.CurrentAsset.Asset.ID = walletKey
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
-	w.CurrentAsset.Asset.Owner = iddoc.Key()
-	w.assetKeyFromPayloadHash()
-
-	currentPayload, err := w.Payload()
-	if err != nil {
-		return nil, err
-	}
-	currentPayload.Currency = currency
-
-	return w, nil
-}
-
-//NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
-func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
-	w = emptyWallet()
-	if previousWallet.DataStore != nil {
-		w.DataStore = previousWallet.DataStore
-	}
-	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
-	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
-	w.CurrentAsset.Asset.Index = previousWallet.CurrentAsset.Asset.Index + 1
-
-	w.PreviousAsset = previousWallet.CurrentAsset
-	previousPayload, err := w.PreviousPayload()
-	if err != nil {
-		return nil, err
-	}
-	currentPayload, err := w.Payload()
-	if err != nil {
-		return nil, err
-	}
-	currentPayload.SpentBalance = previousPayload.SpentBalance
-
-	return w, nil
-}
-
-//ReBuildWallet an existing Wallet from it's on chain PBSignedAsset
-func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err error) {
-	if sig == nil {
-		return nil, errors.New("ReBuildIDDoc  - sig is nil")
-	}
-	if key == nil {
-		return nil, errors.New("ReBuildIDDoc  - key is nil")
-	}
-	w = &Wallet{}
-	w.CurrentAsset = sig
-	w.setKey(key)
-	return w, nil
 }
 
 func emptyWallet() (w *Wallet) {

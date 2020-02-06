@@ -26,17 +26,6 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//Payload - return the IDDoc payload
-func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
-	if i == nil {
-		return nil, errors.New("IDDoc is nil")
-	}
-	if i.CurrentAsset.Asset == nil {
-		return nil, errors.New("IDDoc has no asset")
-	}
-	return i.CurrentAsset.Asset.GetIddoc(), nil
-}
-
 //NewIDDoc create a new IDDoc
 func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	//generate crypto random seed
@@ -103,4 +92,16 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 	i.CurrentAsset = sig
 	i.setKey(key)
 	return i, nil
+}
+
+
+//Payload - return the IDDoc payload
+func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
+	if i == nil {
+		return nil, errors.New("IDDoc is nil")
+	}
+	if i.CurrentAsset.Asset == nil {
+		return nil, errors.New("IDDoc has no asset")
+	}
+	return i.CurrentAsset.Asset.GetIddoc(), nil
 }

@@ -26,6 +26,7 @@ message PBAsset {
         PBWallet Wallet                   = 15;
         PBGroup Group                     = 16;
         PBIDDoc Iddoc                     = 17;
+        PBUnderlying Underlying           = 18;
     }
 }
 
@@ -33,7 +34,8 @@ message PBAsset {
 enum PBAssetType {
 	Wallet      = 0;
 	Group       = 1;
-	Iddoc       = 2;
+    Iddoc       = 2;
+    Underlying = 3;
 }                              
 enum PBTransferType {
     Unspecified         = 0;
@@ -123,7 +125,7 @@ enum PBUnderlyingType {
 }
 
 
-message PBUnderlyingTransaction {
+message PBUnderlying {
     PBUnderlyingType Type               = 1; // Type
     PBCryptoCurrency CryptoCurrencyCode = 2; // Which cryptocurrency chain this relates to.
     bytes Proof                         = 3; // Merkle proof of the transaction - allows nodes to easily determine validity

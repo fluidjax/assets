@@ -26,6 +26,10 @@ import (
 
 //Core Heirachcy
 
+type Underlying struct {
+	SignedAsset
+}
+
 //Group - Group Asset Type
 type Group struct {
 	SignedAsset
