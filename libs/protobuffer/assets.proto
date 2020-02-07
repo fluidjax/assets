@@ -70,8 +70,10 @@ message PBWallet {
 }
 
 message PBWalletTransfer {
-    bytes To            = 1; //send the transfer to IDDoc
+    bytes To            = 1; //send the transfer to IDDoc - maybe this is required, as it
+                             //can be determine by the AssetID fields
     int64 Amount        = 2; //the amount of the transfer
+    bytes AssetID       = 3; //Asset ID of the incoming Wallet
 } 
 
 
@@ -131,7 +133,7 @@ message PBUnderlying {
     bytes Proof                         = 3; // Merkle proof of the transaction - allows nodes to easily determine validity
     float Amount                        = 4; // Value of the transaction  
     string Address                      = 5; // Address money was sent to.
-    bytes AssetID                       = 6; // Credits this Asset ID
+    string TxID                          = 6; // Credits this Asset ID
 }
 
 

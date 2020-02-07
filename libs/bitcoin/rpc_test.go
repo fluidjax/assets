@@ -2,7 +2,6 @@ package bitcoin
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -28,6 +27,7 @@ rpcpassword=KcsUHi4Hn89ELZJo66vygGtGA
 */
 
 func Test_rpc(t *testing.T) {
+
 	// Connect to local bitcoin core RPC server using HTTP POST mode.
 	client, err := BTCTestNetConnector()
 	assert.Nil(t, err, "Error should be nil")
@@ -79,9 +79,8 @@ func Test_AddAddressToWallet(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotNil(t, res, "blockhash should not be nil")
 
-	lastBlockHash, err := strconv.Atoi(res.LastBlock)
 	assert.Nil(t, err, "Error should be nil")
-	assert.NotNil(t, lastBlockHash, "lastBlockHash should be nil")
+	assert.NotNil(t, res.LastBlock, "lastBlockHash should be nil")
 
 }
 

@@ -59,7 +59,7 @@ func (conn *UnderlyingConnector) ProcessRecentTransactions(blockhash *chainhash.
 			count++
 			//fmt.Println(tx.TxID, " * READY *", tx.Confirmations, " confirmations")
 			amount := float32(tx.Amount)
-			txid, code, err := conn.BroadcastUnderlyingChainDeposit(tx.Address, protobuffer.PBCryptoCurrency_BTC, amount)
+			txid, code, err := conn.BroadcastUnderlyingChainDeposit(tx.TxID, tx.Address, protobuffer.PBCryptoCurrency_BTC, amount)
 			if code != 0 || err != nil {
 				return blockhash, 0, err
 			}
@@ -69,7 +69,7 @@ func (conn *UnderlyingConnector) ProcessRecentTransactions(blockhash *chainhash.
 	return nextBlockHash, count, nil
 }
 
-func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(address string, currency protobuffer.PBCryptoCurrency, amount float32) (txid string, code qredochain.TransactionCode, err error) {
+func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID string, address string, currency protobuffer.PBCryptoCurrency, amount float32) (txid string, code qredochain.TransactionCode, err error) {
 	underlying, err := assets.NewUnderlying()
 	if err != nil {
 		return txid, code, err
@@ -85,6 +85,7 @@ func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(address string,
 	payload.Proof = nil
 	payload.Amount = amount
 	payload.Address = address
+	payload.TxID = TxID
 	underlying.AddTag("address", []byte(address))
 	return conn.NodeConnector.PostTx(underlying)
 }

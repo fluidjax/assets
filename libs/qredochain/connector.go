@@ -19,14 +19,15 @@ import (
 type TransactionCode uint32
 
 const (
-	CodeTypeOK            TransactionCode = 0
-	CodeTypeEncodingError                 = 1
-	CodeTypeBadNonce                      = 2
-	CodeTypeUnauthorized                  = 3
-	CodeAlreadyExists                     = 4
-	CodeDatabaseFail                      = 5
-	CodeFailVerfication                   = 6
-	CodeTypeHTTPError                     = 7
+	CodeTypeOK                  TransactionCode = 0
+	CodeTypeEncodingError                       = 1
+	CodeTypeBadNonce                            = 2
+	CodeTypeUnauthorized                        = 3
+	CodeAlreadyExists                           = 4
+	CodeDatabaseFail                            = 5
+	CodeFailVerfication                         = 6
+	CodeTypeHTTPError                           = 7
+	CodeTendermintInternalError                 = -32603
 )
 
 const (
@@ -124,6 +125,18 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 	}
 
 	data := f.(map[string]interface{})
+
+	if data["result"] == nil {
+		if data["error"] != nil {
+			errdata := data["error"].(map[string]interface{})
+			codef64 := errdata["code"].(float64)
+			code = TransactionCode(codef64)
+			return "", code, errors.New("Failed to add new TX")
+		} else {
+			return "", CodeAlreadyExists, errors.New("Failed to decode response")
+		}
+	}
+
 	result := data["result"].(map[string]interface{})
 	txID = result["hash"].(string)
 	checktx := result["check_tx"].(map[string]interface{})
