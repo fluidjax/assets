@@ -94,7 +94,6 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 	return i, nil
 }
 
-
 //Payload - return the IDDoc payload
 func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 	if i == nil {
