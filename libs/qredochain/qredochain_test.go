@@ -5,9 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/qredo/assets/libs/logger"
 	"github.com/qredo/assets/libs/store"
@@ -18,13 +16,13 @@ import (
 )
 
 //Wrap all tests so it starts a test Chain
-func TestMain(m *testing.M) {
-	StartTestChain()
-	code := m.Run()
-	time.Sleep(2 * time.Second)
-	ShutDown()
-	os.Exit(code)
-}
+// func TestMain(m *testing.M) {
+// 	StartTestChain()
+// 	code := m.Run()
+// 	time.Sleep(2 * time.Second)
+// 	ShutDown()
+// 	os.Exit(code)
+// }
 
 func Test_LoadSave(t *testing.T) {
 	i, err := assets.NewIDDoc("1st Ref")

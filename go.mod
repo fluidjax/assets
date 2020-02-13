@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btcutil v1.0.1
+	github.com/cosmos/cosmos-sdk v0.38.1
 	github.com/dgraph-io/badger v1.6.0
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gcash/bchd v0.15.2
@@ -20,6 +21,7 @@ require (
 	github.com/tendermint/abci v0.12.0
 	github.com/tendermint/tendermint v0.33.0
 	github.com/tyler-smith/go-bip39 v1.0.2
+	github.com/urfave/cli v1.22.2
 	go.etcd.io/bbolt v1.3.3
 )
 
