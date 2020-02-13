@@ -95,10 +95,11 @@ query /Users/chris/.milagro "tag.recipient='Au1WipqVeTx9i2PV4UcCxmY6iQvA9RZXy88x
 
 func ConsensusSearch(qredochain string, query string) error {
 
-	tmClientPull, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
-	if err := tmClientPull.Start(); err != nil {
-		print("Failed to open websocket")
-		os.Exit(1)
+	tmClient, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
+	defer tmClient.Stop()
+
+	if err := tmClient.Start(); err != nil {
+		return errors.Wrapf(err, "Failed to start Tendermint client")
 	}
 
 	key, err := base64.StdEncoding.DecodeString(query)
@@ -106,7 +107,7 @@ func ConsensusSearch(qredochain string, query string) error {
 		return errors.Wrapf(err, "Failed to decode Base64 Query %s", query)
 	}
 
-	result, err := tmClientPull.ABCIQuery("V", key)
+	result, err := tmClient.ABCIQuery("V", key)
 
 	if err != nil {
 		return errors.Wrapf(err, "Failed to run Consensus query %s", query)
@@ -130,21 +131,22 @@ func QredoChainSearch(qredochain string, query string) error {
 	currentPage := 0
 	numPerPage := 30
 
-	tmClientPull, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
-	if err := tmClientPull.Start(); err != nil {
-		print("Failed to open websocket")
-		os.Exit(1)
+	tmClient, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
+	defer tmClient.Stop()
+
+	if err := tmClient.Start(); err != nil {
+		return errors.Wrapf(err, "Failed to start Tendermint client")
 	}
 
 	for {
-		result, err := tmClientPull.TxSearch(query, false, currentPage, numPerPage)
+		result, err := tmClient.TxSearch(query, false, currentPage, numPerPage)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to search to query %s %d %d", query, currentPage, numPerPage)
 		}
 		totalToProcess := result.TotalCount
 		fmt.Println("Records Found:", totalToProcess)
 		if totalToProcess == 0 {
-			os.Exit(0)
+			return nil
 		}
 
 		for _, chainTx := range result.Txs {
@@ -155,13 +157,17 @@ func QredoChainSearch(qredochain string, query string) error {
 
 			if err != nil {
 				fmt.Println("Error unmarshalling payload")
-				checkQuit(processedCount, totalToProcess)
+				if checkQuit(processedCount, totalToProcess) == true {
+					return nil
+				}
 				continue
 			}
 
 			pp, _ := prettyjson.Marshal(signedAsset)
 			fmt.Println(string(pp))
-			checkQuit(processedCount, totalToProcess)
+			if checkQuit(processedCount, totalToProcess) == true {
+				return nil
+			}
 
 		}
 		currentPage++
@@ -169,11 +175,8 @@ func QredoChainSearch(qredochain string, query string) error {
 
 }
 
-func checkQuit(processedCount int, totalToProcess int) {
-	if processedCount == totalToProcess {
-		fmt.Printf("Completed %d records\n", processedCount)
-		os.Exit(0)
-	}
+func checkQuit(processedCount int, totalToProcess int) bool {
+	return processedCount == totalToProcess
 }
 
 func getEnv(name, defaultValue string) string {

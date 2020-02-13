@@ -73,6 +73,10 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 	}, nil
 }
 
+func (nc *NodeConnector) Stop() {
+	nc.TmClient.Stop()
+}
+
 func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, numPerPage int) (resultRaw *ctypes.ResultTxSearch, err error) {
 	resultRaw, err = nc.TmClient.TxSearch(query, prove, currentPage, numPerPage)
 	return resultRaw, err

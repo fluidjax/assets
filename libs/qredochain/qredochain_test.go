@@ -84,6 +84,7 @@ func Test_ChainPutGet(t *testing.T) {
 func Test_External_Query(t *testing.T) {
 	//Bring up a Node
 	nc := StartTestConnectionNode(t)
+	defer nc.Stop()
 
 	i, err := assets.NewIDDoc("testdoc")
 	i.AddTag("tagkey", []byte("tagvalue"))
