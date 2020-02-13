@@ -19,6 +19,11 @@ under the License.
 
 package assets
 
+/*
+	A group Asset is simple KV store (GroupFields) together with a list of
+	particpants. Primarily create for the TrusteeGroup Transaction type.
+*/
+
 import (
 	"bytes"
 
@@ -36,7 +41,7 @@ func (w *Group) Payload() *protobuffer.PBGroup {
 	return Group
 }
 
-//NewGroup - Setup a new IDDoc
+//NewGroup - Setup a new Group
 func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err error) {
 	if iddoc == nil {
 		return nil, errors.New("NewGroup - supplied IDDoc is nil")
@@ -73,6 +78,7 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
 	w.PreviousAsset = previousGroup.CurrentAsset
+	w.DeepCopyUpdatePayload()
 	return w, nil
 }
 

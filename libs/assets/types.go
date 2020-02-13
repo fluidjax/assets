@@ -45,6 +45,11 @@ type IDDoc struct {
 	SignedAsset
 }
 
+//KVAsset - A Generic KV asset for storing key value paramaters.
+type KVAsset struct {
+	SignedAsset
+}
+
 //SignedAsset - Asset/Previous Asset Wrapper, holding temporary objects (seed) & previousVersions
 type SignedAsset struct {
 	CurrentAsset *protobuffer.PBSignedAsset

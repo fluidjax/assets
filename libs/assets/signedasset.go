@@ -30,6 +30,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hokaccha/go-prettyjson"
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/boolparser"
 	"github.com/qredo/assets/libs/crypto"
@@ -37,6 +38,11 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/store"
 )
+
+func (a *SignedAsset) DeepCopyUpdatePayload() {
+	//Deep copy the old Payload to the new one
+	copier.Copy(a.CurrentAsset.Asset.Payload, a.PreviousAsset.Asset.Payload)
+}
 
 // Sign - this Signs the Asset including the Payload
 func (a *SignedAsset) Sign(iddoc *IDDoc) error {

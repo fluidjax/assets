@@ -312,7 +312,7 @@ func Test_GroupTransferParser(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 
-	t1, _ := NewGroup(idP, protobuffer.PBGroupType_Default)
+	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 
 	groupPayload := t1.Payload()
 	groupPayload.Participants = *groupMembers

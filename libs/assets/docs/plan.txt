@@ -1,0 +1,132 @@
+Development Plan:
+
+Consensus KV Store
+	These KV fields enable services to query the state (esp. The Asset Balance) and easily link Asset ID to underlying CryptoCurrency Assets.
+
+	AssetID : Balance (Float)
+	AssetID : Pubkey 
+	PubKey : AssetID 
+	Address : AssetID
+
+	The consensus database can be queried locally using app.Get() or remotely using ABCIQuery()
+
+
+Tendermint Database
+	Tags are stored in the underlying tendermint database.
+	The tendermint database can be queried locally using core.TxSearch or remotely using connector.TxSearch.
+	
+
+GUI - Asset
+	The services offered to the GUI.
+	The GUI needs to be able to validate transactions before sending them to the Qredochain, this verfification service is identical to the Consesnsus App verification.
+	
+	On New Wallet
+		Check validity 		Create QredoChain Wallet AssetID
+	
+	On Transfer Wallet (including settlement) 		Check validity 		Create QredoChain Wallet Update 
+
+	On New IDDoc
+		Check validity 		Create QredoChain IDDoc
+
+	On New Trustee Group
+		Check validity 		Create QredoChain Trustee Group  
+
+	On Transfer Trustee Group
+		Check validity 		Create QredoChain Trustee Group Update 
+
+
+Watcher:
+	The Watcher daemon facilites the communication between 3 different services. The MPC cluster, BTC Node and QredoChain.
+	The Watcher must ensure that the onchain transactions it uses as the basis of process have associated 'proofs' which check out.
+
+	On Startup:
+		Subscribe to Qredochain Init Wallet
+		Subscribe to Qredochain Settlement Transfer 
+
+	On Deposit (notified by subscription)
+		Send Init to MPC recieve Public Key
+		Create MPC Response TX on Qredochain containing Public Key/Address
+		Add BTC Address to BTC Node Wallet, to monitor for deposits.
+
+	On Periodic trigger - Underlying BTC TX
+		Poll BTC Node
+		For each address in BTC Node that has new deposits: 		Create an underlying Transaction on Qredochain
+
+	ON Transfer (Notified by Subscription)
+		Determine if valid & Update Consensus state
+ 
+	ON Settlement (Notified by Subscription)
+		Determine underlying unspent TX check on the Qredochain for a "MPC Settlement TX" - not just on the underlying chain.
+		Send Underlying Settlement TX for MPC signing
+		Broadcast MPC Response to QredoChain - Finalizing the UTXO.
+		Broadcast Underlying Settlement TX to BTC Chain
+
+
+BTC:
+	Connect to the underlying Crycptocurrency Node, in this case BTC (using "github.com/btcsuite/btcd/rpcclient")
+	Query state and when sufficient confirmations, mirror the transactions onto the Qredochain to enable it to act as a Sidechain
+	Add new Address to wallet  - ImportPubKey()
+	Poll for changes - listsinceblock()
+
+
+MPC:
+	Get Public Key based on Asset ID
+	Sign Underlying Settlement TX for AssetID
+
+
+Consensus:
+	The Consensus layer exists in the Qredo App it ensures that all transaction entering the chain obey the consensus rules.
+
+	1) Signatures validate
+	2) The required number of trustees detailed in the expression have agreed to the update
+	3) The sum of the amount transferred does not exceed the amount available.
+
+
+	On 	Transfer of Asset on QredoChain - (No MPC/Underlying Node interactions required)
+		Key: 
+			AssetID: balance (subtract)
+			Transferee AssetIDs: balance (add)
+			[ validity check  subtract = sum(add) ]
+
+
+	On MPC Response on Qredochain
+		Transfer of Asset (Settlement) 
+			Key: 	
+					AssetID : balance (subtract the amount withdraw)
+					Transferee AssetIDs: balance (add any balance)					
+		
+	On BTC Underlying Transaction on Qredochain - Add to AssetID balance.
+		Key		Address : AssetID
+				AssetID: Balance
+
+
+Command line utilities:
+These go based CLI utilties enable monitoring, testing and debugging of the QredoChain. An essential set of tools to discover what actually happening on the chain.
+
+	cmon CHAIN
+		What: 	Subscribe to Qredochain Node - and display data about each transaction
+		Why: 	Useful to see whats happening on the QredoChain, new Docs, wallet Assets etc.
+		Description:
+			On each incoming message 
+				Parse Message (IDDoc, Wallet, Update, Group etc)
+				Display TX info
+				Also could do some queries to extract KV consensus data base on AssetID - eg. Balance
+
+	cquery DB/CON QUERY 	
+		What:	 perform TxSearch & ABCIQuery
+		Why:	Useful for debugging and getting data in shell scripts.
+		Description:
+		1) DB - Perform a single query against the underlying tendermint database tags. tx.height 
+		2) CON - perform a lookup in the consensus database
+
+	fishhook QUERY SKIP 
+		What:	Connect to the subscription with query 		Why:	Useful for waiting for results in shell scripts - such as tests
+		Description:
+			Skip	 x number of matches (ignoring them) and return the next matching transaction
+
+	idpump CHAIN1 CHAIN2
+		What:	Connects to both chains, copies data from chain1 to chain2
+		Why:	Useful when create a new version of the QredoChain without losing the old data
+	
+
+

@@ -27,6 +27,7 @@ message PBAsset {
         PBGroup Group                     = 16;
         PBIDDoc Iddoc                     = 17;
         PBUnderlying Underlying           = 18;
+        PBKVAsset KVAsset                 = 19;
     }
 }
 
@@ -35,7 +36,8 @@ enum PBAssetType {
 	Wallet      = 0;
 	Group       = 1;
     Iddoc       = 2;
-    Underlying = 3;
+    Underlying  = 3;
+    KVAsset     = 4;
 }                              
 enum PBTransferType {
     Unspecified         = 0;
@@ -86,8 +88,8 @@ message PBGroup {
 
 
 enum PBGroupType {
-    Default         = 0;
-    TrusteeGroup    = 1;
+    UnspecifiedGroup    = 0;
+    TrusteeGroup        = 1;
 }
 
 
@@ -137,3 +139,17 @@ message PBUnderlying {
 }
 
 
+//Simple KV Asset
+message  PBKVAsset {
+    PBKVAssetType Type              = 1;
+    map<string, bytes> AssetFields  = 2; 
+    repeated string Immutable       = 3;
+    string Description              = 4; 
+}
+
+enum PBKVAssetType {
+    UnspecifiedKVAsset  = 0;
+    Fee                 = 1;
+    MPCList             = 2;
+
+}

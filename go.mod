@@ -13,6 +13,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/gookit/color v1.2.2
 	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
+	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.4.0
