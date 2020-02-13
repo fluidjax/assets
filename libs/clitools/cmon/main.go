@@ -16,15 +16,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/urfave/cli"
 )
-
-const (
-	envMilagroHome = "MILAGRO_HOME"
-	keysFile       = "keys"
-
-	cmdInit   = "init"
-	cmdDaemon = "daemon"
-)
-
 func main() {
 	app := cli.NewApp()
 	app.Name = "tmget"
@@ -38,7 +29,7 @@ func main() {
 	}
 	app.Copyright = "(c) 2020 Chris Morris"
 	app.UsageText = `USAGE:
-    cmon configdir
+    cmon chain:port
 
 DESCRIPTION:
 	cmon continually monitors the chain for new blocks

@@ -86,6 +86,7 @@ func Test_External_Query(t *testing.T) {
 	nc := StartTestConnectionNode(t)
 
 	i, err := assets.NewIDDoc("testdoc")
+	i.AddTag("tagkey", []byte("tagvalue"))
 	assert.Nil(t, err, "Error should be nil", err)
 
 	txid, errorCode, err := nc.PostTx(i)
@@ -93,6 +94,9 @@ func Test_External_Query(t *testing.T) {
 
 	i.Sign(i)
 	txid, errorCode, err = nc.PostTx(i)
+	print("TXID ", txid, "\n")
+	print("Key  ", hex.EncodeToString(i.Key()), "\n")
+
 	assert.True(t, errorCode == CodeTypeOK, "Error should be nil", err)
 
 	assert.Nil(t, err, "Error should be nil", err)
