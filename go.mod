@@ -3,10 +3,10 @@ module github.com/qredo/assets
 go 1.13
 
 require (
-	github.com/btcsuite/btcd v0.0.0-20190115013929-ed77733ec07d
-	github.com/btcsuite/btcutil v0.0.0-20180706230648-ab6388e0c60a
+	github.com/btcsuite/btcd v0.20.1-beta
+	github.com/btcsuite/btcutil v1.0.1
 	github.com/dgraph-io/badger v1.6.0
-	github.com/fatih/color v1.9.0 // indirect
+	github.com/fatih/color v1.9.0
 	github.com/go-kit/kit v0.9.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.3
@@ -23,3 +23,5 @@ require (
 	github.com/urfave/cli/v2 v2.1.1
 	go.etcd.io/bbolt v1.3.3
 )
+
+replace github.com/btcsuite/btcd => github.com/qredo/btcd v0.21.1

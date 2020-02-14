@@ -26,13 +26,10 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//NewIDDoc create a new IDDoc
-func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
-	//generate crypto random seed
-	seed, err := cryptowallet.RandomBytes(48)
-	if err != nil {
-		err = errors.Wrap(err, "Failed to generate random seed")
-		return nil, err
+//NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
+func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, err error) {
+	if seed == nil {
+		return nil, errors.Wrap(err, "No seed provided")
 	}
 	sikePublicKey, _, err := keystore.GenerateSIKEKeys(seed)
 	if err != nil {
@@ -77,6 +74,19 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 
 	i.assetKeyFromPayloadHash()
 	return i, nil
+}
+
+//NewIDDoc create a new IDDoc with a random seed
+func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
+	//generate crypto random seed
+	seed, err := cryptowallet.RandomBytes(48)
+	if err != nil {
+		err = errors.Wrap(err, "Failed to generate random seed")
+		return nil, err
+	}
+
+	return NewIDDocWithSeed(seed, authenticationReference)
+
 }
 
 //ReBuildIDDoc rebuild an existing Signed IDDoc into IDDocDeclaration object

@@ -36,12 +36,7 @@ func Test_LoadSave(t *testing.T) {
 	txid, err := PostTx(base64EncodedTX, "127.0.0.1:26657")
 
 	assert.Nil(t, err, "Error should be nil", err)
-
-	print(txid)
-	txidHash, _ := hex.DecodeString(txid)
-	a, b := app.Load(txidHash)
-	print(a)
-	print(b)
+	assert.NotNil(t, txid, "txid should not be nil", err)
 
 }
 

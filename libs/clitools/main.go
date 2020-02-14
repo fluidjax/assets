@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	defaultConnector = "127.0.01:26657"
+	defaultConnector = "127.0.0.1:26657"
 )
 
 func main() {
@@ -30,142 +30,134 @@ func main() {
 		HelpName:  "qredochain",
 		Usage:     "qredochain command params",
 		UsageText: "Interact with the Qredochain from the command line",
-		ArgsUsage: "[args]",
+		//ArgsUsage: "[args]",
 
 		Commands: []*cli.Command{
 			&cli.Command{
-				Name:      "createiddoc",
-				Aliases:   []string{"cid", "createid"},
-				Category:  "transactions",
-				Usage:     "createiddoc (seed) (authenticator_reference)",
-				UsageText: "Create a New IDDoc Transaction in the Qredochain using the supplied seed & authenicator reference, ",
-				//Description: "",
-				//ArgsUsage: "[]",
-				// Flags: []cli.Flag{
-				// 	&cli.BoolFlag{Name: "forever", Aliases: []string{"forevvarr"}},
-				// },
-				// Subcommands: []*cli.Command{
-				// 	&cli.Command{
-				// 		Name:   "wop",
-				// 		Action: wopAction,
-				// 	},
-				// },
+				Name:    "tendermintquery",
+				Aliases: []string{"tq"},
+				Usage:   "Search the underlying tendermint database",
+				Description: "Query the underlying tendermint database \n" +
+					"   examples:\n" +
+					"   qc tq \"tx.hash='528579CDD20444140270C5B476AA2971A484719C7BE02CB99539468AEC93B222'\"\n" +
+					"   qc tq \"tx.height>0 and tx.height<10\"\n" +
+					"   qc tq \"tag.tagkey='tagvalue'\"\n" +
+					"   qc tq \"tag.tagkey contains 'tag'\"\n",
+				ArgsUsage:       "querystring",
+				Flags:           []cli.Flag{},
 				SkipFlagParsing: false,
 				HideHelp:        false,
 				Hidden:          false,
 				HelpName:        "",
-				BashComplete: func(c *cli.Context) {
-					fmt.Fprintf(c.App.Writer, "--better\n")
-				},
-				Before: func(c *cli.Context) error {
-
-					//fmt.Fprintf(c.App.Writer, "Before\n")
-					return nil
-				},
-				After: func(c *cli.Context) error {
-					//fmt.Fprintf(c.App.Writer, "After\n")
-					return nil
-				},
 				Action: func(c *cli.Context) error {
-					fmt.Fprintf(c.App.Writer, "Create an IDDoc\n")
-					// c.Command.FullName()
-					// c.Command.HasName("wop")
-					// c.Command.Names()
-					// c.Command.VisibleFlags()
-					// fmt.Fprintf(c.App.Writer, "dodododododoodododddooooododododooo\n")
-					// if c.Bool("forever") {
-					// 	c.Command.Run(c)
-					// }
-					return nil
-				},
-				OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-					fmt.Fprintf(c.App.Writer, "for shame\n")
-					return err
-				},
-			},
-			&cli.Command{
-				Name:    "chainquery",
-				Aliases: []string{"cq", "cquery"},
-				//Category:    "Query",
-				Usage:       "qc chainquery 'search query'",
-				Description: "Query the Qredochain (underlying Tendermint) database ",
-				//UsageText: "Query the Qredochain (underlying Tendermint) database ",
-				ArgsUsage: "querystring",
-				//ArgsUsage: "[]",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:        "connect",
-						Aliases:     []string{"c"},
-						Destination: &connector,
-						Usage:       "Qredochain connection string",
-						DefaultText: defaultConnector,
-						Required:    false,
-					},
-				},
-				// Subcommands: []*cli.Command{
-				// 	&cli.Command{
-				// 		Name:   "wop",
-				// 		Action: wopAction,
-				// 	},
-				// },
-				SkipFlagParsing: false,
-				HideHelp:        false,
-				Hidden:          false,
-				HelpName:        "",
-
-				Action: func(c *cli.Context) error {
-					if connector == "" {
-						connector = defaultConnector
-					}
-
 					query := "empty query"
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-
 					qc.QredoChainSearch(connector, query)
-					fmt.Fprintf(c.App.Writer, "Run Query\n")
 					return nil
 				},
-				OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-					fmt.Fprintf(c.App.Writer, "for shame\n")
-					return err
+			},
+			&cli.Command{
+				Name:    "consensusquery",
+				Aliases: []string{"cq"},
+				Usage:   "Search the Qredochain Consensus App database for keys ",
+				Description: "Query the Qredochain Consensus App Layer database\n" +
+					"   examples:\n" +
+					"   qc cq  \"nO3lRBxbYjbEclTiK7joo7uBPObh1CZbB36VHriuSoo=\"\n",
+				ArgsUsage:       "querystring",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					query := "empty query"
+					if c.NArg() > 0 {
+						query = c.Args().Get(0)
+					}
+					qc.ConsensusSearch(connector, query)
+					return nil
+				},
+			},
+			&cli.Command{
+				Name:    "createiddoc",
+				Aliases: []string{"cid"},
+				Usage:   "Create a new Identity Doc (IDDoc) using a random seed",
+				Description: "Generate a new IDDoc with optional supplied authentication reference. Failure to supply an authentication reference will result in a random one being generated.\n" +
+					"   qc cid  \"testid\"",
+				ArgsUsage:       "authref",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					authref := ""
+					if c.NArg() > 0 {
+						authref = c.Args().Get(0)
+					}
+					return qc.CreateIDDoc(connector, authref)
+				},
+			},
+			&cli.Command{
+				Name:            "status",
+				Aliases:         []string{"s"},
+				Usage:           "Display Qredochain status information",
+				Description:     "Show status of QredoChain",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					qc.Status(connector)
+					return nil
+				},
+			},
+			&cli.Command{
+				Name:            "monitor",
+				Aliases:         []string{"m", "mon"},
+				Usage:           "Monitor the Qredochain for incoming transactions",
+				Description:     "Monitor the Qredochain for incoming transactions",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					qc.Monitor(connector)
+					return nil
 				},
 			},
 		},
 		Flags: []cli.Flag{
-			// &cli.BoolFlag{Name: "fancy"},
-			// &cli.BoolFlag{Value: true, Name: "fancier"},
-			// &cli.DurationFlag{Name: "howlong", Aliases: []string{"H"}, Value: time.Second * 3},
-			// &cli.Float64Flag{Name: "howmuch"},
-			// &cli.GenericFlag{Name: "wat", Value: &genericType{}},
-			// &cli.Int64Flag{Name: "longdistance"},
-			// &cli.Int64SliceFlag{Name: "intervals"},
-			// &cli.IntFlag{Name: "distance"},
-			// &cli.IntSliceFlag{Name: "times"},
-
-			// 	&cli.StringSliceFlag{Name: "names", Aliases: []string{"N"}},
-			// 	&cli.UintFlag{Name: "age"},
-			// 	&cli.Uint64Flag{Name: "bigage"},
+			&cli.StringFlag{
+				Name:        "connect",
+				Aliases:     []string{"c"},
+				Destination: &connector,
+				Usage:       "Qredochain connection string",
+				DefaultText: defaultConnector,
+				Required:    false,
+			},
 		},
-		EnableBashCompletion: true,
+		EnableBashCompletion: false,
 		HideHelp:             false,
 		HideVersion:          false,
-		BashComplete: func(c *cli.Context) {
-			fmt.Fprintf(c.App.Writer, "Bash Complete General\n")
-		},
 		Before: func(c *cli.Context) error {
-			fmt.Fprintf(c.App.Writer, "Connect to Qredochain node\n")
+			if connector == "" {
+				connector = defaultConnector
+			}
 			return nil
 		},
-		// After: func(c *cli.Context) error {
-		// 	fmt.Fprintf(c.App.Writer, "After App\n")
-		// 	return nil
-		// },
+		After: func(c *cli.Context) error {
+			return nil
+		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			fmt.Fprintf(c.App.Writer, "Command not found %q. \n", command)
 		},
 		OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
+			print(err)
 			if isSubcommand {
 				return err
 			}
@@ -174,65 +166,6 @@ func main() {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			// cli.DefaultAppComplete(c)
-			// cli.HandleExitCoder(errors.New("not an exit coder, though"))
-			// cli.ShowAppHelp(c)
-			// cli.ShowCommandCompletions(c, "nope")
-			// cli.ShowCommandHelp(c, "also-nope")
-			// cli.ShowCompletions(c)
-			// cli.ShowSubcommandHelp(c)
-			// cli.ShowVersion(c)
-
-			// fmt.Printf("%#v\n", c.App.Command("doo"))
-			// if c.Bool("infinite") {
-			// 	c.App.Run([]string{"app", "doo", "wop"})
-			// }
-
-			// if c.Bool("forevar") {
-			// 	c.App.RunAsSubcommand(c)
-			// }
-			// c.App.Setup()
-			// fmt.Printf("%#v\n", c.App.VisibleCategories())
-			// fmt.Printf("%#v\n", c.App.VisibleCommands())
-			// fmt.Printf("%#v\n", c.App.VisibleFlags())
-
-			// fmt.Printf("%#v\n", c.Args().First())
-			// if c.Args().Len() > 0 {
-			// 	fmt.Printf("%#v\n", c.Args().Get(1))
-			// }
-			// fmt.Printf("%#v\n", c.Args().Present())
-			// fmt.Printf("%#v\n", c.Args().Tail())
-
-			// set := flag.NewFlagSet("contrive", 0)
-			// nc := cli.NewContext(c.App, set, c)
-
-			// fmt.Printf("%#v\n", nc.Args())
-			// fmt.Printf("%#v\n", nc.Bool("nope"))
-			// fmt.Printf("%#v\n", !nc.Bool("nerp"))
-			// fmt.Printf("%#v\n", nc.Duration("howlong"))
-			// fmt.Printf("%#v\n", nc.Float64("hay"))
-			// fmt.Printf("%#v\n", nc.Generic("bloop"))
-			// fmt.Printf("%#v\n", nc.Int64("bonk"))
-			// fmt.Printf("%#v\n", nc.Int64Slice("burnks"))
-			// fmt.Printf("%#v\n", nc.Int("bips"))
-			// fmt.Printf("%#v\n", nc.IntSlice("blups"))
-			// fmt.Printf("%#v\n", nc.String("snurt"))
-			// fmt.Printf("%#v\n", nc.StringSlice("snurkles"))
-			// fmt.Printf("%#v\n", nc.Uint("flub"))
-			// fmt.Printf("%#v\n", nc.Uint64("florb"))
-
-			// fmt.Printf("%#v\n", nc.FlagNames())
-			// fmt.Printf("%#v\n", nc.IsSet("wat"))
-			// fmt.Printf("%#v\n", nc.Set("wat", "nope"))
-			// fmt.Printf("%#v\n", nc.NArg())
-			// fmt.Printf("%#v\n", nc.NumFlags())
-			// fmt.Printf("%#v\n", nc.Lineage()[1])
-			// nc.Set("wat", "also-nope")
-
-			// ec := cli.Exit("ohwell", 86)
-			// fmt.Fprintf(c.App.Writer, "%d", ec.ExitCode())
-			// fmt.Printf("made it!\n")
-			// return ec
 			return nil
 		},
 		Metadata: map[string]interface{}{
@@ -241,13 +174,10 @@ func main() {
 			"whatever-values": 19.99,
 		},
 	}
-
-	// if os.Getenv("HEXY") != "" {
-	// 	app.Writer = &hexWriter{}
-	// 	app.ErrWriter = &hexWriter{}
-	// }
-
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		print("Error:", err)
+	}
 }
 
 func wopAction(c *cli.Context) error {
