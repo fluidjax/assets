@@ -1,7 +1,9 @@
 package qc
 
 import (
+	"encoding/base64"
 	"encoding/hex"
+	"reflect"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
@@ -40,11 +42,17 @@ func CreateIDDoc(connectorString string, authref string) (err error) {
 	}
 
 	//Keep all values internally as Base64 - only convert to Hex to display them
-	addResultItem("txid", hex2base64(txid))
-	addResultItem("object", iddoc.CurrentAsset)
-	addResultItem("assetid", iddoc.Key())
-	addResultItem("seed", iddoc.Seed)
+	addResultTextItem("txid", txid)
+	addResultBinaryItem("assetid", iddoc.Key())
+	addResultBinaryItem("seed", iddoc.Seed)
 
+	//Because json encoding merges binary/string data, and we want binary data converted to 
+	//hex,  data, we need to convert to hex
+	original := reflect.ValueOf(iddoc.CurrentAsset)
+	copy := reflect.New(original.Type()).Elem()
+	translateRecursive(copy, original)
+	addResultItem("object", copy.Interface())
 	ppResult()
+
 	return
 }

@@ -4,7 +4,8 @@ package prettyjson
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/hex"
+
+	//"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -127,26 +128,26 @@ func IsBase64(s string) bool {
 func (f *Formatter) processString(s string) string {
 
 	//special case for Base64 - decode and print as Hex
-	if IsBase64(s) {
-		bin, _ := base64.StdEncoding.DecodeString(s)
-		s = hex.EncodeToString(bin)
-		//s = "BASE64" //hex.EncodeToString(bin)
-		return f.sprintColor(f.StringColor, s)
-	}
+	// if IsBase64(s) {
+	bin, _ := base64.StdEncoding.DecodeString(s)
+	//s = hex.EncodeToString(bin)
+	//s = "BASE64" //hex.EncodeToString(bin)
+	return f.sprintColor(f.StringColor, string(bin))
+	// }
 
-	r := []rune(s)
-	if f.StringMaxLength != 0 && len(r) >= f.StringMaxLength {
-		s = string(r[0:f.StringMaxLength]) + "..."
-	}
+	// r := []rune(s)
+	// if f.StringMaxLength != 0 && len(r) >= f.StringMaxLength {
+	// 	s = string(r[0:f.StringMaxLength]) + "..."
+	// }
 
-	buf := &bytes.Buffer{}
-	encoder := json.NewEncoder(buf)
-	encoder.SetEscapeHTML(false)
-	encoder.Encode(s)
-	s = string(buf.Bytes())
-	s = strings.TrimSuffix(s, "\n")
+	// buf := &bytes.Buffer{}
+	// encoder := json.NewEncoder(buf)
+	// encoder.SetEscapeHTML(false)
+	// encoder.Encode(s)
+	// s = string(buf.Bytes())
+	// s = strings.TrimSuffix(s, "\n")
 
-	return f.sprintColor(f.StringColor, s)
+	// return f.sprintColor(f.StringColor, s)
 }
 
 func (f *Formatter) processMap(m map[string]interface{}, depth int) string {
