@@ -1,47 +1,42 @@
 package qc
 
-func CreateWallet(connectorString string, iddoc string) (err error) {
+import (
+	"reflect"
 
-	// 	nc, err := qredochain.NewNodeConnector(connectorString, "", nil, nil)
-	// 	defer nc.Stop()
+	"github.com/pkg/errors"
+	"github.com/qredo/assets/libs/assets"
+)
 
-	// 	if iddoc == "" {
-	// 		return errors.New("You must specify an IDDoc")
-	// 	}
+func (cliTool *CLITool) CreateWallet(seedHex string) (err error) {
 
-	// 	iddoc, err := assets.NewIDDoc(authref)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	err = iddoc.Sign(iddoc)
+	iddoc, err := cliTool.GetIDDocForSeed(seedHex)
+	if err != nil {
+		return err
+	}
 
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	wallet, err := assets.NewWallet(iddoc, "BTC")
+	if err != nil {
+		return err
+	}
+	wallet.Sign(iddoc)
 
-	// 	txid, code, err := nc.PostTx(iddoc)
+	txid, code, err := cliTool.NodeConn.PostTx(wallet)
 
-	// 	if code != 0 {
-	// 		print(err.Error())
-	// 		return errors.Wrap(err, "TX Fails verifications")
-	// 	}
+	if code != 0 {
+		print(err.Error())
+		return errors.Wrap(err, "TX Fails verifications")
+	}
 
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	if err != nil {
+		return err
+	}
 
-	// 	//Keep all values internally as Base64 - only convert to Hex to display them
-	// 	addResultTextItem("txid", txid)
-	// 	addResultBinaryItem("assetid", iddoc.Key())
-	// 	addResultBinaryItem("seed", iddoc.Seed)
-
-	// 	//Because json encoding merges binary/string data, and we want binary data converted to
-	// 	//hex,  data, we need to convert to hex
-	// 	original := reflect.ValueOf(iddoc.CurrentAsset)
-	// 	copy := reflect.New(original.Type()).Elem()
-	// 	TranslateRecursive(copy, original)
-	// 	addResultItem("object", copy.Interface())
-	// 	ppResult()
+	addResultTextItem("txid", txid)
+	original := reflect.ValueOf(wallet.CurrentAsset)
+	copy := reflect.New(original.Type()).Elem()
+	TranslateRecursive(copy, original)
+	addResultItem("object", copy.Interface())
+	ppResult()
 
 	return
 }

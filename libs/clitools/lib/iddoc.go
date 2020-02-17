@@ -6,13 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
-func CreateIDDoc(connectorString string, authref string) (err error) {
-
-	nc, err := qredochain.NewNodeConnector(connectorString, "", nil, nil)
-	defer nc.Stop()
+func (cliTool *CLITool) CreateIDDoc(authref string) (err error) {
 
 	if authref == "" {
 		randAuth, _ := assets.RandomBytes(32)
@@ -29,7 +25,7 @@ func CreateIDDoc(connectorString string, authref string) (err error) {
 		return err
 	}
 
-	txid, code, err := nc.PostTx(iddoc)
+	txid, code, err := cliTool.NodeConn.PostTx(iddoc)
 
 	if code != 0 {
 		print(err.Error())

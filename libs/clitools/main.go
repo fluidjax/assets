@@ -6,6 +6,7 @@ import (
 	"time"
 
 	qc "github.com/qredo/assets/libs/clitools/lib"
+	"github.com/qredo/assets/libs/qredochain"
 	"github.com/urfave/cli/v2"
 )
 
@@ -15,6 +16,7 @@ var (
 
 func main() {
 	var connector string
+	cliTool := &qc.CLITool{}
 
 	app := &cli.App{
 		Name:     "Qredochain",
@@ -54,7 +56,7 @@ func main() {
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-					qc.PPQredoChainSearch(connector, query)
+					cliTool.PPQredoChainSearch(query)
 					return nil
 				},
 			},
@@ -76,7 +78,7 @@ func main() {
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-					qc.PPConsensusSearch(connector, query)
+					cliTool.PPConsensusSearch(query)
 					return nil
 				},
 			},
@@ -97,7 +99,29 @@ func main() {
 					if c.NArg() > 0 {
 						authref = c.Args().Get(0)
 					}
-					return qc.CreateIDDoc(connector, authref)
+					return cliTool.CreateIDDoc(authref)
+				},
+			},
+			&cli.Command{
+				Name:    "createwallet",
+				Aliases: []string{"cw"},
+				Usage:   "Create a new Wallet with supplied Seed for the already created IDDoc",
+				Description: "Generate a new Wallet with the supplied Seed (IDDoc)\n" +
+					"   qc cw  dedd7dfb323a7013d7528b3dc753aa5f992c3803f5b183e7df20a5972861dfe7",
+				ArgsUsage:       "seed",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					assetID := ""
+					if c.NArg() > 0 {
+						assetID = c.Args().Get(0)
+					} else {
+						return nil
+					}
+					return cliTool.CreateWallet(assetID)
 				},
 			},
 			&cli.Command{
@@ -111,7 +135,7 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					qc.Status(connector)
+					cliTool.Status()
 					return nil
 				},
 			},
@@ -126,7 +150,7 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					qc.Monitor(connector)
+					cliTool.Monitor()
 					return nil
 				},
 			},
@@ -145,12 +169,19 @@ func main() {
 		HideHelp:             false,
 		HideVersion:          false,
 		Before: func(c *cli.Context) error {
+
 			if connector == "" {
 				connector = defaultConnector
 			}
+			nc, err := qredochain.NewNodeConnector(connector, "", nil, nil)
+			if err != nil {
+				return err
+			}
+			cliTool.NodeConn = nc
 			return nil
 		},
 		After: func(c *cli.Context) error {
+			cliTool.NodeConn.Stop()
 			return nil
 		},
 		CommandNotFound: func(c *cli.Context, command string) {

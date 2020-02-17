@@ -6,43 +6,54 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
-	tmclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-func GetAsset(qredochain string, assetID string) error {
-	//Get TX for Asset ID
-	// key, err := hex.DecodeString(assetID)
-	// query := fmt.Sprintf("tx.hash='%s'", key)
+func (cliTool *CLITool) GetIDDocForSeed(seedHex string) (iddoc *assets.IDDoc, err error) {
+	seed, err := hex.DecodeString(seedHex)
+	if err != nil {
+		return nil, err
+	}
+	assetID := assets.KeyFromSeed(seed)
+	assedIDHex := hex.EncodeToString(assetID)
 
-	// tmClient, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
-	// defer tmClient.Stop()
+	signedAsset, err := cliTool.GetAsset(assedIDHex)
 
-	// if err := tmClient.Start(); err != nil {
-	// 	return errors.Wrapf(err, "Failed to start Tendermint client")
-	// }
-	// key, err = hex.DecodeString(query)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "Failed to decode Base64 Query %s", query)
-	// }
+	if err != nil {
+		return nil, err
+	}
 
-	// result, err := tmClient.ABCIQuery("V", key)
+	iddoc, err = assets.ReBuildIDDoc(signedAsset, assetID)
 
-	// if err != nil {
-	// 	return errors.Wrapf(err, "Failed to run Consensus query %s", query)
-	// }
+	if err != nil {
+		return nil, err
+	}
 
-	// assetID = result.Response.GetValue()
-
-	// //Get TX for Asset ID
-	return nil
+	iddoc.Seed = seed
+	return iddoc, nil
 }
 
-func PPConsensusSearch(qredochain string, query string) (err error) {
-	data, err := ConsensusSearch(qredochain, query)
+func (cliTool *CLITool) GetAsset(assetID string) (*protobuffer.PBSignedAsset, error) {
+	//Get TX for Asset ID
+	txid, err := cliTool.ConsensusSearch(assetID)
+	if err != nil {
+		return nil, err
+	}
+	query := "tx.hash='" + hex.EncodeToString(txid) + "'"
+	result, err := cliTool.QredoChainSearch(query)
+	if len(result) != 1 {
+		return nil, errors.New("Incorrect number of responses")
+	}
+
+	return result[0], nil
+}
+
+func (cliTool *CLITool) PPConsensusSearch(query string) (err error) {
+	data, err := cliTool.ConsensusSearch(query)
 	if err != nil {
 		return err
 	}
@@ -60,16 +71,9 @@ func PPConsensusSearch(qredochain string, query string) (err error) {
 	return nil
 }
 
-func ConsensusSearch(qredochain string, query string) (data []byte, err error) {
+func (cliTool *CLITool) ConsensusSearch(query string) (data []byte, err error) {
 
-	tmClient, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
-	defer tmClient.Stop()
-
-	if err := tmClient.Start(); err != nil {
-		return nil, errors.Wrapf(err, "Failed to start Tendermint client")
-	}
-
-	//key, err := base64.StdEncoding.DecodeString(query)
+	tmClient := cliTool.NodeConn.TmClient
 	key, err := hex.DecodeString(query)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to decode Base64 Query %s", query)
@@ -86,8 +90,8 @@ func ConsensusSearch(qredochain string, query string) (data []byte, err error) {
 
 }
 
-func PPQredoChainSearch(qredochain string, query string) (err error) {
-	results, err := QredoChainSearch(qredochain, query)
+func (cliTool *CLITool) PPQredoChainSearch(query string) (err error) {
+	results, err := cliTool.QredoChainSearch(query)
 
 	original := reflect.ValueOf(results)
 	copy := reflect.New(original.Type()).Elem()
@@ -98,17 +102,12 @@ func PPQredoChainSearch(qredochain string, query string) (err error) {
 	return err
 }
 
-func QredoChainSearch(qredochain string, query string) (results []*protobuffer.PBSignedAsset, err error) {
+func (cliTool *CLITool) QredoChainSearch(query string) (results []*protobuffer.PBSignedAsset, err error) {
 	processedCount := 0
 	currentPage := 0
 	numPerPage := 30
 
-	tmClient, _ := tmclient.NewHTTP(fmt.Sprintf("tcp://%s", qredochain), "/websocket")
-	defer tmClient.Stop()
-
-	if err := tmClient.Start(); err != nil {
-		return nil, errors.Wrapf(err, "Failed to start Tendermint client")
-	}
+	tmClient := cliTool.NodeConn.TmClient
 
 	for {
 		result, err := tmClient.TxSearch(query, false, currentPage, numPerPage)
@@ -129,14 +128,14 @@ func QredoChainSearch(qredochain string, query string) (results []*protobuffer.P
 
 			if err != nil {
 				fmt.Println("Error unmarshalling payload")
-				if checkQuit(processedCount, totalToProcess) == true {
+				if cliTool.checkQuit(processedCount, totalToProcess) == true {
 					return results, nil
 				}
 				continue
 			}
 			results = append(results, signedAsset)
 
-			if checkQuit(processedCount, totalToProcess) == true {
+			if cliTool.checkQuit(processedCount, totalToProcess) == true {
 				return results, nil
 			}
 		}
@@ -144,6 +143,6 @@ func QredoChainSearch(qredochain string, query string) (results []*protobuffer.P
 	}
 }
 
-func checkQuit(processedCount int, totalToProcess int) bool {
+func (cliTool *CLITool) checkQuit(processedCount int, totalToProcess int) bool {
 	return processedCount == totalToProcess
 }

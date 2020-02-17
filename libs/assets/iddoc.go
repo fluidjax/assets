@@ -20,6 +20,8 @@ under the License.
 package assets
 
 import (
+	"crypto/sha256"
+
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
@@ -71,9 +73,16 @@ func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, er
 	Payload.Iddoc = iddoc
 
 	i.CurrentAsset.Asset.Payload = Payload
-
-	i.assetKeyFromPayloadHash()
+	i.setKey(KeyFromSeed(seed))
 	return i, nil
+}
+
+//KeyFromSeed double the hash the seed to make a unique key
+func KeyFromSeed(seed []byte) []byte {
+	onehash := sha256.Sum256(seed)
+	key := sha256.Sum256(onehash[:])
+	return key[:]
+
 }
 
 //NewIDDoc create a new IDDoc with a random seed
