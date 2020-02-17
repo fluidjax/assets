@@ -13,6 +13,9 @@ require (
 	github.com/gookit/color v1.2.2
 	github.com/hokaccha/go-prettyjson v0.0.0-20190818114111-108c894c2c0e
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
+	github.com/jroimartin/gocui v0.4.0
+	github.com/mattn/go-runewidth v0.0.8 // indirect
+	github.com/nsf/termbox-go v0.0.0-20200204031403-4d2b513ad8be // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0

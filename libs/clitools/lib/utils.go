@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+	"github.com/qredo/assets/libs/protobuffer"
 )
 
 var (
@@ -53,6 +54,15 @@ func ppResult() {
 	fmt.Println(string(pp))
 }
 
+func prettyStringFromSignedAsset(signedAsset *protobuffer.PBSignedAsset) string {
+	original := reflect.ValueOf(signedAsset)
+	copy := reflect.New(original.Type()).Elem()
+	TranslateRecursive(copy, original)
+
+	pp, _ := prettyjson.Marshal(copy.Interface())
+	return string(pp)
+}
+
 //PadRight - right pad a string
 func PadRight(str, pad string, lenght int) string {
 	for {
@@ -80,7 +90,7 @@ func TranslateRecursive(copy, original reflect.Value) {
 		// Allocate a new object and set the pointer to it
 		copy.Set(reflect.New(originalValue.Type()))
 		// Unwrap the newly created pointer
-		translateRecursive(copy.Elem(), originalValue)
+		TranslateRecursive(copy.Elem(), originalValue)
 
 	// If it is an interface (which is very similar to a pointer), do basically the
 	// same as for the pointer. Though a pointer is not the same as an interface so
@@ -92,13 +102,13 @@ func TranslateRecursive(copy, original reflect.Value) {
 		// Create a new object. Now new gives us a pointer, but we want the value it
 		// points to, so we have to call Elem() to unwrap it
 		copyValue := reflect.New(originalValue.Type()).Elem()
-		translateRecursive(copyValue, originalValue)
+		TranslateRecursive(copyValue, originalValue)
 		copy.Set(copyValue)
 
 	// If it is a struct we translate each field
 	case reflect.Struct:
 		for i := 0; i < original.NumField(); i += 1 {
-			translateRecursive(copy.Field(i), original.Field(i))
+			TranslateRecursive(copy.Field(i), original.Field(i))
 		}
 
 	// If it is a slice we create a new slice and translate each element
@@ -114,7 +124,7 @@ func TranslateRecursive(copy, original reflect.Value) {
 		} else {
 			copy.Set(reflect.MakeSlice(original.Type(), original.Len(), original.Cap()))
 			for i := 0; i < original.Len(); i += 1 {
-				translateRecursive(copy.Index(i), original.Index(i))
+				TranslateRecursive(copy.Index(i), original.Index(i))
 			}
 		}
 
@@ -125,7 +135,7 @@ func TranslateRecursive(copy, original reflect.Value) {
 			originalValue := original.MapIndex(key)
 			// New gives us a pointer, but again we want the value
 			copyValue := reflect.New(originalValue.Type()).Elem()
-			translateRecursive(copyValue, originalValue)
+			TranslateRecursive(copyValue, originalValue)
 			copy.SetMapIndex(key, copyValue)
 		}
 

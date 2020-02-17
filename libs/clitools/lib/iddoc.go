@@ -1,7 +1,6 @@
 package qc
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"reflect"
 
@@ -46,11 +45,11 @@ func CreateIDDoc(connectorString string, authref string) (err error) {
 	addResultBinaryItem("assetid", iddoc.Key())
 	addResultBinaryItem("seed", iddoc.Seed)
 
-	//Because json encoding merges binary/string data, and we want binary data converted to 
+	//Because json encoding merges binary/string data, and we want binary data converted to
 	//hex,  data, we need to convert to hex
 	original := reflect.ValueOf(iddoc.CurrentAsset)
 	copy := reflect.New(original.Type()).Elem()
-	translateRecursive(copy, original)
+	TranslateRecursive(copy, original)
 	addResultItem("object", copy.Interface())
 	ppResult()
 

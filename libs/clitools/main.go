@@ -54,7 +54,7 @@ func main() {
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-					qc.QredoChainSearch(connector, query)
+					qc.PPQredoChainSearch(connector, query)
 					return nil
 				},
 			},
@@ -76,7 +76,7 @@ func main() {
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-					qc.ConsensusSearch(connector, query)
+					qc.PPConsensusSearch(connector, query)
 					return nil
 				},
 			},
