@@ -33,21 +33,22 @@ message PBAsset {
 
 
 enum PBAssetType {
-	Wallet      = 0;
-	Group       = 1;
-    Iddoc       = 2;
-    Underlying  = 3;
-    KVAsset     = 4;
+	UndefinedAssetType   = 0;
+	Group                = 1;
+    Iddoc                = 2;
+    Underlying           = 3;
+    KVAsset              = 4;
+    Wallet               = 5;
 }                              
 enum PBTransferType {
-    Unspecified         = 0;
-    SettlePush          = 1;
-    SettlePull          = 2;
-    TransferPush        = 3;
-    TransferPull        = 4;
-    Swap                = 5;
-    Load                = 6;
-    GroupDefinition     = 7;
+    UndefinedTransferType = 0;
+    SettlePush            = 1;
+    SettlePull            = 2;
+    TransferPush          = 3;
+    TransferPull          = 4;
+    Swap                  = 5;
+    Load                  = 6;
+    GroupDefinition       = 7;
 }
 
 message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
@@ -59,16 +60,16 @@ message PBTransfer {                  //Defined for each Transfer type an expres
 
 //Asset Definitons
 message PBWallet {
-    string Currency                 = 1;
-    int64 SpentBalance              = 2; //total of all outgoing spends = previous + sum of Asset Transfer
+    string Currency                             = 1;
+    int64 SpentBalance                          = 2; //total of all outgoing spends = previous + sum of Asset Transfer
     repeated PBWalletTransfer WalletTransfers   = 3;
-    string Description              = 11;
-    bytes Principal                 = 12;
-	bytes Creditor                  = 13;
-	bytes Initiator                 = 14;
-	bytes Address                   = 15;
-    bytes Counterparty              = 16;
-    bytes TransactionHash           = 17;
+    string Description                          = 11;
+    bytes Principal                             = 12;
+	bytes Creditor                              = 13;
+	bytes Initiator                             = 14;
+	bytes Address                               = 15;
+    bytes Counterparty                          = 16;
+    bytes TransactionHash                       = 17;
 }
 
 message PBWalletTransfer {
@@ -88,8 +89,8 @@ message PBGroup {
 
 
 enum PBGroupType {
-    UnspecifiedGroup    = 0;
-    TrusteeGroup        = 1;
+    UnspecifiedGroupType    = 0;
+    TrusteeGroup            = 1;
 }
 
 
@@ -120,12 +121,15 @@ message PBAssetTransferSignature {
 
 //Message to capture the underlying chain transaction
 enum PBCryptoCurrency {
-    BTC         = 0;
+    UndefinedCryptoCurrency   = 0;
+    BTC                       = 1;
 }
 
 enum PBUnderlyingType {
-    Deposit         = 0;
-    Spend           = 1;
+    UndefinedUnderlyingType       = 0;
+    Deposit                       = 1;
+    Spend                         = 2;
+
 }
 
 

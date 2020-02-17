@@ -1,6 +1,6 @@
-assetid=$(qc cid "chris" | jq -r .object.Asset.ID)
-txid=$(qc cq $assetid | jq -r .hex)
-asset=$(qc tq "tx.hash='$txid'")
+seed=$(qc cid "chris" | jq -r .seed)
+txid=$(qc cw  $seed)
+#asset=$(qc tq "tx.hash='$txid'")
 
 
-echo $asset
+#echo $asset

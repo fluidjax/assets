@@ -132,7 +132,9 @@ func (f *Formatter) processString(s string) string {
 	bin, _ := base64.StdEncoding.DecodeString(s)
 	//s = hex.EncodeToString(bin)
 	//s = "BASE64" //hex.EncodeToString(bin)
-	return f.sprintColor(f.StringColor, string(bin))
+
+	retval := fmt.Sprintf("\"%s\"", string(bin))
+	return f.sprintColor(f.StringColor, retval)
 	// }
 
 	// r := []rune(s)

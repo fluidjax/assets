@@ -105,6 +105,7 @@ type head struct {
 func showMainHeader(main *gocui.View) {
 	str := ""
 	cm := []head{
+		{"Time", 3},
 		{"Blk", 3},
 		{"Type", 16},
 		{"AssetID", 40},
@@ -137,7 +138,7 @@ func addItemToScreen(g *gocui.Gui, res ctypes.ResultEvent) {
 func showTXHistoryLine(main *gocui.View, res ctypes.ResultEvent) {
 	tx := res.Data.(tmtypes.EventDataTx).Tx
 	chainData := res.Data.(tmtypes.EventDataTx)
-	txsize := len(tx)
+	txsize := fmt.Sprintf("%d", len(tx))
 	signedAsset := &protobuffer.PBSignedAsset{}
 	err := proto.Unmarshal(tx, signedAsset)
 	if err != nil {
@@ -149,9 +150,15 @@ func showTXHistoryLine(main *gocui.View, res ctypes.ResultEvent) {
 	t := time.Now()
 	blockHeight := PadRight(strconv.FormatInt(chainData.Height, 10), " ", 5)
 	assetIDHex := hex.EncodeToString(assetID)
-	fmt.Fprintf(main, " %s  %s %s %s %d\n", t.Format(time.Kitchen), blockHeight, txType, assetIDHex, txsize)
 
+	fmt.Fprintf(main, "%s %s %s %s %s\n",
+		PadRight(t.Format(time.Kitchen), " ", 6),
+		PadRight(blockHeight, " ", 5),
+		PadRight(txType, " ", 8),
+		PadRight(assetIDHex, " ", 70),
+		PadRight(txsize, " ", 6))
 }
+
 func showTX(g *gocui.Gui, main *gocui.View) error {
 	info, err := g.View("info")
 	info.Clear()
