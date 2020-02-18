@@ -42,13 +42,14 @@ enum PBAssetType {
 }                              
 enum PBTransferType {
     UndefinedTransferType = 0;
-    SettlePush            = 1;
-    SettlePull            = 2;
-    TransferPush          = 3;
-    TransferPull          = 4;
-    Swap                  = 5;
-    Load                  = 6;
-    GroupDefinition       = 7;
+    None                  = 1;
+    SettlePush            = 2;
+    SettlePull            = 3;
+    TransferPush          = 4;
+    TransferPull          = 5;
+    Swap                  = 6;
+    Load                  = 7;
+    GroupDefinition       = 8;
 }
 
 message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed

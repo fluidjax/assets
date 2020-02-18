@@ -41,6 +41,8 @@ func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
 	w.CurrentAsset.Asset.ID = walletKey
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
+	w.CurrentAsset.Asset.Index = 1
+	w.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_None
 	w.assetKeyFromPayloadHash()
 
 	currentPayload, err := w.Payload()

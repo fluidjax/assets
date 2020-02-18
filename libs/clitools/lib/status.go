@@ -3,9 +3,9 @@ package qc
 func (cliTool *CLITool) Status() (err error) {
 
 	stat, err := cliTool.NodeConn.TmClient.Status()
-	// if err != nil {
-	// 	return nil
-	// }
+	if err != nil {
+		return nil
+	}
 
 	consensusState, err := cliTool.NodeConn.TmClient.ConsensusState()
 	if err != nil {

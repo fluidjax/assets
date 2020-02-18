@@ -2,6 +2,7 @@ package qredochain
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/datastore"
 	"github.com/qredo/assets/libs/logger"
+	"github.com/qredo/assets/libs/protobuffer"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -71,6 +74,22 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 		},
 		TmClient: tmClient,
 	}, nil
+}
+
+//Load by AssetID
+func (nc *NodeConnector) Load(assetID []byte) ([]byte, error) {
+	txid, err := nc.SingleRawConsensusSearch(assetID)
+	if err != nil {
+		return nil, err
+	}
+	query := "tx.hash='" + hex.EncodeToString(txid) + "'"
+	result, err := nc.SingleRawChainSearch(query)
+	return result, nil
+}
+
+//Save (key)
+func (nc *NodeConnector) Save(key []byte, serializedData []byte) error {
+	return nil
 }
 
 func (nc *NodeConnector) Stop() {
@@ -203,3 +222,92 @@ func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
 
 // 	return nil
 // }
+
+func (nc *NodeConnector) GetAsset(assetID string) (*protobuffer.PBSignedAsset, error) {
+	//Get TX for Asset ID
+	txid, err := nc.ConsensusSearch(assetID)
+	if err != nil {
+		return nil, err
+	}
+	query := "tx.hash='" + hex.EncodeToString(txid) + "'"
+	result, err := nc.QredoChainSearch(query)
+	if len(result) != 1 {
+		return nil, errors.New("Incorrect number of responses")
+	}
+	return result[0], nil
+}
+
+func (nc *NodeConnector) ConsensusSearch(query string) (data []byte, err error) {
+	key, err := hex.DecodeString(query)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to decode Base64 Query %s", query)
+	}
+	return nc.SingleRawConsensusSearch(key)
+}
+
+func (nc *NodeConnector) SingleRawConsensusSearch(key []byte) (data []byte, err error) {
+	tmClient := nc.TmClient
+
+	result, err := tmClient.ABCIQuery("V", key)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to run Consensus query %s", hex.EncodeToString(key))
+	}
+	data = result.Response.GetValue()
+	return data, nil
+}
+
+func (nc *NodeConnector) SingleRawChainSearch(query string) (result []byte, err error) {
+	tmClient := nc.TmClient
+	r, err := tmClient.TxSearch(query, false, 0, 0)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to SingleRawChainSearch - query %s %d %d", query)
+	}
+	chainTx := r.Txs[0]
+	tx := chainTx.Tx
+	return tx, nil
+}
+
+func (nc *NodeConnector) QredoChainSearch(query string) (results []*protobuffer.PBSignedAsset, err error) {
+	processedCount := 0
+	currentPage := 0
+	numPerPage := 30
+
+	tmClient := nc.TmClient
+
+	for {
+		result, err := tmClient.TxSearch(query, false, currentPage, numPerPage)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to search to query %s %d %d", query, currentPage, numPerPage)
+		}
+		totalToProcess := result.TotalCount
+		//fmt.Println("Records Found:", totalToProcess)
+		if totalToProcess == 0 {
+			return nil, nil
+		}
+
+		for _, chainTx := range result.Txs {
+			processedCount++
+			tx := chainTx.Tx
+			signedAsset := &protobuffer.PBSignedAsset{}
+			err := proto.Unmarshal(tx, signedAsset)
+
+			if err != nil {
+				fmt.Println("Error unmarshalling payload")
+				if nc.checkQuit(processedCount, totalToProcess) == true {
+					return results, nil
+				}
+				continue
+			}
+			results = append(results, signedAsset)
+
+			if nc.checkQuit(processedCount, totalToProcess) == true {
+				return results, nil
+			}
+		}
+		currentPage++
+	}
+}
+
+func (nc *NodeConnector) checkQuit(processedCount int, totalToProcess int) bool {
+	return processedCount == totalToProcess
+}

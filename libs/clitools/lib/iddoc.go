@@ -2,13 +2,13 @@ package qc
 
 import (
 	"encoding/hex"
-	"reflect"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
+	"github.com/qredo/assets/libs/qredochain"
 )
 
-func (cliTool *CLITool) CreateIDDoc(authref string) (err error) {
+func (cliTool *CLITool) CreateIDDoc(authref string, broadcast bool) (err error) {
 
 	if authref == "" {
 		randAuth, _ := assets.RandomBytes(32)
@@ -25,13 +25,20 @@ func (cliTool *CLITool) CreateIDDoc(authref string) (err error) {
 		return err
 	}
 
-	txid, code, err := cliTool.NodeConn.PostTx(iddoc)
-
-	if code != 0 {
-		print(err.Error())
-		return errors.Wrap(err, "TX Fails verifications")
+	txid := ""
+	if broadcast == true {
+		var code qredochain.TransactionCode
+		txid, code, err = cliTool.NodeConn.PostTx(iddoc)
+		if code != 0 {
+			print(err.Error())
+			return errors.Wrap(err, "TX Fails verifications")
+		}
+		if err != nil {
+			return err
+		}
 	}
 
+	serializedAsset, err := iddoc.SerializeAsset()
 	if err != nil {
 		return err
 	}
@@ -40,13 +47,9 @@ func (cliTool *CLITool) CreateIDDoc(authref string) (err error) {
 	addResultTextItem("txid", txid)
 	addResultBinaryItem("assetid", iddoc.Key())
 	addResultBinaryItem("seed", iddoc.Seed)
+	addResultBinaryItem("serialized", serializedAsset)
+	addResultSignedAsset("object", iddoc.CurrentAsset)
 
-	//Because json encoding merges binary/string data, and we want binary data converted to
-	//hex,  data, we need to convert to hex
-	original := reflect.ValueOf(iddoc.CurrentAsset)
-	copy := reflect.New(original.Type()).Elem()
-	TranslateRecursive(copy, original)
-	addResultItem("object", copy.Interface())
 	ppResult()
 
 	return

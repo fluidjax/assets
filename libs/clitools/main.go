@@ -88,18 +88,26 @@ func main() {
 				Usage:   "Create a new Identity Doc (IDDoc) using a random seed",
 				Description: "Generate a new IDDoc with optional supplied authentication reference. Failure to supply an authentication reference will result in a random one being generated.\n" +
 					"   qc cid  \"testid\"",
-				ArgsUsage:       "authref",
-				Flags:           []cli.Flag{},
+				ArgsUsage: "authref",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
 				SkipFlagParsing: false,
 				HideHelp:        false,
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
+					broadcast := c.Bool("broadcast")
 					authref := ""
 					if c.NArg() > 0 {
 						authref = c.Args().Get(0)
 					}
-					return cliTool.CreateIDDoc(authref)
+					return cliTool.CreateIDDoc(authref, broadcast)
 				},
 			},
 			&cli.Command{
@@ -108,20 +116,38 @@ func main() {
 				Usage:   "Create a new Wallet with supplied Seed for the already created IDDoc",
 				Description: "Generate a new Wallet with the supplied Seed (IDDoc)\n" +
 					"   qc cw  dedd7dfb323a7013d7528b3dc753aa5f992c3803f5b183e7df20a5972861dfe7",
-				ArgsUsage:       "seed",
-				Flags:           []cli.Flag{},
+				ArgsUsage: "seed",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
 				SkipFlagParsing: false,
 				HideHelp:        false,
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					assetID := ""
+					broadcast := c.Bool("broadcast")
+					if c.String("json") != "" {
+						return cliTool.CreateWalletWithJSON(c.String("json"), broadcast)
+
+					}
+					seed := ""
 					if c.NArg() > 0 {
-						assetID = c.Args().Get(0)
+						seed = c.Args().Get(0)
 					} else {
 						return nil
 					}
-					return cliTool.CreateWallet(assetID)
+					return cliTool.CreateWallet(seed, broadcast)
+
 				},
 			},
 			&cli.Command{

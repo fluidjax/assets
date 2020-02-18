@@ -54,6 +54,13 @@ func ppResult() {
 	fmt.Println(string(pp))
 }
 
+func addResultSignedAsset(key string, signedAsset *protobuffer.PBSignedAsset) {
+	original := reflect.ValueOf(signedAsset)
+	copy := reflect.New(original.Type()).Elem()
+	TranslateRecursive(copy, original)
+	res[key] = copy.Interface()
+}
+
 func prettyStringFromSignedAsset(signedAsset *protobuffer.PBSignedAsset) string {
 	original := reflect.ValueOf(signedAsset)
 	copy := reflect.New(original.Type()).Elem()
@@ -155,6 +162,3 @@ func TranslateRecursive(copy, original reflect.Value) {
 	}
 
 }
-
-
-
