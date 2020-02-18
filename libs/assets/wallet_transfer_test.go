@@ -45,7 +45,7 @@ func Test_TruthTable(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 	w1, _ := NewWallet(idP, "BTC")
-	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 	//Create another based on previous, ie. AnUpdateWallet
 	res, err := w1.TruthTable(protobuffer.PBTransferType_SettlePush)
 	assert.Nil(t, err, "Truth table return should be nil")
@@ -88,7 +88,7 @@ func Test_RuleAdd(t *testing.T) {
 
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
@@ -157,7 +157,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 	}
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
@@ -210,7 +210,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
@@ -257,7 +257,7 @@ func Test_WalletTransfer(t *testing.T) {
 
 	w1, _ := NewWallet(idP, "BTC")
 	w1.DataStore = idP.DataStore
-	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 	wallet, err := w1.Payload()
 
 	//Wallet has already spent 100

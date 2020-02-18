@@ -22,8 +22,10 @@ package assets
 import (
 	"math"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 )
 
 //NewWallet - Setup a new Wallet
@@ -193,4 +195,24 @@ func emptyWallet() (w *Wallet) {
 	payload.Wallet = wallet
 	w.CurrentAsset.Asset.Payload = payload
 	return w
+}
+
+//LoadWallet -
+func LoadWallet(store store.StoreInterface, walletID []byte) (w *Wallet, err error) {
+	data, err := store.Load(walletID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	wallet, err := ReBuildWallet(sa, walletID)
+	if err != nil {
+		return nil, err
+	}
+
+	return wallet, nil
+
 }

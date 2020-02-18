@@ -22,10 +22,12 @@ package assets
 import (
 	"crypto/sha256"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 )
 
 //NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
@@ -122,4 +124,24 @@ func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 		return nil, errors.New("IDDoc has no asset")
 	}
 	return i.CurrentAsset.Asset.GetIddoc(), nil
+}
+
+//LoadIDDoc -
+func LoadIDDoc(store store.StoreInterface, iddocID []byte) (i *IDDoc, err error) {
+	data, err := store.Load(iddocID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	iddoc, err := ReBuildIDDoc(sa, iddocID)
+	if err != nil {
+		return nil, err
+	}
+
+	return iddoc, nil
+
 }

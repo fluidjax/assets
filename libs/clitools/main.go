@@ -148,6 +148,38 @@ func main() {
 						return nil
 					}
 					return cliTool.CreateWallet(seed, broadcast)
+				},
+			},
+			&cli.Command{
+				Name:        "updatewallet",
+				Aliases:     []string{"uw"},
+				Usage:       "Update an existing wallet with a transfer",
+				Description: "Update an existing wallet with a transfer\n",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					broadcast := c.Bool("broadcast")
+					if c.String("json") != "" {
+						return cliTool.UpdateWalletWithJSON(c.String("json"), broadcast)
+
+					}
+					return nil
 
 				},
 			},

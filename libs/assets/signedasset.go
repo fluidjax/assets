@@ -157,7 +157,7 @@ func (a *SignedAsset) Dump() {
 // transferType	enum of transfer type such as settlePush, swap, Transfer etc.
 // expression 		is a string containing the boolean expression such as "t1 + t2 + t3 > 1 & p"
 // participant		map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
-func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte) error {
+func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expression string, participants *map[string][]byte, description string) error {
 	if a == nil {
 		return errors.New("AddTransfer is nil")
 	}
@@ -173,6 +173,7 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 	transferRule := &protobuffer.PBTransfer{}
 	transferRule.Type = transferType
 	transferRule.Expression = expression
+	transferRule.Description = description
 	if transferRule.Participants == nil {
 		transferRule.Participants = make(map[string][]byte)
 	}

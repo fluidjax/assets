@@ -40,7 +40,7 @@ func Test_GroupTruthTable(t *testing.T) {
 	}
 
 	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_TrusteeGroup)
-	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants)
+	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants, "description")
 
 	//Create another based on previous, ie. AnUpdateGroup
 	res, err := t1.TruthTable(protobuffer.PBTransferType_TransferPush)
@@ -64,7 +64,7 @@ func Test_GroupRuleAdd(t *testing.T) {
 
 	t1, _ := NewGroup(idInitiator, protobuffer.PBGroupType_TrusteeGroup)
 	t1.DataStore = idInitiator.DataStore
-	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants)
+	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants,"description")
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
@@ -141,7 +141,7 @@ func Test_GroupAggregationAndVerify(t *testing.T) {
 
 	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 	t1.DataStore = idP.DataStore
-	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants)
+	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants,"description")
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
@@ -193,7 +193,7 @@ func Test_Recusion_GroupAggregationAndVerify(t *testing.T) {
 
 	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 	t1.DataStore = idP.DataStore
-	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants)
+	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants,"description")
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
@@ -249,7 +249,7 @@ func Test_GroupAggregationAndVerifyFailingTransfer(t *testing.T) {
 
 	t1, _ := NewGroup(idP, protobuffer.PBGroupType_TrusteeGroup)
 	t1.DataStore = idP.DataStore
-	t1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants)
+	t1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants,"description")
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)
@@ -318,7 +318,7 @@ func Test_GroupTransferParser(t *testing.T) {
 	groupPayload.Participants = *groupMembers
 
 	t1.DataStore = idP.DataStore
-	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants)
+	t1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants,"description")
 
 	//Create another Group based on previous, ie. AnUpdateGroup
 	t2, _ := NewUpdateGroup(t1, idNewOwner)

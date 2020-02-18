@@ -158,25 +158,33 @@ func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txH
 		if err != nil {
 			return CodeDatabaseFail, nil
 		}
+		//Write the AssetID:TX pointer
+
+		err = app.Set(wallet.Key(), txHash)
+		msg := fmt.Sprintf("Wallet set (assetid:tx)     %v:%v", hex.EncodeToString(wallet.Key()), hex.EncodeToString(txHash))
+		dumpMessage(4, msg)
+		if err != nil {
+			return CodeDatabaseFail, nil
+		}
 
 		//Write the Pointer Key
 		// ABCDE.0 = txHash
 		pointerKey := KeySuffix(wallet.Key(), newAssetIndexString)
-		msg := fmt.Sprintf("Wallet set (assetid.index:tx)     %v:%v", hex.EncodeToString(pointerKey), hex.EncodeToString(txHash))
+		msg = fmt.Sprintf("Wallet set (assetid.index:tx)     %v:%v", hex.EncodeToString(pointerKey), hex.EncodeToString(txHash))
 		dumpMessage(4, msg)
 		err = app.Set(pointerKey, txHash)
 		if err != nil {
 			return CodeDatabaseFail, nil
 		}
 
-		//Write the lastest index to the asset key
-		// ABCDE = 0
-		msg = fmt.Sprintf("Wallet set (assetid:latest_index) %v:%v", hex.EncodeToString(wallet.Key()), newAssetIndexString)
-		dumpMessage(4, msg)
-		err = app.Set(wallet.Key(), []byte(newAssetIndexString))
-		if err != nil {
-			return CodeDatabaseFail, nil
-		}
+		// //Write the lastest index to the asset key
+		// // ABCDE = 0
+		// msg = fmt.Sprintf("Wallet set (assetid:latest_index) %v:%v", hex.EncodeToString(wallet.Key()), newAssetIndexString)
+		// dumpMessage(4, msg)
+		// err = app.Set(wallet.Key(), []byte(newAssetIndexString))
+		// if err != nil {
+		// 	return CodeDatabaseFail, nil
+		// }
 
 		events = processTags(wallet.CurrentAsset.Asset.Tags)
 	}
