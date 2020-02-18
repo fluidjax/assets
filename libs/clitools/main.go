@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -151,6 +152,51 @@ func main() {
 				},
 			},
 			&cli.Command{
+				Name:            "verifytx",
+				Aliases:         []string{"vtx"},
+				Usage:           "Verify a Raw TX",
+				Description:     "Decode and verify a raw TX",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					iddoc := ""
+					tx := ""
+					if c.NArg() > 0 {
+						iddoc = c.Args().Get(0)
+					} else {
+						return nil
+					}
+					if c.NArg() > 1 {
+						tx = c.Args().Get(1)
+					} else {
+						return nil
+					}
+					err := cliTool.VerifyTX(iddoc, tx)
+					if err != nil {
+						return cli.Exit(fmt.Sprintf("Verify Fails: %s ", err.Error()), 100)
+					}
+					return nil
+				},
+			},
+			&cli.Command{
+				Name:            "generateseed",
+				Aliases:         []string{"gs"},
+				Usage:           "Generate a random seed value",
+				Description:     "Generate a random seed value",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					cliTool.GenerateSeed()
+					return nil
+				},
+			},
+			&cli.Command{
 				Name:            "status",
 				Aliases:         []string{"s"},
 				Usage:           "Display Qredochain status information",
@@ -233,7 +279,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		print("Error:", err)
+		log.Fatal(err)
 	}
 }
 

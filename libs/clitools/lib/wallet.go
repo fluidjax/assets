@@ -58,7 +58,6 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 	if err != nil {
 		return err
 	}
-	wallet.Sign(iddoc)
 
 	transferType := protobuffer.PBTransferType(cwJSON.TransferType)
 
@@ -77,6 +76,8 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 		return err
 	}
 
+	wallet.Sign(iddoc)
+
 	txid := ""
 	if broadcast == true {
 		var code qredochain.TransactionCode
@@ -90,7 +91,7 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 		}
 	}
 
-	serializedAsset, err := wallet.SerializeAsset()
+	serializedSignedAsset, err := wallet.SerializeSignedAsset()
 	if err != nil {
 		return err
 	}
@@ -103,7 +104,7 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 
 	addResultTextItem("txid", txid)
 	addResultBinaryItem("assetid", wallet.Key())
-	addResultBinaryItem("serialized", serializedAsset)
+	addResultBinaryItem("serializedSignedAsset", serializedSignedAsset)
 	addResultSignedAsset("object", wallet.CurrentAsset)
 
 	ppResult()

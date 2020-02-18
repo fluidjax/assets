@@ -24,7 +24,7 @@ t3Seed=$(echo $trustee3 | jq -r .seed)
 
 
 
-createJSON='{"ownerseed":"3772e3fa880e1912498d2fc48a367a2058c69ea4bf6ec3cf41fbbb6d8089f8868f3c46e31d8e9ab251ea5e4c6f5ded53",
+createJSON='{"ownerseed":"'$pSeed'",
 "expression":"t1 + t2 + t3 > 1 & p",
 "transferType":1,
 "participants":[
@@ -41,5 +41,10 @@ createJSON=$(echo $createJSON | tr -d '\n')
 createJSON=$(echo $createJSON | tr -d '\r')
 
 echo Make Wallet
-qc cw -b=true -j="$createJSON"
+
+newWallet=$(qc cw -b=true -j="$createJSON")
+serializedSignedAsset=$(echo $newWallet | jq -r .serializedSignedAsset)
+
+echo Check Verification
+verify=$(qc vtx "$pAssetID" "$serializedSignedAsset")
 
