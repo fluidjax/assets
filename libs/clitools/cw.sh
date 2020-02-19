@@ -1,16 +1,20 @@
 #!/bin/bash
 
+#Use -d flag for debug info
+
 dump (){
-	echo $2
-	echo -e "\033[40;31;5;82m $1  \033[0m"	
-	res=$(echo $1 | sed 's/"/\\"/g')
-	echo -e "\033[40;38;5;82m $res  \033[0m"
+	if [ $d_flag = 'true' ]; then
+		echo "debug $debug"
+		echo $2
+		echo -e "\033[40;31;5;82m $1  \033[0m"	
+		res=$(echo $1 | sed 's/"/\\"/g')
+		echo -e "\033[40;38;5;82m $res  \033[0m"
+	fi
 }
 
 
 
-echo Build Binary
-build
+#----------------------------------------------------------------------------------------------------------------------------------------
 
 MakeIDDocs() {
 	echo Make IDDocs
@@ -40,10 +44,11 @@ MakeIDDocs() {
 	newOwnerSeed=$(echo $newOwner | jq -r .seed)
 }
 
+#----------------------------------------------------------------------------------------------------------------------------------------
 
 
 MakeWallet() {
-	echo Make Wallet
+	echo Make Wallet and optionally broadcast
 
 	createJSON='
 	{
@@ -83,15 +88,17 @@ MakeWallet() {
 	serializedSignedAsset=$(echo $newWallet | jq -r .serializedSignedAsset)
 	newWalletID=$(echo $newWallet | jq -r .assetid)
 }
+#----------------------------------------------------------------------------------------------------------------------------------------
 
 VerifyWallet() {
 	echo Check Verification
 	verify=$(qc vtx "$pAssetID" "$serializedSignedAsset")
 }
 
+#----------------------------------------------------------------------------------------------------------------------------------------
 
-SerializeUpdate() {
-	echo Build Serialized Updated
+PrepWalletUpdate() {
+	echo Prepare Updated Wallet serialized TX for Signing 
 
 	updateJson='{
 		"ExistingWalletAssetID":"'$newWalletID'",
@@ -112,7 +119,7 @@ SerializeUpdate() {
 
 
 	updateJson=$(echo $updateJson | sed 's/\n//g')
-	updateWallet=$(qc uw -j="$updateJson")
+	updateWallet=$(qc pwu -j="$updateJson")
 	serializedUnsignedAsset=$(echo $updateWallet | jq -r .serializedUpdate)
 }
 #----------------------------------------------------------------------------------------------------------------------------------------
@@ -138,10 +145,8 @@ SignForEachIDoc() {
 
 #----------------------------------------------------------------------------------------------------------------------------------------
 
-AggregateSign() {
-	#Aggregate Sign
-	echo Aggregate Sign
-
+SendWallet() {
+	echo SendWallet - Aggreate Sign, Verify and optionally broadcast
 	json='{"Sigs":[
 				{"id":"'$pAssetID'","abbreviation":"p","signature":"'$sigP'"},
 				{"id":"'$t1AssetID'","abbreviation":"t1","signature":"'$sigT1'"},
@@ -150,18 +155,28 @@ AggregateSign() {
 				],
 			"walletUpdate":'$updateJson'
 		}'
-
 	dump "$json" "Aggregate Sign"
-
-	updateComplete=$(qc as -b=true -j="$json")
-
+	updateComplete=$(qc sw -b=true -j="$json")
 }
 
+d_flag='false'
 
+while getopts 'd' flag; do
+  case "${flag}" in
+    d) d_flag='true' ;;
+   esac
+done
+
+
+echo Build Binary
+build
+
+
+debug=false
 
 MakeIDDocs
 MakeWallet
 VerifyWallet
-SerializeUpdate
+PrepWalletUpdate
 SignForEachIDoc
-AggregateSign
+SendWallet

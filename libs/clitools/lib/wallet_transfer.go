@@ -7,15 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/qredochain"
 )
-
-type WalletUpdate struct {
-	ExistingWalletAssetID string     `json:"ExistingWalletAssetID"`
-	NewOwner              string     `json:"newownerseed"`
-	TransferType          int64      `json:"transferType"`
-	Currency              string     `json:"currency"`
-	Transfer              []Transfer `json:"Transfer"`
-}
 
 func (cliTool *CLITool) UpdateWalletWithJSON(jsonParams string) (err error) {
 	//Load existing wallet from AssetID
@@ -27,7 +20,7 @@ func (cliTool *CLITool) UpdateWalletWithJSON(jsonParams string) (err error) {
 	if err != nil {
 		return err
 	}
-	updatedWallet, err := cliTool.WalletFromWalletUpdateJSON(uwJSON)
+	updatedWallet, err := cliTool.walletFromWalletUpdateJSON(uwJSON)
 
 	//Updated wallet complete, return for signing
 	msg, err := updatedWallet.SerializeAsset()
@@ -40,7 +33,7 @@ func (cliTool *CLITool) UpdateWalletWithJSON(jsonParams string) (err error) {
 	return nil
 }
 
-func (cliTool *CLITool) WalletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (*assets.Wallet, error) {
+func (cliTool *CLITool) walletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (*assets.Wallet, error) {
 	//Decode the JSON
 
 	//Get the New Owner IDDoc
@@ -75,4 +68,67 @@ func (cliTool *CLITool) WalletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (
 	updatedWallet.DataStore = cliTool.NodeConn
 
 	return updatedWallet, nil
+}
+
+func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (err error) {
+	//Decode the JSON
+	agJSON := &AggregateSignJSON{}
+	err = json.Unmarshal([]byte(jsonParams), agJSON)
+	if err != nil {
+		return err
+	}
+
+	var transferSignatures []assets.SignatureID
+	for _, sig := range agJSON.Sigs {
+		key, err := hex.DecodeString(sig.ID)
+		if err != nil {
+			return err
+		}
+		iddoc, err := assets.LoadIDDoc(cliTool.NodeConn, key)
+		signature, err := hex.DecodeString(sig.Signature)
+		if err != nil {
+			return err
+		}
+		sid := assets.SignatureID{IDDoc: iddoc, Abbreviation: sig.Abbreviation, Signature: signature}
+		transferSignatures = append(transferSignatures, sid)
+	}
+
+	//Rebuild the Wallet from the TX supplied
+	updatedWallet, err := cliTool.walletFromWalletUpdateJSON(&agJSON.WalletUpdate)
+
+	err = updatedWallet.AggregatedSign(transferSignatures)
+	if err != nil {
+		return err
+	}
+
+	verify, err := updatedWallet.FullVerify()
+
+	if verify == false {
+		return errors.New("Error failed to verify final update wallet transaction")
+	}
+
+	txid := ""
+	if broadcast == true {
+		var code qredochain.TransactionCode
+		txid, code, err = cliTool.NodeConn.PostTx(updatedWallet)
+		if code != 0 {
+			print(err.Error())
+			return errors.Wrap(err, "TX Fails verifications")
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	serializedSignedAsset, err := updatedWallet.SerializeSignedAsset()
+	if err != nil {
+		return err
+	}
+
+	addResultTextItem("txid", txid)
+	addResultBinaryItem("assetid", updatedWallet.Key())
+	addResultBinaryItem("serializedSignedAsset", serializedSignedAsset)
+	addResultSignedAsset("object", updatedWallet.CurrentAsset)
+	ppResult()
+	return
 }

@@ -2,6 +2,7 @@ package qc
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
@@ -52,4 +53,33 @@ func (cliTool *CLITool) GenerateSeed() error {
 	seedHex := hex.EncodeToString(seed)
 	fmt.Printf("{\"seed\":\"%s\"}", seedHex)
 	return nil
+}
+
+func (cliTool *CLITool) Sign(jsonParams string) (err error) {
+	//Decode the JSON
+	signJSON := &SignJSON{}
+	err = json.Unmarshal([]byte(jsonParams), signJSON)
+	if err != nil {
+		return err
+	}
+
+	seed, err := hex.DecodeString(signJSON.Seed)
+	if err != nil {
+		return err
+	}
+
+	key := assets.KeyFromSeed(seed)
+	iddoc, err := assets.LoadIDDoc(cliTool.NodeConn, key)
+	iddoc.Seed = seed
+
+	msgToSign, err := hex.DecodeString(signJSON.Msg)
+	if err != nil {
+		return err
+	}
+
+	signature, err := assets.Sign(msgToSign, iddoc)
+
+	addResultBinaryItem("signature", signature)
+	ppResult()
+	return
 }

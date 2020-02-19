@@ -112,12 +112,11 @@ func main() {
 				},
 			},
 			&cli.Command{
-				Name:    "createwallet",
-				Aliases: []string{"cw"},
-				Usage:   "Create a new Wallet with supplied Seed for the already created IDDoc",
-				Description: "Generate a new Wallet with the supplied Seed (IDDoc)\n" +
-					"   qc cw  dedd7dfb323a7013d7528b3dc753aa5f992c3803f5b183e7df20a5972861dfe7",
-				ArgsUsage: "seed",
+				Name:        "createwallet",
+				Aliases:     []string{"cw"},
+				Usage:       "Create a new Wallet",
+				Description: "Generate a new Wallet with the supplied JSON",
+				ArgsUsage:   "seed",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "json",
@@ -141,20 +140,14 @@ func main() {
 						return cliTool.CreateWalletWithJSON(c.String("json"), broadcast)
 
 					}
-					seed := ""
-					if c.NArg() > 0 {
-						seed = c.Args().Get(0)
-					} else {
-						return nil
-					}
-					return cliTool.CreateWallet(seed, broadcast)
+					return nil
 				},
 			},
 			&cli.Command{
-				Name:        "updatewallet",
-				Aliases:     []string{"uw"},
-				Usage:       "Update an existing wallet with a transfer",
-				Description: "Update an existing wallet with a transfer\n",
+				Name:        "prepwalletupdate",
+				Aliases:     []string{"pwu"},
+				Usage:       "Prepare a New Wallet Update Transaction for Signing",
+				Description: "Prepare a New Wallet Update Transaction for Signing",
 				ArgsUsage:   "",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -172,7 +165,6 @@ func main() {
 						return cliTool.UpdateWalletWithJSON(c.String("json"))
 					}
 					return nil
-
 				},
 			},
 			&cli.Command{
@@ -200,9 +192,9 @@ func main() {
 				},
 			},
 			&cli.Command{
-				Name:        "aggregatesign",
-				Aliases:     []string{"as", "agsign"},
-				Usage:       "",
+				Name:        "sendwallet",
+				Aliases:     []string{"sw", ""},
+				Usage:       "Aggregate Sign, Check & Broadcast Wallet update",
 				Description: "",
 				ArgsUsage:   "",
 				Flags: []cli.Flag{
@@ -225,7 +217,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					broadcast := c.Bool("broadcast")
 					if c.String("json") != "" {
-						return cliTool.AggregateSign(c.String("json"), broadcast)
+						return cliTool.AggregateWalletSign(c.String("json"), broadcast)
 					}
 					return nil
 				},
