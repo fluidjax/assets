@@ -138,6 +138,15 @@ func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txH
 			return CodeDatabaseFail, nil
 		}
 		events = processTags(wallet.CurrentAsset.Asset.Tags)
+
+		currentBalance, err := app.GetWithSuffix(wallet.Key(), "Balance")
+		if err != nil {
+			return CodeDatabaseFail, nil
+		}
+		if currentBalance == nil {
+			app.SetWithSuffix(wallet.Key(), "Balance", []byte("4321"))
+		}
+
 	}
 
 	// currentIndex, err := app.Get(wallet.Key())

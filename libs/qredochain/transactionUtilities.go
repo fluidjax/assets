@@ -78,6 +78,12 @@ func (app *QredoChain) GetGroup(assetID []byte) (*assets.Group, error) {
 	return assets.ReBuildGroup(msg, key)
 }
 
+func (app *QredoChain) GetWithSuffix(key []byte, suffix string) ([]byte, error) {
+	fullSuffix := []byte("." + suffix)
+	key = append(key[:], fullSuffix[:]...)
+	return app.Get(key)
+}
+
 func (app *QredoChain) Get(key []byte) ([]byte, error) {
 	var res []byte
 	err := app.db.View(func(txn *badger.Txn) error {
@@ -95,6 +101,12 @@ func (app *QredoChain) Get(key []byte) ([]byte, error) {
 		return nil, err
 	}
 	return res, err
+}
+
+func (app *QredoChain) SetWithSuffix(key []byte, suffix string, data []byte) error {
+	fullSuffix := []byte("." + suffix)
+	key = append(key[:], fullSuffix[:]...)
+	return app.Set(key, data)
 }
 
 func (app *QredoChain) Set(key []byte, data []byte) error {

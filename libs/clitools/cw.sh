@@ -151,8 +151,11 @@ SendWallet() {
 
 
 SendUnderLying() {
-	underlyingTXID=$(openssl rand -base64 32)
 	echo Generate a new underlying transaction
+
+	#A random underlying utxo
+	underlyingTXID=$(openssl rand -base64 32)
+	
 	json='{
 		"type":1,
 		"CryptoCurrencyCode":1,
@@ -166,19 +169,25 @@ SendUnderLying() {
 }
 #----------------------------------------------------------------------------------------------------------------------------------------
 SendMPC() {
+
+	#Fake an random address from MPC
 	mpcadd=$(openssl rand -base64 32)
-	assetid=""
 
 	echo Generate a new MPC transaction
 	json='{
     	"type":1,
     	"Address":"'$mpcadd'",
     	"Signature":"",
-	    "AssetID":"'$assetid'"
+	    "AssetID":"'$newWalletID'"
 	}'
 	
 	dump "$json" "SendMPC"
 	sendUnderlying=$(qc smpc -b=true -j="$json")
+}
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+GetBalance() {
+	balance=$(qc bal "$newWalletID")	
 }
 
 
@@ -205,5 +214,7 @@ debug=false
 # PrepWalletUpdate
 # SignForEachIDoc
 # SendWallet
+
 SendMPC
 SendUnderLying
+GetBalance

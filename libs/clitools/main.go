@@ -331,6 +331,27 @@ func main() {
 				},
 			},
 			&cli.Command{
+
+				Name:            "balance",
+				Aliases:         []string{"bal"},
+				Usage:           "Display Balance for Supplied AssetID",
+				Description:     "Show status of QredoChain",
+				ArgsUsage:       "assetid",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					assetid := ""
+					if c.NArg() > 0 {
+						assetid = c.Args().Get(0)
+					}
+					cliTool.Balance(assetid)
+					return nil
+				},
+			},
+			&cli.Command{
 				Name:            "status",
 				Aliases:         []string{"s"},
 				Usage:           "Display Qredochain status information",
