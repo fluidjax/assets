@@ -2,9 +2,7 @@ package qredochain
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"strconv"
 
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -118,76 +116,88 @@ func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txH
 		return CodeAlreadyExists, nil
 	}
 
-	currentIndex, err := app.Get(wallet.Key())
-	if err != nil {
-		return CodeDatabaseFail, nil
-	}
-	var newAssetIndexString string
-
-	if currentIndex == nil {
-		//New Wallet
-		if app.VerifyNewWallet(wallet) == false {
-			dumpMessage(4, "Wallet failed verification")
-			return CodeFailVerfication, nil
-		}
-		newAssetIndexString = IndexFormater(0)
-
-	} else {
-		//Check we are correctly incrementing the index
-		currentIndexInteger, err := strconv.ParseInt(string(currentIndex), 10, 64)
-		if err != nil {
-			dumpMessage(4, "Failed to Parse Current Index")
-			return CodeFailVerfication, nil
-		}
-		newIndex := wallet.CurrentAsset.Asset.Index
-		if newIndex != currentIndexInteger+1 {
-			dumpMessage(2, "Invalid Wallet Index\n")
-			return CodeFailVerfication, nil
-		}
-		newAssetIndexString = IndexFormater(newIndex)
-		//Wallet update
-		if app.VerifyWalletUpdate(wallet) == false {
-			dumpMessage(4, "Wallet failed verification")
-			return CodeFailVerfication, nil
-		}
-	}
-
 	if lightWeight == false {
-
-		err := app.Set(txHash, rawAsset)
-		if err != nil {
+		err1 := app.Set(txHash, rawAsset)
+		if err1 != nil {
 			return CodeDatabaseFail, nil
 		}
-		//Write the AssetID:TX pointer
-
-		err = app.Set(wallet.Key(), txHash)
-		msg := fmt.Sprintf("Wallet set (assetid:tx)     %v:%v", hex.EncodeToString(wallet.Key()), hex.EncodeToString(txHash))
-		dumpMessage(4, msg)
-		if err != nil {
+		err2 := app.Set(wallet.Key(), txHash)
+		if err2 != nil {
 			return CodeDatabaseFail, nil
 		}
-
-		//Write the Pointer Key
-		// ABCDE.0 = txHash
-		pointerKey := KeySuffix(wallet.Key(), newAssetIndexString)
-		msg = fmt.Sprintf("Wallet set (assetid.index:tx)     %v:%v", hex.EncodeToString(pointerKey), hex.EncodeToString(txHash))
-		dumpMessage(4, msg)
-		err = app.Set(pointerKey, txHash)
-		if err != nil {
-			return CodeDatabaseFail, nil
-		}
-
-		// //Write the lastest index to the asset key
-		// // ABCDE = 0
-		// msg = fmt.Sprintf("Wallet set (assetid:latest_index) %v:%v", hex.EncodeToString(wallet.Key()), newAssetIndexString)
-		// dumpMessage(4, msg)
-		// err = app.Set(wallet.Key(), []byte(newAssetIndexString))
-		// if err != nil {
-		// 	return CodeDatabaseFail, nil
-		// }
-
 		events = processTags(wallet.CurrentAsset.Asset.Tags)
 	}
+
+	// currentIndex, err := app.Get(wallet.Key())
+	// if err != nil {
+	// 	return CodeDatabaseFail, nil
+	// }
+	// var newAssetIndexString string
+
+	// if currentIndex == nil {
+	// 	//New Wallet
+	// 	if app.VerifyNewWallet(wallet) == false {
+	// 		dumpMessage(4, "Wallet failed verification")
+	// 		return CodeFailVerfication, nil
+	// 	}
+	// 	newAssetIndexString = IndexFormater(0)
+
+	// } else {
+	// 	//Check we are correctly incrementing the index
+	// 	// currentIndexInteger, err := strconv.ParseInt(string(currentIndex), 10, 64)
+	// 	// if err != nil {
+	// 	// 	dumpMessage(4, "Failed to Parse Current Index")
+	// 	// 	return CodeFailVerfication, nil
+	// 	// }
+	// 	// newIndex := wallet.CurrentAsset.Asset.Index
+	// 	// if newIndex != currentIndexInteger+1 {
+	// 	// 	dumpMessage(2, "Invalid Wallet Index\n")
+	// 	// 	return CodeFailVerfication, nil
+	// 	// }
+	// 	newAssetIndexString = IndexFormater(newIndex)
+	// 	//Wallet update
+	// 	if app.VerifyWalletUpdate(wallet) == false {
+	// 		dumpMessage(4, "Wallet failed verification")
+	// 		return CodeFailVerfication, nil
+	// 	}
+	// }
+
+	// if lightWeight == false {
+
+	// 	err := app.Set(txHash, rawAsset)
+	// 	if err != nil {
+	// 		return CodeDatabaseFail, nil
+	// 	}
+	// 	//Write the AssetID:TX pointer
+
+	// 	err = app.Set(wallet.Key(), txHash)
+	// 	msg := fmt.Sprintf("Wallet set (assetid:tx)     %v:%v", hex.EncodeToString(wallet.Key()), hex.EncodeToString(txHash))
+	// 	dumpMessage(4, msg)
+	// 	if err != nil {
+	// 		return CodeDatabaseFail, nil
+	// 	}
+
+	// 	//Write the Pointer Key
+	// 	// ABCDE.0 = txHash
+	// 	pointerKey := KeySuffix(wallet.Key(), newAssetIndexString)
+	// 	msg = fmt.Sprintf("Wallet set (assetid.index:tx)     %v:%v", hex.EncodeToString(pointerKey), hex.EncodeToString(txHash))
+	// 	dumpMessage(4, msg)
+	// 	err = app.Set(pointerKey, txHash)
+	// 	if err != nil {
+	// 		return CodeDatabaseFail, nil
+	// 	}
+
+	// 	// //Write the lastest index to the asset key
+	// 	// // ABCDE = 0
+	// 	// msg = fmt.Sprintf("Wallet set (assetid:latest_index) %v:%v", hex.EncodeToString(wallet.Key()), newAssetIndexString)
+	// 	// dumpMessage(4, msg)
+	// 	// err = app.Set(wallet.Key(), []byte(newAssetIndexString))
+	// 	// if err != nil {
+	// 	// 	return CodeDatabaseFail, nil
+	// 	// }
+
+	// 	events = processTags(wallet.CurrentAsset.Asset.Tags)
+	// }
 	return CodeTypeOK, events
 }
 

@@ -13,10 +13,9 @@ import (
 )
 
 // createwalletjson.go
-
 type CreateWalletJSON struct {
-	Ownerseed    string     `json:"ownerseed"`
 	TransferType int64      `json:"transferType"`
+	Ownerseed    string     `json:"ownerseed"`
 	Currency     string     `json:"currency"`
 	Transfer     []Transfer `json:"Transfer"`
 }
@@ -37,23 +36,6 @@ type Participant struct {
 	ID   string `json:"ID"`
 }
 
-// participant.go
-
-/*
-{
-	"ownerseed":"3772e3fa880e1912498d2fc48a367a2058c69ea4bf6ec3cf41fbbb6d8089f8868f3c46e31d8e9ab251ea5e4c6f5ded53",
-	"transferType":1,
-	"currency":"BTC",
-	"Transfer":[{"TransferType":1,"Expression":"exp","description":"some description goes here",
-	    "participants":[
-			{"name":"p","ID":"3b1c3e7563f6f174ba4cc01e77bd69f3999e6e81e74b5d044c69336e2751045a"},
-			{"name":"t1","ID":"40cac6105b4a025a0815c96e630d75414982ff2b4aa5b500011fc59f50ad3c4d"},
-			{"name":"t2","ID":"b29d6d6fb277eef333e1dfc79e4bed516cf18bf5ce3eae808a4d941c081f7afa"},
-			{"name":"t3","ID":"cc4d921dc8f8ebe163ee476b4ce9ed06412be60d9d94c9e0316fa2321c2eaa20"}
-			] }]
-	}
-*/
-
 func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) (err error) {
 	cwJSON := &CreateWalletJSON{}
 	err = json.Unmarshal([]byte(jsonParams), cwJSON)
@@ -71,7 +53,7 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 	if err != nil {
 		return err
 	}
-	transferType := protobuffer.PBTransferType(cwJSON.TransferType)
+
 	var truths []string
 	for _, trans := range cwJSON.Transfer {
 
@@ -83,8 +65,8 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 			}
 			binParticipants[v.Name] = binVal
 		}
-
-		wallet.AddTransfer(protobuffer.PBTransferType(trans.TransferType), trans.Expression, &binParticipants, trans.Description)
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		wallet.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
 		truthTable, err := wallet.TruthTable(transferType)
 		if err != nil {
 			return err

@@ -162,6 +162,55 @@ func main() {
 						Aliases: []string{"j"},
 						Usage:   "specify json parameters",
 					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if c.String("json") != "" {
+						return cliTool.UpdateWalletWithJSON(c.String("json"))
+					}
+					return nil
+
+				},
+			},
+			&cli.Command{
+				Name:        "sign",
+				Aliases:     []string{"s"},
+				Usage:       "Update an existing wallet with a transfer",
+				Description: "Update an existing wallet with a transfer\n",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if c.String("json") != "" {
+						return cliTool.Sign(c.String("json"))
+					}
+					return nil
+				},
+			},
+			&cli.Command{
+				Name:        "aggregatesign",
+				Aliases:     []string{"as", "agsign"},
+				Usage:       "",
+				Description: "",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
 					&cli.BoolFlag{
 						Name:    "broadcast",
 						Aliases: []string{"b"},
@@ -176,11 +225,9 @@ func main() {
 				Action: func(c *cli.Context) error {
 					broadcast := c.Bool("broadcast")
 					if c.String("json") != "" {
-						return cliTool.UpdateWalletWithJSON(c.String("json"), broadcast)
-
+						return cliTool.AggregateSign(c.String("json"), broadcast)
 					}
 					return nil
-
 				},
 			},
 			&cli.Command{

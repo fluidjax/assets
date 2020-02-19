@@ -160,6 +160,9 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 		}
 	}
 
+	// pp, _ := prettyjson.Marshal(data)
+	//	fmt.Println(string(pp))
+
 	result := data["result"].(map[string]interface{})
 	txID = result["hash"].(string)
 	checktx := result["check_tx"].(map[string]interface{})

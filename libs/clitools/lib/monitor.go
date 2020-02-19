@@ -170,6 +170,11 @@ func showTXHistoryLine(main *gocui.View, res ctypes.ResultEvent) {
 	}
 	asset := signedAsset.Asset
 	txType := asset.Type.String()
+
+	if asset.Index > 1 {
+		txType = "U" + txType
+	}
+
 	assetID := asset.ID
 	t := time.Now()
 	blockHeight := PadRight(strconv.FormatInt(chainData.Height, 10), " ", 5)
