@@ -54,6 +54,7 @@ func (cliTool *CLITool) Monitor() (err error) {
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	if _, err := g.SetView("main", 0, 0, maxX-1, maxY/2-1); err != nil {
+
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -63,10 +64,33 @@ func layout(g *gocui.Gui) error {
 		return err
 	}
 
+	main, _ := g.View("main")
+	main.Highlight = true
+	main.Cursor()
+
+	return nil
+}
+func ListUp(g *gocui.Gui, v *gocui.View) error {
+	x, y := v.Cursor()
+	v.SetCursor(x, y-1)
+	return nil
+}
+
+func ListDown(g *gocui.Gui, v *gocui.View) error {
+	x, y := v.Cursor()
+	v.SetCursor(x, y+1)
 	return nil
 }
 
 func keybindings(g *gocui.Gui) error {
+
+	if err := g.SetKeybinding("main", gocui.KeyArrowUp, gocui.ModNone, ListUp); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("main", gocui.KeyArrowDown, gocui.ModNone, ListDown); err != nil {
+		return err
+	}
+
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		return err
 	}
