@@ -572,9 +572,9 @@ func (a *SignedAsset) FullVerify() (bool, error) {
 }
 
 // assetKeyFromPayloadHash - set the Assets ID Key to be sha256 of the Serialized Payload
-func (a *SignedAsset) assetKeyFromPayloadHash() (err error) {
+func (a *SignedAsset) AssetKeyFromPayloadHash() (err error) {
 	if a == nil {
-		return errors.New("assetKeyFromPayloadHash - SignAsset is nil")
+		return errors.New("AssetKeyFromPayloadHash - SignAsset is nil")
 	}
 	data, err := a.SerializeAsset()
 	if err != nil {

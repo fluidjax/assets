@@ -183,8 +183,8 @@ func showTXHistoryLine(main *gocui.View, res ctypes.ResultEvent) {
 	fmt.Fprintf(main, "%s %s %s %s %s\n",
 		PadRight(t.Format(time.Kitchen), " ", 6),
 		PadRight(blockHeight, " ", 5),
-		PadRight(txType, " ", 8),
-		PadRight(assetIDHex, " ", 70),
+		PadRight(txType, " ", 12),
+		PadRight(assetIDHex, " ", 64),
 		PadRight(txsize, " ", 6))
 }
 

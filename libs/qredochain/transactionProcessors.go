@@ -64,9 +64,21 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 		}
 		code, events := app.processUnderlying(underlying, lightWeight)
 		return uint32(code), events
-
+	case protobuffer.PBAssetType_MPC:
+		mpc, err := assets.ReBuildMPC(signedAsset, assetID)
+		if err != nil {
+			return code.CodeTypeEncodingError, nil
+		}
+		code, events := app.processMPC(mpc, lightWeight)
+		return uint32(code), events
 	}
 	return code.CodeTypeEncodingError, nil
+}
+
+func (app *QredoChain) processMPC(mpc *assets.MPC, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	//TODO: Implement checks for MPC transactions
+	fmt.Printf("Process an MPC\n")
+	return CodeTypeOK, events
 }
 
 func (app *QredoChain) processUnderlying(underlying *assets.Underlying, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {

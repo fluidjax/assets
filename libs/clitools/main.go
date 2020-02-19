@@ -116,7 +116,7 @@ func main() {
 				Aliases:     []string{"cw"},
 				Usage:       "Create a new Wallet",
 				Description: "Generate a new Wallet with the supplied JSON",
-				ArgsUsage:   "seed",
+				ArgsUsage:   "",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "json",
@@ -163,6 +163,69 @@ func main() {
 				Action: func(c *cli.Context) error {
 					if c.String("json") != "" {
 						return cliTool.UpdateWalletWithJSON(c.String("json"))
+					}
+					return nil
+				},
+			},
+			&cli.Command{
+				Name:        "sendunderlying",
+				Aliases:     []string{"su"},
+				Usage:       "Create a new Underlying Transaction",
+				Description: "Create a new Underlying Transaction",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					broadcast := c.Bool("broadcast")
+					if c.String("json") != "" {
+						return cliTool.CreateUnderlyingWithJSON(c.String("json"), broadcast)
+
+					}
+					return nil
+				},
+			},
+			&cli.Command{
+				Name:        "sendmpc",
+				Aliases:     []string{"smpc"},
+				Usage:       "Create a new MPC Transaction",
+				Description: "Create a new MPC Transaction",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					broadcast := c.Bool("broadcast")
+					if c.String("json") != "" {
+						return cliTool.CreateMPCWithJSON(c.String("json"), broadcast)
 					}
 					return nil
 				},

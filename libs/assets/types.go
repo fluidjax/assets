@@ -26,6 +26,10 @@ import (
 
 //Core Heirachcy
 
+type MPC struct {
+	SignedAsset
+}
+
 type Underlying struct {
 	SignedAsset
 }

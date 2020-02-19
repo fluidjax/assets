@@ -38,7 +38,6 @@ func NewUnderlying() (u *Underlying, err error) {
 	asset := &protobuffer.PBAsset{}
 	asset.Type = protobuffer.PBAssetType_Underlying
 
-	//IDDoc
 	underlying := &protobuffer.PBUnderlying{}
 
 	//Compose
@@ -48,12 +47,10 @@ func NewUnderlying() (u *Underlying, err error) {
 	Payload.Underlying = underlying
 
 	u.CurrentAsset.Asset.Payload = Payload
-	u.assetKeyFromPayloadHash()
 	return u, nil
 }
 
-//ReBuildIDDoc rebuild an existing Signed IDDoc into IDDocDeclaration object
-//Seed can be manually set if known (ie. Is a local ID)
+//ReBuildUnderlying -
 func ReBuildUnderlying(sig *protobuffer.PBSignedAsset, key []byte) (u *Underlying, err error) {
 	if sig == nil {
 		return nil, errors.New("ReBuildUnderlying  - sig is nil")

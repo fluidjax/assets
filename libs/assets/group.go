@@ -55,7 +55,7 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	w.CurrentAsset.Asset.ID = GroupKey
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
-	w.assetKeyFromPayloadHash()
+	w.AssetKeyFromPayloadHash()
 	return w, nil
 }
 

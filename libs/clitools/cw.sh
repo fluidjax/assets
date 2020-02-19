@@ -60,22 +60,10 @@ MakeWallet() {
 		"Expression": "t1 + t2 + t3 > 1 & p",
 		"description": "Here is the transfer Type 2",
 		"participants": [
-		{
-			"name": "p",
-			"ID": "'$pAssetID'"
-		},
-		{
-			"name": "t1",
-			"ID": "'$t1AssetID'"
-		},
-		{
-			"name": "t2",
-			"ID": "'$t2AssetID'"
-		},
-		{
-			"name": "t3",
-			"ID": "'$t3AssetID'"
-		}
+			{"name": "p", "ID": "'$pAssetID'"},
+			{"name": "t1","ID": "'$t1AssetID'"},
+			{"name": "t2","ID": "'$t2AssetID'"},
+			{"name": "t3","ID": "'$t3AssetID'"}
 		]
 	}]
 	}'
@@ -159,6 +147,43 @@ SendWallet() {
 	updateComplete=$(qc sw -b=true -j="$json")
 }
 
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+
+SendUnderLying() {
+	underlyingTXID=$(openssl rand -base64 32)
+	echo Generate a new underlying transaction
+	json='{
+		"type":1,
+		"CryptoCurrencyCode":1,
+		"Proof":"",
+		"Amount":1000,
+		"Address":"'$mpcadd'",
+		"TxID":"'$underlyingTXID'"
+	}'
+	dump "$json" "SendUnderLying"
+	sendUnderlying=$(qc su -b=true -j="$json")
+}
+#----------------------------------------------------------------------------------------------------------------------------------------
+SendMPC() {
+	mpcadd=$(openssl rand -base64 32)
+	assetid=""
+
+	echo Generate a new MPC transaction
+	json='{
+    	"type":1,
+    	"Address":"'$mpcadd'",
+    	"Signature":"",
+	    "AssetID":"'$assetid'"
+	}'
+	
+	dump "$json" "SendMPC"
+	sendUnderlying=$(qc smpc -b=true -j="$json")
+}
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
 d_flag='false'
 
 while getopts 'd' flag; do
@@ -174,9 +199,11 @@ build
 
 debug=false
 
-MakeIDDocs
-MakeWallet
-VerifyWallet
-PrepWalletUpdate
-SignForEachIDoc
-SendWallet
+# MakeIDDocs
+# MakeWallet
+# VerifyWallet
+# PrepWalletUpdate
+# SignForEachIDoc
+# SendWallet
+SendMPC
+SendUnderLying

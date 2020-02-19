@@ -28,6 +28,7 @@ message PBAsset {
         PBIDDoc Iddoc                     = 17;
         PBUnderlying Underlying           = 18;
         PBKVAsset KVAsset                 = 19;
+        PBMPC MPC                         = 20;
     }
 }
 
@@ -39,6 +40,7 @@ enum PBAssetType {
     Underlying           = 3;
     KVAsset              = 4;
     Wallet               = 5;
+    MPC                  = 6;
 }                              
 enum PBTransferType {
     UndefinedTransferType = 0;
@@ -124,6 +126,7 @@ message PBAssetTransferSignature {
 enum PBCryptoCurrency {
     UndefinedCryptoCurrency   = 0;
     BTC                       = 1;
+    BTCTESTNET                = 2;
 }
 
 enum PBUnderlyingType {
@@ -157,4 +160,18 @@ enum PBKVAssetType {
     Fee                 = 1;
     MPCList             = 2;
 
+}
+
+enum PBMPCType {
+    UnspecifiedMPCType  = 0;
+    Address             = 1;
+    Signature           = 2;
+}
+
+
+message PBMPC {
+    PBMPCType   Type        = 1;
+    bytes       Address     = 2;
+    bytes       Signature   = 3;
+    bytes       AssetID     = 4;
 }

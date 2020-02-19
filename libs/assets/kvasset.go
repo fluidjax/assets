@@ -102,7 +102,7 @@ func NewKVAsset(iddoc *IDDoc, assetType protobuffer.PBKVAssetType) (w *KVAsset, 
 	w.CurrentAsset.Asset.ID = KVAssetKey
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_KVAsset
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
-	w.assetKeyFromPayloadHash()
+	w.AssetKeyFromPayloadHash()
 	return w, nil
 }
 
