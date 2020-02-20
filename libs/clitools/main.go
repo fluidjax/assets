@@ -385,6 +385,21 @@ func main() {
 					return nil
 				},
 			},
+			&cli.Command{
+				Name:            "monitor2",
+				Aliases:         []string{"m2", "mon2"},
+				Usage:           "Monitor the Qredochain for incoming transactions",
+				Description:     "Monitor the Qredochain for incoming transactions",
+				Flags:           []cli.Flag{},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					cliTool.Monitor2()
+					return nil
+				},
+			},
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
