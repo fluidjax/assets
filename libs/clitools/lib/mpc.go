@@ -1,6 +1,7 @@
 package qc
 
 import (
+	"encoding/hex"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -36,7 +37,12 @@ func (cliTool *CLITool) CreateMPCWithJSON(jsonParams string, broadcast bool) (er
 
 	payload.Address = []byte(cJSON.Address)
 	payload.Signature = []byte(cJSON.Signature)
-	payload.AssetID = []byte(cJSON.AssetID)
+
+	assetID, err := hex.DecodeString(cJSON.AssetID)
+	if err != nil {
+		return errors.New("Invalid AssetID")
+	}
+	payload.AssetID = assetID
 	mpc.AssetKeyFromPayloadHash()
 
 	txid := ""

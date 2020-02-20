@@ -40,7 +40,7 @@ func (cliTool *CLITool) CreateUnderlyingWithJSON(jsonParams string, broadcast bo
 	proofBin, err := hex.DecodeString(cJSON.Proof)
 	payload.Proof = proofBin
 
-	amount := float32(cJSON.Amount)
+	amount := int64(cJSON.Amount)
 	payload.Amount = amount
 	payload.Address = cJSON.Address
 	payload.TxID = cJSON.TxID

@@ -1,3 +1,5 @@
 
 
 Generate Testnet based Underlying Transactions
+AssetIDs must be derived from the 1st payload hash - other wise fake assetid can change the db
+

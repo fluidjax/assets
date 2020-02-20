@@ -33,12 +33,16 @@ func (cliTool *CLITool) GetIDDocForSeed(seedHex string) (iddoc *assets.IDDoc, er
 	return iddoc, nil
 }
 
-func (cliTool *CLITool) PPConsensusSearch(query string) (err error) {
-	data, err := cliTool.NodeConn.ConsensusSearch(query)
+func (cliTool *CLITool) PPConsensusSearch(query string, suffix string) (err error) {
+
+	data, err := cliTool.NodeConn.ConsensusSearch(query, suffix)
 	if err != nil {
 		return err
 	}
 
+	if suffix != "" {
+		addResultItem("suffix", suffix)
+	}
 	addResultItem("key", query)
 	addResultItem("value", hex.EncodeToString(data))
 

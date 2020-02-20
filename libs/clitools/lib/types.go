@@ -24,3 +24,15 @@ var (
 	highlightRow      = 0
 	txhistory         []ctypes.ResultEvent
 )
+
+type SignJSON struct {
+	Seed string `json:"seed"`
+	Msg  string `json:"msg"`
+}
+
+type CreateWalletJSON struct {
+	TransferType int64      `json:"transferType"`
+	Ownerseed    string     `json:"ownerseed"`
+	Currency     string     `json:"currency"`
+	Transfer     []Transfer `json:"Transfer"`
+}

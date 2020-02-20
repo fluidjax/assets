@@ -1,7 +1,9 @@
 package qredochain
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/qredo/assets/libs/assets"
@@ -76,15 +78,88 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 }
 
 func (app *QredoChain) processMPC(mpc *assets.MPC, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
-	//TODO: Implement checks for MPC transactions
-	fmt.Printf("Process an MPC\n")
+	//fmt.Printf("Process an MPC\n")
+
+	payload, err := mpc.Payload()
+	if err != nil {
+		return CodeTypeEncodingError, nil
+	}
+	address := payload.Address
+	assetID := payload.AssetID
+
+	if lightWeight == false {
+		//Set the KV to link between asset & address
+		app.SetWithSuffix(assetID, ".as2ad", address)
+		app.SetWithSuffix(address, ".ad2as", assetID)
+	}
+
 	return CodeTypeOK, events
 }
 
 func (app *QredoChain) processUnderlying(underlying *assets.Underlying, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
-	//TODO: Implement checks for Underlying transactions
-	fmt.Printf("Process an Underlying\n")
+	//fmt.Printf("Process an Underlying\n")
+
+	payload, err := underlying.Payload()
+	if err != nil {
+		return CodeTypeEncodingError, nil
+	}
+	address := []byte(payload.Address)
+	amount := payload.Amount
+	underlyingTxID := []byte(payload.TxID)
+
+	exists, err := app.GetWithSuffix(underlyingTxID, ".UTxID")
+	if err != nil || exists != nil {
+		return CodeConsensusError, nil
+	}
+
+	if lightWeight == false {
+		//underlying has Crypto Address - get AssetID from KV Store
+		assetID, err := app.GetWithSuffix(address, ".ad2as")
+		if err != nil {
+			return CodeTypeEncodingError, nil
+		}
+		code := app.addToBalanceKey(assetID, amount)
+		if code != 0 {
+			return code, nil
+		}
+
+	}
 	return CodeTypeOK, events
+}
+
+func (app *QredoChain) subtractFromBalanceKey(assetID []byte, amount int64) (code TransactionCode) {
+	currentBalance, code := app.getBalanceKey(assetID)
+	newBalance := currentBalance - amount
+	if newBalance < 0 {
+		return CodeConsensusBalanceError
+	}
+	return app.setBalanceKey(assetID, newBalance)
+}
+
+func (app *QredoChain) addToBalanceKey(assetID []byte, amount int64) (code TransactionCode) {
+	currentBalance, code := app.getBalanceKey(assetID)
+	newBalance := currentBalance + amount
+	return app.setBalanceKey(assetID, newBalance)
+}
+
+func (app *QredoChain) setBalanceKey(assetID []byte, newBalance int64) (code TransactionCode) {
+	//Convert new balance to bytes and save for AssetID
+	newBalanceBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
+	err := app.SetWithSuffix(assetID, ".balance", newBalanceBytes)
+	if err != nil {
+		return CodeConsensusBalanceError
+	}
+	return 0
+}
+
+func (app *QredoChain) getBalanceKey(assetID []byte) (amount int64, code TransactionCode) {
+	currentBalanceBytes, err := app.GetWithSuffix(assetID, ".balance")
+	if currentBalanceBytes == nil || err != nil {
+		return 0, CodeConsensusBalanceError
+	}
+	currentBalance := int64(binary.LittleEndian.Uint64(currentBalanceBytes))
+	return currentBalance, 0
 }
 
 func (app *QredoChain) processIDDoc(iddoc *assets.IDDoc, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
@@ -128,6 +203,71 @@ func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txH
 		return CodeAlreadyExists, nil
 	}
 
+	exists, err := app.Get(wallet.Key())
+	if err != nil {
+		return CodeDatabaseFail, nil
+	}
+
+	if exists == nil {
+		return app.processWalletCreate(wallet, rawAsset, txHash, lightWeight)
+	} else {
+		return app.processWalletUpdate(wallet, rawAsset, txHash, lightWeight)
+	}
+
+}
+
+func (app *QredoChain) processWalletUpdate(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if lightWeight == false {
+		err := app.Set(wallet.Key(), txHash)
+		if err != nil {
+			return CodeDatabaseFail, nil
+		}
+		events = processTags(wallet.CurrentAsset.Asset.Tags)
+
+		//Loop through all the transfers out and update their destinations
+		payload, err := wallet.Payload()
+		if err != nil {
+			return CodeFailVerfication, nil
+		}
+
+		currentBalance, code := app.getBalanceKey(wallet.Key())
+		if code != 0 {
+			return code, nil
+		}
+
+		//Check we have enough - Pass 1
+		var totalOutgoing int64
+		for _, wt := range payload.WalletTransfers {
+			res := bytes.Compare(wt.AssetID, wallet.Key())
+			if res == 0 {
+				//this is money coming back to self, just ignore it
+				continue
+			}
+			totalOutgoing = totalOutgoing + wt.Amount
+		}
+
+		if totalOutgoing > currentBalance {
+			return CodeInsufficientFunds, nil
+		}
+
+		//We have enough funds, do the database updates for transfer Pass 2
+
+		for _, wt := range payload.WalletTransfers {
+			res := bytes.Compare(wt.AssetID, wallet.Key())
+			if res == 0 {
+				//this is money coming back to self, just ignore it
+				continue
+			}
+			amount := wt.Amount
+			destinationAssetID := wt.AssetID
+			app.addToBalanceKey(destinationAssetID, amount)
+			app.subtractFromBalanceKey(wallet.Key(), amount)
+		}
+	}
+	return CodeTypeOK, events
+}
+
+func (app *QredoChain) processWalletCreate(wallet *assets.Wallet, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
 	if lightWeight == false {
 		err1 := app.Set(txHash, rawAsset)
 		if err1 != nil {
@@ -139,86 +279,9 @@ func (app *QredoChain) processWallet(wallet *assets.Wallet, rawAsset []byte, txH
 		}
 		events = processTags(wallet.CurrentAsset.Asset.Tags)
 
-		currentBalance, err := app.GetWithSuffix(wallet.Key(), "Balance")
-		if err != nil {
-			return CodeDatabaseFail, nil
-		}
-		if currentBalance == nil {
-			app.SetWithSuffix(wallet.Key(), "Balance", []byte("4321"))
-		}
+		app.setBalanceKey(wallet.Key(), 0)
 
 	}
-
-	// currentIndex, err := app.Get(wallet.Key())
-	// if err != nil {
-	// 	return CodeDatabaseFail, nil
-	// }
-	// var newAssetIndexString string
-
-	// if currentIndex == nil {
-	// 	//New Wallet
-	// 	if app.VerifyNewWallet(wallet) == false {
-	// 		dumpMessage(4, "Wallet failed verification")
-	// 		return CodeFailVerfication, nil
-	// 	}
-	// 	newAssetIndexString = IndexFormater(0)
-
-	// } else {
-	// 	//Check we are correctly incrementing the index
-	// 	// currentIndexInteger, err := strconv.ParseInt(string(currentIndex), 10, 64)
-	// 	// if err != nil {
-	// 	// 	dumpMessage(4, "Failed to Parse Current Index")
-	// 	// 	return CodeFailVerfication, nil
-	// 	// }
-	// 	// newIndex := wallet.CurrentAsset.Asset.Index
-	// 	// if newIndex != currentIndexInteger+1 {
-	// 	// 	dumpMessage(2, "Invalid Wallet Index\n")
-	// 	// 	return CodeFailVerfication, nil
-	// 	// }
-	// 	newAssetIndexString = IndexFormater(newIndex)
-	// 	//Wallet update
-	// 	if app.VerifyWalletUpdate(wallet) == false {
-	// 		dumpMessage(4, "Wallet failed verification")
-	// 		return CodeFailVerfication, nil
-	// 	}
-	// }
-
-	// if lightWeight == false {
-
-	// 	err := app.Set(txHash, rawAsset)
-	// 	if err != nil {
-	// 		return CodeDatabaseFail, nil
-	// 	}
-	// 	//Write the AssetID:TX pointer
-
-	// 	err = app.Set(wallet.Key(), txHash)
-	// 	msg := fmt.Sprintf("Wallet set (assetid:tx)     %v:%v", hex.EncodeToString(wallet.Key()), hex.EncodeToString(txHash))
-	// 	dumpMessage(4, msg)
-	// 	if err != nil {
-	// 		return CodeDatabaseFail, nil
-	// 	}
-
-	// 	//Write the Pointer Key
-	// 	// ABCDE.0 = txHash
-	// 	pointerKey := KeySuffix(wallet.Key(), newAssetIndexString)
-	// 	msg = fmt.Sprintf("Wallet set (assetid.index:tx)     %v:%v", hex.EncodeToString(pointerKey), hex.EncodeToString(txHash))
-	// 	dumpMessage(4, msg)
-	// 	err = app.Set(pointerKey, txHash)
-	// 	if err != nil {
-	// 		return CodeDatabaseFail, nil
-	// 	}
-
-	// 	// //Write the lastest index to the asset key
-	// 	// // ABCDE = 0
-	// 	// msg = fmt.Sprintf("Wallet set (assetid:latest_index) %v:%v", hex.EncodeToString(wallet.Key()), newAssetIndexString)
-	// 	// dumpMessage(4, msg)
-	// 	// err = app.Set(wallet.Key(), []byte(newAssetIndexString))
-	// 	// if err != nil {
-	// 	// 	return CodeDatabaseFail, nil
-	// 	// }
-
-	// 	events = processTags(wallet.CurrentAsset.Asset.Tags)
-	// }
 	return CodeTypeOK, events
 }
 

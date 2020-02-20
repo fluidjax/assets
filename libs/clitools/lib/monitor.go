@@ -2,6 +2,7 @@ package qc
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -12,13 +13,17 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/jroimartin/gocui"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/qredochain"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+var connector *qredochain.NodeConnector
+
 //Monitor - Monitor the chain in real time
 func (cliTool *CLITool) Monitor() (err error) {
 
+	connector = cliTool.NodeConn
 	out, err = cliTool.NodeConn.TmClient.Subscribe(context.Background(), "", "tx.height>0", 1000)
 	if err != nil {
 		return err
@@ -94,7 +99,7 @@ func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("main", gocui.MouseLeft, gocui.ModNone, showTX); err != nil &&
+	if err := g.SetKeybinding("main", gocui.MouseLeft, gocui.ModNone, displayDetail); err != nil &&
 		err != gocui.ErrUnknownView {
 		return err
 	}
@@ -174,21 +179,32 @@ func showTXHistoryLine(main *gocui.View, res ctypes.ResultEvent) {
 	if asset.Index > 1 {
 		txType = "U" + txType
 	}
-
 	assetID := asset.ID
-	t := time.Now()
-	blockHeight := PadRight(strconv.FormatInt(chainData.Height, 10), " ", 5)
 	assetIDHex := hex.EncodeToString(assetID)
 
-	fmt.Fprintf(main, "%s %s %s %s %s\n",
+	data, err := connector.ConsensusSearch(assetIDHex, ".balance")
+	if err != nil {
+		panic("Fatal error retrieving balance")
+	}
+	currentBalance := "-"
+	if len(data) == 8 {
+		balance := int64(binary.LittleEndian.Uint64(data))
+		currentBalance = fmt.Sprintf("%d", balance)
+	}
+
+	t := time.Now()
+	blockHeight := PadRight(strconv.FormatInt(chainData.Height, 10), " ", 5)
+
+	fmt.Fprintf(main, "%s %s %s %s %s %s\n",
 		PadRight(t.Format(time.Kitchen), " ", 6),
 		PadRight(blockHeight, " ", 5),
 		PadRight(txType, " ", 12),
 		PadRight(assetIDHex, " ", 64),
-		PadRight(txsize, " ", 6))
+		PadRight(txsize, " ", 6),
+		PadRight(currentBalance, " ", 8))
 }
 
-func showTX(g *gocui.Gui, main *gocui.View) error {
+func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	info, err := g.View("info")
 	info.Clear()
 	info.Editable = true
@@ -215,6 +231,8 @@ func showTX(g *gocui.Gui, main *gocui.View) error {
 	if err != nil {
 		return nil
 	}
+
+	fmt.Fprintf(info, "num %d", itemNumber)
 	fmt.Fprintf(info, prettyStringFromSignedAsset(signedAsset))
 	return nil
 }

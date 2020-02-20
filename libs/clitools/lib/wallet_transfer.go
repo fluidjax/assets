@@ -10,17 +10,20 @@ import (
 	"github.com/qredo/assets/libs/qredochain"
 )
 
-func (cliTool *CLITool) UpdateWalletWithJSON(jsonParams string) (err error) {
+func (cliTool *CLITool) PrepareWalletUpdateWithJSON(jsonParams string) (err error) {
 	//Load existing wallet from AssetID
 	//Load all the IDDocs
 
 	//wallet from JSON
-	uwJSON := &WalletUpdate{}
+	uwJSON := &WalletUpdatePayload{}
 	err = json.Unmarshal([]byte(jsonParams), uwJSON)
 	if err != nil {
 		return err
 	}
 	updatedWallet, err := cliTool.walletFromWalletUpdateJSON(uwJSON)
+	if err != nil {
+		return err
+	}
 
 	//Updated wallet complete, return for signing
 	msg, err := updatedWallet.SerializeAsset()
@@ -33,11 +36,11 @@ func (cliTool *CLITool) UpdateWalletWithJSON(jsonParams string) (err error) {
 	return nil
 }
 
-func (cliTool *CLITool) walletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (*assets.Wallet, error) {
+func (cliTool *CLITool) walletFromWalletUpdateJSON(signedUpdate *WalletUpdatePayload) (*assets.Wallet, error) {
 	//Decode the JSON
 
 	//Get the New Owner IDDoc
-	idNewOwnerKey, err := hex.DecodeString(walletUpdate.ExistingWalletAssetID)
+	idNewOwnerKey, err := hex.DecodeString(signedUpdate.Newowner)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +51,7 @@ func (cliTool *CLITool) walletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (
 	}
 
 	//Get the Existing Wallet
-	existingWalletKey, err := hex.DecodeString(walletUpdate.ExistingWalletAssetID)
+	existingWalletKey, err := hex.DecodeString(signedUpdate.ExistingWalletAssetID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +67,21 @@ func (cliTool *CLITool) walletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (
 		return nil, err
 	}
 
-	updatedWallet.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(walletUpdate.TransferType)
+	//Add in the WalletTransfers - ie. payment destinations
+	for _, wt := range signedUpdate.WalletTransfers {
+		to, err := hex.DecodeString(wt.To)
+		if err != nil {
+			return nil, err
+		}
+		assetID, err := hex.DecodeString(wt.Assetid)
+		if err != nil {
+			return nil, err
+		}
+
+		updatedWallet.AddWalletTransfer(to, wt.Amount, assetID)
+	}
+
+	updatedWallet.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(signedUpdate.TransferType)
 	updatedWallet.DataStore = cliTool.NodeConn
 
 	return updatedWallet, nil
@@ -72,7 +89,7 @@ func (cliTool *CLITool) walletFromWalletUpdateJSON(walletUpdate *WalletUpdate) (
 
 func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (err error) {
 	//Decode the JSON
-	agJSON := &AggregateSignJSON{}
+	agJSON := &WalletUpdate{}
 	err = json.Unmarshal([]byte(jsonParams), agJSON)
 	if err != nil {
 		return err
@@ -94,7 +111,7 @@ func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (
 	}
 
 	//Rebuild the Wallet from the TX supplied
-	updatedWallet, err := cliTool.walletFromWalletUpdateJSON(&agJSON.WalletUpdate)
+	updatedWallet, err := cliTool.walletFromWalletUpdateJSON(&agJSON.WalletUpdatePayload)
 
 	err = updatedWallet.AggregatedSign(transferSignatures)
 	if err != nil {

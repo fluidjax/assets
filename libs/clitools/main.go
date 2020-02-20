@@ -63,7 +63,7 @@ func main() {
 			},
 			&cli.Command{
 				Name:    "consensusquery",
-				Aliases: []string{"cq"},
+				Aliases: []string{"cq", "qq"},
 				Usage:   "Search the Qredochain Consensus App database for keys ",
 				Description: "Query the Qredochain Consensus App Layer database\n" +
 					"   examples:\n" +
@@ -76,10 +76,14 @@ func main() {
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
 					query := "empty query"
+					suffix := ""
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-					cliTool.PPConsensusSearch(query)
+					if c.NArg() > 1 {
+						suffix = c.Args().Get(1)
+					}
+					cliTool.PPConsensusSearch(query, suffix)
 					return nil
 				},
 			},
@@ -162,7 +166,7 @@ func main() {
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
 					if c.String("json") != "" {
-						return cliTool.UpdateWalletWithJSON(c.String("json"))
+						return cliTool.PrepareWalletUpdateWithJSON(c.String("json"))
 					}
 					return nil
 				},

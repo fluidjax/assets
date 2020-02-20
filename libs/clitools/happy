@@ -89,13 +89,17 @@ PrepWalletUpdate() {
 	echo Prepare Updated Wallet serialized TX for Signing 
 
 	updateJson='{
-		"ExistingWalletAssetID":"'$newWalletID'",
-		"Newowner":"'$newOwnerAssetID'",
+		"existingWalletAssetID":"'$newWalletID'",
+		"newowner":"'$newOwnerAssetID'",
 		"transferType":2,
 		"currency":"BTC",
-		"Transfer":[{
-			"TransferType":1,
-			"Expression":"different expression",
+		"walletTransfers":[
+		    {"to":"01010100ff00","amount":20,"assetid":"00ff00"},
+		   	{"to":"02020200ff00","amount":30,"assetid":"00ff01"}
+		    ],
+		"transfer":[{
+			"transferType":1,
+			"expression":"different expression",
 			"description":"some description goes here",
 			"participants":[
 				{"name":"p","ID":"'$newOwnerAssetID'"},
@@ -105,7 +109,8 @@ PrepWalletUpdate() {
 				] }]
 		}'
 
-
+	dump "$updateJson" "PrepWalletUpdate"
+	
 	updateJson=$(echo $updateJson | sed 's/\n//g')
 	updateWallet=$(qc pwu -j="$updateJson")
 	serializedUnsignedAsset=$(echo $updateWallet | jq -r .serializedUpdate)
@@ -135,13 +140,13 @@ SignForEachIDoc() {
 
 SendWallet() {
 	echo SendWallet - Aggreate Sign, Verify and optionally broadcast
-	json='{"Sigs":[
+	json='{"sigs":[
 				{"id":"'$pAssetID'","abbreviation":"p","signature":"'$sigP'"},
 				{"id":"'$t1AssetID'","abbreviation":"t1","signature":"'$sigT1'"},
 				{"id":"'$t2AssetID'","abbreviation":"t2","signature":"'$sigT2'"},
 				{"id":"'$t3AssetID'","abbreviation":"t3","signature":"'$sigT3'"}
 				],
-			"walletUpdate":'$updateJson'
+			"walletUpdatePayload":'$updateJson'
 		}'
 	dump "$json" "Aggregate Sign"
 	updateComplete=$(qc sw -b=true -j="$json")
@@ -154,24 +159,25 @@ SendUnderLying() {
 	echo Generate a new underlying transaction
 
 	#A random underlying utxo
-	underlyingTXID=$(openssl rand -base64 32)
-	
+	underlyingTXID=$(openssl rand -hex 16)
 	json='{
 		"type":1,
 		"CryptoCurrencyCode":1,
 		"Proof":"",
-		"Amount":1000,
+		"Amount":1111,
 		"Address":"'$mpcadd'",
 		"TxID":"'$underlyingTXID'"
 	}'
 	dump "$json" "SendUnderLying"
 	sendUnderlying=$(qc su -b=true -j="$json")
 }
+
+
 #----------------------------------------------------------------------------------------------------------------------------------------
 SendMPC() {
 
 	#Fake an random address from MPC
-	mpcadd=$(openssl rand -base64 32)
+	mpcadd=$(openssl rand -hex 8)
 
 	echo Generate a new MPC transaction
 	json='{
@@ -187,7 +193,8 @@ SendMPC() {
 
 #----------------------------------------------------------------------------------------------------------------------------------------
 GetBalance() {
-	balance=$(qc bal "$newWalletID")	
+	balance=$(qc balance "$newWalletID"  | jq -r ".amount")	
+	echo Balance: $balance
 }
 
 
@@ -208,13 +215,15 @@ build
 
 debug=false
 
-# MakeIDDocs
-# MakeWallet
-# VerifyWallet
-# PrepWalletUpdate
-# SignForEachIDoc
-# SendWallet
-
+MakeIDDocs
+MakeWallet
+VerifyWallet
 SendMPC
 SendUnderLying
+SendUnderLying
+GetBalance
+
+PrepWalletUpdate
+SignForEachIDoc
+SendWallet
 GetBalance

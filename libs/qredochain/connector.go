@@ -22,19 +22,23 @@ import (
 type TransactionCode uint32
 
 const (
-	CodeTypeOK                  TransactionCode = 0
-	CodeTypeEncodingError                       = 1
-	CodeTypeBadNonce                            = 2
-	CodeTypeUnauthorized                        = 3
-	CodeAlreadyExists                           = 4
-	CodeDatabaseFail                            = 5
-	CodeFailVerfication                         = 6
-	CodeTypeHTTPError                           = 7
-	CodeTendermintInternalError                 = -32603
+	CodeTypeOK                TransactionCode = 0
+	CodeTypeEncodingError                     = 1
+	CodeTypeBadNonce                          = 2
+	CodeTypeUnauthorized                      = 3
+	CodeAlreadyExists                         = 4
+	CodeDatabaseFail                          = 5
+	CodeFailVerfication                       = 6
+	CodeTypeHTTPError                         = 7
+	CodeConsensusBalanceError                 = 8
+	CodeConsensusError                        = 9
+	CodeInsufficientFunds                     = 10
+
+	CodeTendermintInternalError = -32603
 )
 
 const (
-	nodeConnectionTimeout = time.Second * 10
+	nodeConnectionTimeout = time.Second * 600
 	txChanSize            = 1000
 )
 
@@ -228,7 +232,7 @@ func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
 
 func (nc *NodeConnector) GetAsset(assetID string) (*protobuffer.PBSignedAsset, error) {
 	//Get TX for Asset ID
-	txid, err := nc.ConsensusSearch(assetID)
+	txid, err := nc.ConsensusSearch(assetID, "")
 	if err != nil {
 		return nil, err
 	}
@@ -240,8 +244,15 @@ func (nc *NodeConnector) GetAsset(assetID string) (*protobuffer.PBSignedAsset, e
 	return result[0], nil
 }
 
-func (nc *NodeConnector) ConsensusSearch(query string) (data []byte, err error) {
+func (nc *NodeConnector) ConsensusSearch(query string, suffix string) (data []byte, err error) {
+
 	key, err := hex.DecodeString(query)
+
+	if suffix != "" {
+		fullSuffix := []byte(suffix)
+		key = append(key[:], fullSuffix[:]...)
+	}
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to decode Base64 Query %s", query)
 	}

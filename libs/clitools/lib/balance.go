@@ -1,15 +1,30 @@
 package qc
 
-import "encoding/hex"
+import (
+	"encoding/binary"
+	"fmt"
+	"reflect"
+
+	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+)
 
 func (cliTool *CLITool) Balance(assetID string) (err error) {
 
-	assetIDBin, err := hex.DecodeString(assetID)
-	fullSuffix := []byte("." + "balance")
-	key := append(assetIDBin[:], fullSuffix[:]...)
+	data, err := cliTool.NodeConn.ConsensusSearch(assetID, ".balance")
+	if err != nil {
+		return err
+	}
 
-	result, err := cliTool.NodeConn.SingleRawConsensusSearch(key)
+	currentBalance := int64(binary.LittleEndian.Uint64(data))
 
-	print("hello", result)
+	//	addResultItem("value", hex.EncodeToString(data))
+	addResultItem("amount", currentBalance)
+
+	original := reflect.ValueOf(res)
+	copy := reflect.New(original.Type()).Elem()
+	TranslateRecursive(copy, original)
+
+	pp, _ := prettyjson.Marshal(copy.Interface())
+	fmt.Println(string(pp))
 	return nil
 }

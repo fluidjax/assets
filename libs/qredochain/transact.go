@@ -29,7 +29,7 @@ func PostTx(base64EncodedTX string, host string) (txID string, err error) {
 	req.Header.Set("Content-Type", "text/plain;")
 
 	httpClient := &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 600,
 	}
 
 	resp, err := httpClient.Do(req)

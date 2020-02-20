@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gookit/color"
 	"github.com/qredo/assets/libs/assets"
@@ -79,34 +78,52 @@ func (app *QredoChain) GetGroup(assetID []byte) (*assets.Group, error) {
 }
 
 func (app *QredoChain) GetWithSuffix(key []byte, suffix string) ([]byte, error) {
-	fullSuffix := []byte("." + suffix)
+	fullSuffix := []byte(suffix)
 	key = append(key[:], fullSuffix[:]...)
 	return app.Get(key)
 }
 
 func (app *QredoChain) Get(key []byte) ([]byte, error) {
+
 	var res []byte
-	err := app.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
-		if item == nil {
-			return nil
-		}
-		err = item.Value(func(val []byte) error {
-			res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
-			return nil
-		})
-		return err
-	})
-	if err != nil {
-		return nil, err
+	item, err := app.currentBatch.Get(key)
+	if item == nil {
+		return nil, nil
 	}
+	err = item.Value(func(val []byte) error {
+		res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
+		return nil
+	})
 	return res, err
+
+	// var res []byte
+	// err := app.db.View(func(txn *badger.Txn) error {
+	// 	item, err := txn.Get(key)
+	// 	if item == nil {
+	// 		return nil
+	// 	}
+	// 	err = item.Value(func(val []byte) error {
+	// 		res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
+	// 		return nil
+	// 	})
+	// 	return err
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return res, err
 }
 
 func (app *QredoChain) SetWithSuffix(key []byte, suffix string, data []byte) error {
-	fullSuffix := []byte("." + suffix)
-	key = append(key[:], fullSuffix[:]...)
-	return app.Set(key, data)
+
+	suffixBytes := []byte(suffix)
+	fullkey := append(key[:], suffixBytes[:]...)
+
+	//Display
+	//fmt.Println("SET: ", hex.EncodeToString(key), suffix, " = ", hex.EncodeToString(data))
+	//fmt.Println("FULL KEY ", hex.EncodeToString(fullkey))
+
+	return app.Set(fullkey, data)
 }
 
 func (app *QredoChain) Set(key []byte, data []byte) error {

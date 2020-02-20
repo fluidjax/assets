@@ -122,9 +122,13 @@ func (w *Wallet) PreviousPayload() (*protobuffer.PBWallet, error) {
 	return wallet, nil
 }
 
-func (w *Wallet) AddWalletTransfer(to []byte, amount int64) (err error) {
+func (w *Wallet) AddWalletTransfer(to []byte, amount int64, assetid []byte) (err error) {
 	if to == nil {
 		return errors.New("Transfer to is nil")
+	}
+
+	if assetid == nil {
+		return errors.New("Transfer assetid is nil")
 	}
 	if amount == 0 {
 		return errors.New("Can't transfer zero amount")
@@ -143,8 +147,9 @@ func (w *Wallet) AddWalletTransfer(to []byte, amount int64) (err error) {
 	}
 
 	currentPayload.SpentBalance += amount
+
 	currentPayload.WalletTransfers = append(currentPayload.WalletTransfers,
-		&protobuffer.PBWalletTransfer{To: to, Amount: amount})
+		&protobuffer.PBWalletTransfer{To: to, Amount: amount, AssetID: assetid})
 	return nil
 }
 
