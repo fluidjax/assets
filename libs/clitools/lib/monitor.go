@@ -19,6 +19,7 @@ import (
 )
 
 var connector *qredochain.NodeConnector
+var count = 0
 
 //Monitor - Monitor the chain in real time
 func (cliTool *CLITool) Monitor() (err error) {
@@ -194,8 +195,11 @@ func showTXHistoryLine(main *gocui.View, res ctypes.ResultEvent) {
 
 	t := time.Now()
 	blockHeight := PadRight(strconv.FormatInt(chainData.Height, 10), " ", 5)
+	count++
 
-	fmt.Fprintf(main, "%s %s %s %s %s %s\n",
+	countStr := fmt.Sprintf("%d", count)
+	fmt.Fprintf(main, "%s %s %s %s %s %s %s\n",
+		PadRight(countStr, " ", 4),
 		PadRight(t.Format(time.Kitchen), " ", 6),
 		PadRight(blockHeight, " ", 5),
 		PadRight(txType, " ", 12),
@@ -214,12 +218,17 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	}
 	_, y := main.Cursor()
 	_, sizeY := main.Size()
+	sizeY--
 	historyLength := len(txhistory)
 	var itemNumber int
 	if len(txhistory) < sizeY {
 		itemNumber = y
 	} else {
-		itemNumber = historyLength - (sizeY - y + 1)
+		//Reached the end
+		//set so sizeY -1 = historyLength
+		firstItem := historyLength - sizeY + 1
+		fmt.Fprintf(info, "firstItem %d\n", firstItem)
+		itemNumber = firstItem + y - 1
 	}
 	if itemNumber > historyLength-1 {
 		return nil
@@ -232,7 +241,7 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 		return nil
 	}
 
-	fmt.Fprintf(info, "num %d", itemNumber)
+	fmt.Fprintf(info, "height %d\n", sizeY)
 	fmt.Fprintf(info, prettyStringFromSignedAsset(signedAsset))
 	return nil
 }
