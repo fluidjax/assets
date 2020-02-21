@@ -384,7 +384,7 @@ func showdatalinesLine(main *gocui.View, qc *QredoChainTX, count int) {
 			if err != nil {
 				break
 			}
-			qc.balance = color.Green.Sprintf("%d", payload.Amount)
+			qc.balance = color.Green.Sprintf("+%d", payload.Amount)
 
 		case protobuffer.PBAssetType_Wallet:
 			data, err := connector.ConsensusSearch(assetIDHex, ".balance")
@@ -392,6 +392,7 @@ func showdatalinesLine(main *gocui.View, qc *QredoChainTX, count int) {
 				panic("Fatal error retrieving balance")
 			}
 			if len(data) == 8 {
+
 				balance := int64(binary.LittleEndian.Uint64(data))
 				balanceStr := PadRight(fmt.Sprintf("%d", balance), " ", getCol("amount").pad)
 				qc.balance = color.Cyan.Sprintf("%s", balanceStr)
