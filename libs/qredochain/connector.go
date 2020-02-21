@@ -274,7 +274,7 @@ func (nc *NodeConnector) SingleRawChainSearch(query string) (result []byte, err 
 	tmClient := nc.TmClient
 	r, err := tmClient.TxSearch(query, false, 0, 0)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to SingleRawChainSearch - query %s %d %d", query)
+		return nil, errors.Wrapf(err, "Failed to SingleRawChainSearch - query %s ", query)
 	}
 	chainTx := r.Txs[0]
 	tx := chainTx.Tx

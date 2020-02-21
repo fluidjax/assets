@@ -267,8 +267,8 @@ func Test_WalletTransfer(t *testing.T) {
 	w2, _ := NewUpdateWallet(w1, idNewOwner)
 
 	//send 30 BTC to idT3
-	w2.AddWalletTransfer(idT3.Key(), 30)
-	w2.AddWalletTransfer(idT2.Key(), 22)
+	w2.AddWalletTransfer(idT3.Key(), 30, idT3.Key()) //for now we just transfer to the IDDoc Asset, but it should be a Wallet AssetID
+	w2.AddWalletTransfer(idT2.Key(), 22, idT3.Key())
 
 	//Change Payload to a SettlePush Type Transfer
 	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_SettlePush

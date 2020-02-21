@@ -17,7 +17,6 @@ specific language governing permissions and limitations
 under the License.
 */
 
-
 package bitcoin
 
 import (
@@ -78,18 +77,20 @@ func (conn *UnderlyingConnector) ProcessRecentTransactions(blockhash *chainhash.
 		} else {
 			count++
 			//fmt.Println(tx.TxID, " * READY *", tx.Confirmations, " confirmations")
-			amount := float32(tx.Amount)
-			txid, code, err := conn.BroadcastUnderlyingChainDeposit(tx.TxID, tx.Address, protobuffer.PBCryptoCurrency_BTC, amount)
+			amount := int64(tx.Amount)
+			TxID := []byte(tx.TxID)
+			address := []byte(tx.Address)
+			txid, code, err := conn.BroadcastUnderlyingChainDeposit(TxID, address, protobuffer.PBCryptoCurrency_BTC, amount)
 			if code != 0 || err != nil {
 				return blockhash, 0, err
 			}
-			fmt.Printf("Underlying ADD: Address: %v  TXID: %v \n", tx.Address, txid)
+			fmt.Printf("Underlying ADD: Address: %v  TXID: %v \n", address, txid)
 		}
 	}
 	return nextBlockHash, count, nil
 }
 
-func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID string, address string, currency protobuffer.PBCryptoCurrency, amount float32) (txid string, code qredochain.TransactionCode, err error) {
+func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, address []byte, currency protobuffer.PBCryptoCurrency, amount int64) (txid string, code qredochain.TransactionCode, err error) {
 	underlying, err := assets.NewUnderlying()
 	if err != nil {
 		return txid, code, err

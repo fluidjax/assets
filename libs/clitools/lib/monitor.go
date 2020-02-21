@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/jroimartin/gocui"
 	"github.com/qredo/assets/libs/assets"
+	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/qredochain"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -39,12 +41,12 @@ var latched = false
 //Monitor - Monitor the chain in real time
 func (cliTool *CLITool) Monitor() (err error) {
 
-	coldefs.Set("num", col{"Num", 4})
+	coldefs.Set("num", col{"Num", 3})
 	coldefs.Set("time", col{"Time", 6})
 	coldefs.Set("block", col{"Blk", 5})
-	coldefs.Set("type", col{"Type", 12})
+	coldefs.Set("type", col{"Type", 14})
 	coldefs.Set("assetid", col{"AssetID", 64})
-	coldefs.Set("size", col{"Size", 6})
+	coldefs.Set("size", col{"Size", 4})
 	coldefs.Set("amount", col{"Amount", 8})
 
 	connector = cliTool.NodeConn
@@ -362,7 +364,7 @@ func showdatalinesLine(main *gocui.View, qc *QredoChainTX, count int) {
 	txType := asset.Type.String()
 
 	if asset.Index > 1 {
-		txType = "U" + txType
+		txType = "Updated" + txType
 	}
 	assetID := asset.ID
 	assetIDHex := hex.EncodeToString(assetID)
@@ -480,6 +482,21 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	}
 
 	//fmt.Fprintf(info, "height %d\n", sizeY)
+
+	chainData := res.Data.(tmtypes.EventDataTx)
+	hash := chainData.Tx.Hash()
+	result := make(map[string]string)
+	result["TxID"] = hex.EncodeToString(hash)
+
+	original := reflect.ValueOf(result)
+	copy := reflect.New(original.Type()).Elem()
+	TranslateRecursive(copy, original)
+
+	pp, _ := prettyjson.Marshal(copy.Interface())
+
+	fmt.Fprintf(info, string(pp))
+
 	fmt.Fprintf(info, prettyStringFromSignedAsset(signedAsset))
+
 	return nil
 }
