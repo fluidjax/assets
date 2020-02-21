@@ -177,7 +177,7 @@ SendUnderLying() {
 SendMPC() {
 
 	#Fake an random address from MPC
-	mpcadd=$(openssl rand -hex 8)
+	mpcadd=$(openssl dgst -sha256 -hmac abc <<< "$newWalletID")
 
 	echo Generate a new MPC transaction
 	json='{

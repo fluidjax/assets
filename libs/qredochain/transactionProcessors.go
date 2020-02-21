@@ -113,6 +113,12 @@ func (app *QredoChain) processUnderlying(underlying *assets.Underlying, lightWei
 	}
 
 	if lightWeight == false {
+		//set UTxID so its not added twice
+		err = app.SetWithSuffix(underlyingTxID, ".UTxID", []byte("1"))
+		if err != nil {
+			return CodeDatabaseFail, nil
+		}
+
 		//underlying has Crypto Address - get AssetID from KV Store
 		assetID, err := app.GetWithSuffix(address, ".ad2as")
 		if err != nil {

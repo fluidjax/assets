@@ -42,8 +42,8 @@ func (cliTool *CLITool) CreateUnderlyingWithJSON(jsonParams string, broadcast bo
 
 	amount := int64(cJSON.Amount)
 	payload.Amount = amount
-	payload.Address = cJSON.Address
-	payload.TxID = cJSON.TxID
+	payload.Address = []byte(cJSON.Address)
+	payload.TxID = []byte(cJSON.TxID)
 	under.AssetKeyFromPayloadHash()
 
 	txid := ""
