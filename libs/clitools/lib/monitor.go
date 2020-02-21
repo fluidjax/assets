@@ -458,7 +458,6 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 
 	info, err := g.View("info")
 	info.Clear()
-	//dumpStatus(g)
 	info.Editable = true
 	info.Wrap = true
 
@@ -467,9 +466,9 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	}
 
 	_, y := main.Cursor()
-	itemNumber := y + displayTopItem
+	itemNumber := y + displayTopItem - 1
 
-	if itemNumber >= len(datalines) {
+	if itemNumber < 0 || itemNumber > len(datalines) {
 		return nil
 	}
 	res := datalines[itemNumber].result
