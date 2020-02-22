@@ -114,7 +114,7 @@ func Test_IDOC(t *testing.T) {
 
 	//Tendermint DB - Local Search
 	query := fmt.Sprintf("tx.hash='%v'", txid)
-	res, err := core.TxSearch(nil, query, true, 1, 30)
+	res, err := core.TxSearch(nil, query, true, 1, 30, "")
 	compareAssets(t, res.Txs[0].Tx, serializedIDDoc, i.Key())
 
 	//Tendermint DB - Remote Search
@@ -143,10 +143,10 @@ func Test_IDOC(t *testing.T) {
 	assert.True(t, len(tresq2.Txs) == 0, "Should have 1 matching tag")
 
 	//Tags Local
-	tlresq, tlerr := core.TxSearch(nil, "tag.qredo_test_tag='abc'", false, 1, 1)
+	tlresq, tlerr := core.TxSearch(nil, "tag.qredo_test_tag='abc'", false, 1, 1, "")
 	assert.Nil(t, tlerr, "Error should be nil", tlerr)
 	assert.True(t, len(tlresq.Txs) == 1, "Should have 1 matching tag")
-	tlresq2, tlerr2 := core.TxSearch(nil, "tag.qredo_test_tag='notfound'", false, 1, 1)
+	tlresq2, tlerr2 := core.TxSearch(nil, "tag.qredo_test_tag='notfound'", false, 1, 1, "")
 	assert.Nil(t, tlerr2, "Error should be nil", tlerr2)
 	assert.True(t, len(tlresq2.Txs) == 0, "Should have 1 matching tag")
 

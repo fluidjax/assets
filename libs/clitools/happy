@@ -222,7 +222,6 @@ SendMPC
 SendUnderLying
 SendUnderLying
 GetBalance
-
 PrepWalletUpdate
 SignForEachIDoc
 SendWallet

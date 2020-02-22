@@ -101,7 +101,7 @@ func (nc *NodeConnector) Stop() {
 }
 
 func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, numPerPage int) (resultRaw *ctypes.ResultTxSearch, err error) {
-	resultRaw, err = nc.TmClient.TxSearch(query, prove, currentPage, numPerPage)
+	resultRaw, err = nc.TmClient.TxSearch(query, prove, currentPage, numPerPage, "")
 	return resultRaw, err
 }
 
@@ -179,7 +179,7 @@ func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {
 	//query := fmt.Sprintf("tag.txid='%s'", txHash)
 	query := "tag.myname='chris'"
 	print("QUERY:", query, "\n")
-	result, err := nc.TmClient.TxSearch(query, true, 1, 1)
+	result, err := nc.TmClient.TxSearch(query, true, 1, 1, "")
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (nc *NodeConnector) SingleRawConsensusSearch(key []byte) (data []byte, err 
 
 func (nc *NodeConnector) SingleRawChainSearch(query string) (result []byte, err error) {
 	tmClient := nc.TmClient
-	r, err := tmClient.TxSearch(query, false, 0, 0)
+	r, err := tmClient.TxSearch(query, false, 0, 0, "")
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to SingleRawChainSearch - query %s ", query)
 	}
@@ -289,7 +289,7 @@ func (nc *NodeConnector) QredoChainSearch(query string) (results []*protobuffer.
 	tmClient := nc.TmClient
 
 	for {
-		result, err := tmClient.TxSearch(query, false, currentPage, numPerPage)
+		result, err := tmClient.TxSearch(query, false, currentPage, numPerPage, "asc")
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to search to query %s %d %d", query, currentPage, numPerPage)
 		}

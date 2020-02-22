@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/elliotchance/orderedmap"
@@ -27,6 +28,7 @@ type col struct {
 	pad  int
 }
 
+var mux sync.Mutex
 var coldefs = orderedmap.NewOrderedMap()
 
 type QredoChainTX struct {
@@ -250,35 +252,6 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-func txListener(g *gocui.Gui) {
-	defer wg.Done()
-	for {
-		select {
-		case <-done:
-			return
-		case incoming := <-out:
-
-			res := QredoChainTX{
-				result:  &incoming,
-				balance: "",
-			}
-			datalines = append(datalines, &res)
-
-			main, _ := g.View("main")
-			_, maxY := main.Size()
-
-			_ = maxY
-			if latched == true && len(datalines) > maxY-1 {
-				displayTopItem++
-			}
-			showList(g)
-			addItemToScreen(g, res)
-			displayDetail(g, main)
-
-		}
-	}
-}
-
 type head struct {
 	name string
 	pad  int
@@ -500,4 +473,36 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	fmt.Fprintf(info, prettyStringFromSignedAsset(signedAsset))
 
 	return nil
+}
+
+func txListener(g *gocui.Gui) {
+	defer wg.Done()
+	for {
+		select {
+		case <-done:
+			return
+		case incoming := <-out:
+			mux.Lock()
+			res := QredoChainTX{
+				result:  &incoming,
+				balance: "",
+			}
+			datalines = append(datalines, &res)
+
+			g.Update(func(g *gocui.Gui) error {
+				main, _ := g.View("main")
+				_, maxY := main.Size()
+
+				_ = maxY
+				if latched == true && len(datalines) > maxY-1 {
+					displayTopItem++
+				}
+				showList(g)
+				addItemToScreen(g, res)
+				displayDetail(g, main)
+				mux.Unlock()
+				return nil
+			})
+		}
+	}
 }

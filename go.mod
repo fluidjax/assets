@@ -8,7 +8,7 @@ require (
 	github.com/dgraph-io/badger v1.6.0
 	github.com/elliotchance/orderedmap v1.2.0
 	github.com/fatih/color v1.9.0
-	github.com/go-kit/kit v0.9.0
+	github.com/go-kit/kit v0.10.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.3
 	github.com/gookit/color v1.2.2
@@ -19,10 +19,10 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20200204031403-4d2b513ad8be // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rivo/tview v0.0.0-20200204110323-ae3d8cac5e4b
-	github.com/spf13/viper v1.6.1
-	github.com/stretchr/testify v1.4.0
+	github.com/spf13/viper v1.6.2
+	github.com/stretchr/testify v1.5.1
 	github.com/tendermint/abci v0.12.0
-	github.com/tendermint/tendermint v0.33.0
+	github.com/tendermint/tendermint v0.33.1
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/urfave/cli v1.22.2
 	github.com/urfave/cli/v2 v2.1.1
@@ -30,3 +30,5 @@ require (
 )
 
 replace github.com/btcsuite/btcd => github.com/qredo/btcd v0.21.1
+
+replace github.com/tendermint/tendermint => /Users/chris/dev/qredo/tendermint/
