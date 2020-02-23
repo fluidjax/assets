@@ -43,9 +43,9 @@ var latched = false
 //Monitor - Monitor the chain in real time
 func (cliTool *CLITool) Monitor() (err error) {
 
-	coldefs.Set("num", col{"Num", 3})
+	coldefs.Set("num", col{"Num", 8})
 	coldefs.Set("time", col{"Time", 6})
-	coldefs.Set("block", col{"Blk", 5})
+	coldefs.Set("block", col{"Blk", 8})
 	coldefs.Set("type", col{"Type", 14})
 	coldefs.Set("assetid", col{"AssetID", 64})
 	coldefs.Set("size", col{"Size", 4})
