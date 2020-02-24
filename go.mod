@@ -3,6 +3,7 @@ module github.com/qredo/assets
 go 1.13
 
 require (
+	github.com/MinterTeam/minter-go-node v1.0.5
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btcutil v1.0.1
 	github.com/dgraph-io/badger v1.6.0
@@ -22,6 +23,7 @@ require (
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
 	github.com/tendermint/abci v0.12.0
+	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/tendermint v0.33.1
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/urfave/cli v1.22.2

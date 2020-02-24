@@ -1,6 +1,8 @@
 package qredochain
 
 import (
+	"fmt"
+
 	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -10,7 +12,7 @@ import (
 
 //QredoChain -
 type QredoChain struct {
-	db           *badger.DB
+	db           *AppDB
 	currentBatch *badger.Txn
 }
 
@@ -18,8 +20,12 @@ var _ abcitypes.Application = (*QredoChain)(nil)
 
 //NewQredoChain -
 func NewQredoChain(db *badger.DB) *QredoChain {
+
+	adb := NewAppDB(db)
+
+	_ = adb
 	kv := &QredoChain{
-		db: db,
+		db: adb,
 	}
 	return kv
 }
@@ -174,6 +180,10 @@ func (app *QredoChain) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.Res
 	//			 We may seek to generalize this in the future.
 	// The LastCommitInfo and ByzantineValidators can be used to determine rewards and punishments for the validators.
 	//			 NOTE validators here do not include pubkeys.
+	height := uint64(req.Header.Height)
+	app.db.SetLastHeight(height)
+	fmt.Printf("Current block is %d", app.db.GetLastHeight())
+
 	app.currentBatch = app.db.NewTransaction(true)
 	return abcitypes.ResponseBeginBlock{}
 }
