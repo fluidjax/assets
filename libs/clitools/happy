@@ -1,6 +1,23 @@
 #!/bin/bash
 
+# Some Stats for reference:
+# 40 hour run,  550,000 TXs
+# /tmp/example 884M data directory
+# assets/libs/app/data/ 669M
+# Restart App and re-process all transaction (they will all exsit so will return with "Fail to add IDDoc - tx already in Consensus Database")
+# Time taken = 2mins for 0.5million records.
+# Large chain set 'ulimit -n 4096'  else too many open files error
 #Use -d flag for debug info
+
+
+hasNode=$(qc status)
+if [ $? -ne 0 ]; then
+    echo "Error Connecting to QredoChain Node"
+	exit 1
+fi
+
+
+set -e
 
 dump (){
 	if [ $d_flag = 'true' ]; then
@@ -214,6 +231,11 @@ build
 
 
 debug=false
+
+if [ -x "$(command -v tabset)" ]; then
+    tabset happy
+fi
+
 
 MakeIDDocs
 MakeWallet

@@ -1,5 +1,9 @@
 package qc
 
+import (
+	prettyjson "github.com/hokaccha/go-prettyjson"
+)
+
 func (cliTool *CLITool) Status() (err error) {
 
 	stat, err := cliTool.NodeConn.TmClient.Status()
@@ -19,10 +23,13 @@ func (cliTool *CLITool) Status() (err error) {
 	if err != nil {
 		return err
 	}
+
 	addResultItem("status", stat)
 	addResultItem("ConsensusState", consensusState)
 	addResultItem("Health", health)
 	addResultItem("NetInfo", netInfo)
-	ppResult()
-	return
+
+	pp, _ := prettyjson.Marshal(res)
+	print(string(pp))
+	return nil
 }

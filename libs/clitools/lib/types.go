@@ -9,7 +9,8 @@ import (
 
 //CLITool connector for CLI
 type CLITool struct {
-	NodeConn *qredochain.NodeConnector
+	NodeConn      *qredochain.NodeConnector
+	ConnectString string
 }
 
 var (

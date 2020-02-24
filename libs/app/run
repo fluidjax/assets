@@ -1,4 +1,10 @@
 #!/bin/bash
+
+
+if [ -x "$(command -v tabset)" ]; then
+    tabset Qredochain
+fi
+
 rm ./app
 set -e
 go build

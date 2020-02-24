@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
+	"github.com/gookit/color"
 	qc "github.com/qredo/assets/libs/clitools/lib"
 	"github.com/qredo/assets/libs/qredochain"
 	"github.com/urfave/cli/v2"
@@ -57,8 +58,10 @@ func main() {
 					if c.NArg() > 0 {
 						query = c.Args().Get(0)
 					}
-					cliTool.PPQredoChainSearch(query)
-					return nil
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.PPQredoChainSearch(query)
 				},
 			},
 			&cli.Command{
@@ -83,8 +86,10 @@ func main() {
 					if c.NArg() > 1 {
 						suffix = c.Args().Get(1)
 					}
-					cliTool.PPConsensusSearch(query, suffix)
-					return nil
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.PPConsensusSearch(query, suffix)
 				},
 			},
 			&cli.Command{
@@ -111,6 +116,9 @@ func main() {
 					authref := ""
 					if c.NArg() > 0 {
 						authref = c.Args().Get(0)
+					}
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
 					return cliTool.CreateIDDoc(authref, broadcast)
 				},
@@ -140,11 +148,11 @@ func main() {
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
 					broadcast := c.Bool("broadcast")
-					if c.String("json") != "" {
-						return cliTool.CreateWalletWithJSON(c.String("json"), broadcast)
-
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-					return nil
+					return cliTool.CreateWalletWithJSON(c.String("json"), broadcast)
+
 				},
 			},
 			&cli.Command{
@@ -165,10 +173,11 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					if c.String("json") != "" {
-						return cliTool.PrepareWalletUpdateWithJSON(c.String("json"))
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-					return nil
+					return cliTool.PrepareWalletUpdateWithJSON(c.String("json"))
+
 				},
 			},
 			&cli.Command{
@@ -196,11 +205,12 @@ func main() {
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
 					broadcast := c.Bool("broadcast")
-					if c.String("json") != "" {
-						return cliTool.CreateUnderlyingWithJSON(c.String("json"), broadcast)
-
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-					return nil
+
+					return cliTool.CreateUnderlyingWithJSON(c.String("json"), broadcast)
+
 				},
 			},
 			&cli.Command{
@@ -227,11 +237,11 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					broadcast := c.Bool("broadcast")
-					if c.String("json") != "" {
-						return cliTool.CreateMPCWithJSON(c.String("json"), broadcast)
+					if cliTool.NodeConn == nil {
+						return errors.New("Error: Fail to connect to Node - " + cliTool.ConnectString)
 					}
-					return nil
+					broadcast := c.Bool("broadcast")
+					return cliTool.CreateMPCWithJSON(c.String("json"), broadcast)
 				},
 			},
 			&cli.Command{
@@ -252,10 +262,12 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					if c.String("json") != "" {
-						return cliTool.Sign(c.String("json"))
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-					return nil
+
+					return cliTool.Sign(c.String("json"))
+
 				},
 			},
 			&cli.Command{
@@ -282,11 +294,12 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					broadcast := c.Bool("broadcast")
-					if c.String("json") != "" {
-						return cliTool.AggregateWalletSign(c.String("json"), broadcast)
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-					return nil
+
+					broadcast := c.Bool("broadcast")
+					return cliTool.AggregateWalletSign(c.String("json"), broadcast)
 				},
 			},
 			&cli.Command{
@@ -300,6 +313,10 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+
 					iddoc := ""
 					tx := ""
 					if c.NArg() > 0 {
@@ -312,11 +329,7 @@ func main() {
 					} else {
 						return nil
 					}
-					err := cliTool.VerifyTX(iddoc, tx)
-					if err != nil {
-						return cli.Exit(fmt.Sprintf("Verify Fails: %s ", err.Error()), 100)
-					}
-					return nil
+					return cliTool.VerifyTX(iddoc, tx)
 				},
 			},
 			&cli.Command{
@@ -330,8 +343,11 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					cliTool.GenerateSeed()
-					return nil
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.GenerateSeed()
+
 				},
 			},
 			&cli.Command{
@@ -339,7 +355,7 @@ func main() {
 				Name:            "balance",
 				Aliases:         []string{"bal"},
 				Usage:           "Display Balance for Supplied AssetID",
-				Description:     "Show status of QredoChain",
+				Description:     "Get balance(s) for supplied AssetID",
 				ArgsUsage:       "assetid",
 				Flags:           []cli.Flag{},
 				SkipFlagParsing: false,
@@ -351,8 +367,10 @@ func main() {
 					if c.NArg() > 0 {
 						assetid = c.Args().Get(0)
 					}
-					cliTool.Balance(assetid)
-					return nil
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.Balance(assetid)
 				},
 			},
 			&cli.Command{
@@ -362,12 +380,14 @@ func main() {
 				Description:     "Show status of QredoChain",
 				Flags:           []cli.Flag{},
 				SkipFlagParsing: false,
-				HideHelp:        false,
+				HideHelp:        true,
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					cliTool.Status()
-					return nil
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.Status()
 				},
 			},
 			&cli.Command{
@@ -381,23 +401,10 @@ func main() {
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
-					cliTool.Monitor()
-					return nil
-				},
-			},
-			&cli.Command{
-				Name:            "monitor2",
-				Aliases:         []string{"m2", "mon2"},
-				Usage:           "Monitor the Qredochain for incoming transactions",
-				Description:     "Monitor the Qredochain for incoming transactions",
-				Flags:           []cli.Flag{},
-				SkipFlagParsing: false,
-				HideHelp:        false,
-				Hidden:          false,
-				HelpName:        "",
-				Action: func(c *cli.Context) error {
-					cliTool.Monitor2()
-					return nil
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.Monitor()
 				},
 			},
 		},
@@ -415,45 +422,37 @@ func main() {
 		HideHelp:             false,
 		HideVersion:          false,
 		Before: func(c *cli.Context) error {
-
 			if connector == "" {
 				connector = defaultConnector
 			}
-			nc, err := qredochain.NewNodeConnector(connector, "", nil, nil)
-			if err != nil {
-				return err
-			}
+			nc, _ := qredochain.NewNodeConnector(connector, "", nil, nil)
+			//we trap any failure later - else we print the help screen everytime
 			cliTool.NodeConn = nc
+			cliTool.ConnectString = connector
 			return nil
 		},
 		After: func(c *cli.Context) error {
-			cliTool.NodeConn.Stop()
+			if cliTool.NodeConn != nil {
+				cliTool.NodeConn.Stop()
+			}
 			return nil
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			fmt.Fprintf(c.App.Writer, "Command not found %q. \n", command)
 		},
 		OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-			print(err)
 			if isSubcommand {
 				return err
 			}
-
-			fmt.Fprintf(c.App.Writer, "WRONG: %#v\n", err)
+			//fmt.Fprintf(c.App.Writer, "WRONG: %#v\n", err)
 			return nil
-		},
-		Action: func(c *cli.Context) error {
-			return nil
-		},
-		Metadata: map[string]interface{}{
-			"layers":          "many",
-			"explicable":      false,
-			"whatever-values": 19.99,
 		},
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		color.Red.Println(err.Error())
+		os.Exit(1)
+		return
 	}
 }
 
