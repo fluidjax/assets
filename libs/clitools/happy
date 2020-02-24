@@ -10,7 +10,7 @@
 #Use -d flag for debug info
 
 
-hasNode=$(qc status)
+hasNode=$(qc status -silent)
 if [ $? -ne 0 ]; then
     echo "Error Connecting to QredoChain Node"
 	exit 1

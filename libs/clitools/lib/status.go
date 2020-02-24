@@ -4,13 +4,12 @@ import (
 	prettyjson "github.com/hokaccha/go-prettyjson"
 )
 
-func (cliTool *CLITool) Status() (err error) {
+func (cliTool *CLITool) Status(silent bool) (err error) {
 
 	stat, err := cliTool.NodeConn.TmClient.Status()
 	if err != nil {
 		return nil
 	}
-
 	consensusState, err := cliTool.NodeConn.TmClient.ConsensusState()
 	if err != nil {
 		return err
@@ -30,6 +29,9 @@ func (cliTool *CLITool) Status() (err error) {
 	addResultItem("NetInfo", netInfo)
 
 	pp, _ := prettyjson.Marshal(res)
-	print(string(pp))
+
+	if silent == false {
+		print(string(pp))
+	}
 	return nil
 }

@@ -374,20 +374,28 @@ func main() {
 				},
 			},
 			&cli.Command{
-				Name:            "status",
-				Aliases:         []string{"s"},
-				Usage:           "Display Qredochain status information",
-				Description:     "Show status of QredoChain",
-				Flags:           []cli.Flag{},
+				Name:        "status",
+				Aliases:     []string{"s"},
+				Usage:       "Display Qredochain status information",
+				Description: "Show status of QredoChain",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "silent",
+						Aliases: []string{"s"},
+						Value:   false,
+						Usage:   "no output",
+					},
+				},
 				SkipFlagParsing: false,
 				HideHelp:        true,
 				Hidden:          false,
 				HelpName:        "",
 				Action: func(c *cli.Context) error {
+					silent := c.Bool("silent")
 					if cliTool.NodeConn == nil {
 						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-					return cliTool.Status()
+					return cliTool.Status(silent)
 				},
 			},
 			&cli.Command{
