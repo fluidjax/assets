@@ -1,7 +1,7 @@
 package qredochain
 
 import (
-	"fmt"
+	"crypto/sha256"
 
 	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
@@ -9,11 +9,14 @@ import (
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
+//https://k0d.su/dkodnik/minter-go-node/src/commit/14439248926def5f6f1d334dc9a84f7d0d2e5a0a/core/minter/minter.go?lang=pl-PL
+
 
 //QredoChain -
 type QredoChain struct {
 	db           *AppDB
 	currentBatch *badger.Txn
+	height       uint64
 }
 
 var _ abcitypes.Application = (*QredoChain)(nil)
@@ -31,12 +34,21 @@ func NewQredoChain(db *badger.DB) *QredoChain {
 }
 
 //Info -
-func (QredoChain) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
-	return abcitypes.ResponseInfo{}
+func (app *QredoChain) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
+	lastHeight := int64(app.db.GetLastHeight())
+	lastBlockHash := app.db.GetLastBlockHash()
+	if lastHeight == 0 {
+		return abcitypes.ResponseInfo{}
+	}
+
+	return abcitypes.ResponseInfo{
+		LastBlockHeight:  lastHeight,
+		LastBlockAppHash: lastBlockHash,
+	}
 }
 
 //SetOption -
-func (QredoChain) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
+func (app *QredoChain) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
 	return abcitypes.ResponseSetOption{}
 }
 
@@ -73,31 +85,12 @@ func (app *QredoChain) Commit() abcitypes.ResponseCommit {
 
 	app.currentBatch.Commit()
 
-	// print("--------COMMIT-----------------------------------------------------\n")
-	// app.db.View(func(txn *badger.Txn) error {
-	// 	opts := badger.DefaultIteratorOptions
-	// 	opts.PrefetchSize = 10
-	// 	it := txn.NewIterator(opts)
-	// 	defer it.Close()
-	// 	for it.Rewind(); it.Valid(); it.Next() {
-	// 		print("Inside loop")
-	// 		item := it.Item()
-	// 		k := item.Key()
-	// 		err := item.Value(func(v []byte) error {
+	hash := sha256.Sum256([]byte("TEST"))
 
-	// 			fmt.Printf("key=%s, value=%s\n", hex.EncodeToString(k), hex.EncodeToString(v))
-	// 			return nil
-	// 		})
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// 	return nil
-	// })
+	app.db.SetLastBlockHash(hash[:])
+	app.db.SetLastHeight(app.height)
 
-	// print("--------COMMIT END-----------------------------------------------------\n")
-
-	return abcitypes.ResponseCommit{Data: []byte{}}
+	return abcitypes.ResponseCommit{Data: hash[:]}
 }
 
 //Query -
@@ -180,9 +173,9 @@ func (app *QredoChain) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.Res
 	//			 We may seek to generalize this in the future.
 	// The LastCommitInfo and ByzantineValidators can be used to determine rewards and punishments for the validators.
 	//			 NOTE validators here do not include pubkeys.
-	height := uint64(req.Header.Height)
-	app.db.SetLastHeight(height)
-	fmt.Printf("Current block is %d", app.db.GetLastHeight())
+	app.height = uint64(req.Header.Height)
+	//app.db.SetLastHeight(height)
+	//fmt.Printf("Current block is %d", app.db.GetLastHeight())
 
 	app.currentBatch = app.db.NewTransaction(true)
 	return abcitypes.ResponseBeginBlock{}

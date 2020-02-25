@@ -7,7 +7,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 

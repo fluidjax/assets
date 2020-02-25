@@ -181,6 +181,38 @@ func main() {
 				},
 			},
 			&cli.Command{
+				Name:        "sendwallet",
+				Aliases:     []string{"sw", ""},
+				Usage:       "Aggregate Sign, Check & Broadcast Wallet update",
+				Description: "",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+
+					broadcast := c.Bool("broadcast")
+					return cliTool.AggregateWalletSign(c.String("json"), broadcast)
+				},
+			},
+			&cli.Command{
 				Name:        "sendunderlying",
 				Aliases:     []string{"su"},
 				Usage:       "Create a new Underlying Transaction",
@@ -245,10 +277,41 @@ func main() {
 				},
 			},
 			&cli.Command{
-				Name:        "sign",
-				Aliases:     []string{"s"},
-				Usage:       "Update an existing wallet with a transfer",
-				Description: "Update an existing wallet with a transfer\n",
+				Name:        "createkv",
+				Aliases:     []string{"ckv"},
+				Usage:       "Create a new KV Transaction",
+				Description: "Create a new KV Transaction",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Error: Fail to connect to Node - " + cliTool.ConnectString)
+					}
+					broadcast := c.Bool("broadcast")
+					return cliTool.CreateKVJSON(c.String("json"), broadcast)
+				},
+			},
+			&cli.Command{
+				Name:        "prepkvupdate",
+				Aliases:     []string{"pkvu"},
+				Usage:       "Prepare a New KVAsset Update Transaction for Signing",
+				Description: "Prepare a New KVAsset Update Transaction for Signing",
 				ArgsUsage:   "",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -265,15 +328,14 @@ func main() {
 					if cliTool.NodeConn == nil {
 						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
-
-					return cliTool.Sign(c.String("json"))
+					return cliTool.PrepareKVUpdateWithJSON(c.String("json"))
 
 				},
 			},
 			&cli.Command{
-				Name:        "sendwallet",
-				Aliases:     []string{"sw", ""},
-				Usage:       "Aggregate Sign, Check & Broadcast Wallet update",
+				Name:        "sendkv",
+				Aliases:     []string{"skv", ""},
+				Usage:       "Aggregate Sign, Check & Broadcast KV update",
 				Description: "",
 				ArgsUsage:   "",
 				Flags: []cli.Flag{
@@ -299,9 +361,67 @@ func main() {
 					}
 
 					broadcast := c.Bool("broadcast")
-					return cliTool.AggregateWalletSign(c.String("json"), broadcast)
+					return cliTool.AggregateKVSign(c.String("json"), broadcast)
 				},
 			},
+			&cli.Command{
+				Name:        "creategroup",
+				Aliases:     []string{"cg"},
+				Usage:       "Create a new Group Transaction",
+				Description: "Create a new Group Transaction",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Error: Fail to connect to Node - " + cliTool.ConnectString)
+					}
+					broadcast := c.Bool("broadcast")
+					return cliTool.CreateGroupJSON(c.String("json"), broadcast)
+				},
+			},
+			&cli.Command{
+				Name:        "sign",
+				Aliases:     []string{"s"},
+				Usage:       "Update an existing wallet with a transfer",
+				Description: "Update an existing wallet with a transfer\n",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+
+					return cliTool.Sign(c.String("json"))
+
+				},
+			},
+
 			&cli.Command{
 				Name:            "verifytx",
 				Aliases:         []string{"vtx"},

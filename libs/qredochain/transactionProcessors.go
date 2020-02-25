@@ -73,8 +73,64 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 		}
 		code, events := app.processMPC(mpc, lightWeight)
 		return uint32(code), events
+	case protobuffer.PBAssetType_KVAsset:
+		kv, err := assets.ReBuildKVAsset(signedAsset, assetID)
+		if err != nil {
+			return code.CodeTypeEncodingError, nil
+		}
+		code, events := app.processKVAsset(kv, tx, txHash, lightWeight)
+		return uint32(code), events
 	}
+
 	return code.CodeTypeEncodingError, nil
+}
+
+func (app *QredoChain) processKVAsset(kv *assets.KVAsset, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if app.exists(txHash) {
+		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
+		dumpMessage(2, "Fail to add wallet - tx already in chain\n")
+		return CodeAlreadyExists, nil
+	}
+
+	exists, err := app.Get(kv.Key())
+	if err != nil {
+		return CodeDatabaseFail, nil
+	}
+
+	if exists == nil {
+		return app.processKVCreate(kv, rawAsset, txHash, lightWeight)
+	} else {
+		return app.processKVUpdate(kv, rawAsset, txHash, lightWeight)
+	}
+
+	return CodeTypeOK, events
+}
+
+func (app *QredoChain) processKVUpdate(kv *assets.KVAsset, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if lightWeight == false {
+		err := app.Set(kv.Key(), txHash)
+		if err != nil {
+			return CodeDatabaseFail, nil
+		}
+		events = processTags(kv.CurrentAsset.Asset.Tags)
+
+	}
+	return CodeTypeOK, events
+}
+
+func (app *QredoChain) processKVCreate(kv *assets.KVAsset, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if lightWeight == false {
+		err1 := app.Set(txHash, rawAsset)
+		if err1 != nil {
+			return CodeDatabaseFail, nil
+		}
+		err2 := app.Set(kv.Key(), txHash)
+		if err2 != nil {
+			return CodeDatabaseFail, nil
+		}
+		events = processTags(kv.CurrentAsset.Asset.Tags)
+	}
+	return CodeTypeOK, events
 }
 
 func (app *QredoChain) processMPC(mpc *assets.MPC, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {

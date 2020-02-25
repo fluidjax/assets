@@ -16,7 +16,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/jroimartin/gocui"
 	"github.com/qredo/assets/libs/assets"
-	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/qredochain"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"

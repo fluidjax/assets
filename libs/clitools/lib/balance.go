@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+	"github.com/qredo/assets/libs/prettyjson"
 )
 
 func (cliTool *CLITool) Balance(assetID string) (err error) {

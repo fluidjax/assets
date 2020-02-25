@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/qredo/assets/libs/assets"
-	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+	"github.com/qredo/assets/libs/prettyjson"
 )
 
 func (cliTool *CLITool) GetIDDocForSeed(seedHex string) (iddoc *assets.IDDoc, err error) {

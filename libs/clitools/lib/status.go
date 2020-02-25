@@ -1,7 +1,7 @@
 package qc
 
 import (
-	prettyjson "github.com/hokaccha/go-prettyjson"
+	"github.com/qredo/assets/libs/prettyjson"
 )
 
 func (cliTool *CLITool) Status(silent bool) (err error) {

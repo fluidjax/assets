@@ -27,8 +27,10 @@ package assets
 import (
 	"bytes"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 )
 
 //SetKV - set the KV Field value
@@ -48,6 +50,17 @@ func (w *KVAsset) SetKV(key string, value []byte) error {
 		kvAsset.AssetFields = make(map[string][]byte)
 	}
 	kvAsset.AssetFields[key] = value
+	return nil
+}
+
+func (w *KVAsset) SetKeyString(key string) error {
+	if w.CurrentAsset == nil {
+		return errors.New("KVAsset - currentAsset is nil")
+	}
+	if key == "" {
+		return errors.New("KVAsset - key can't be empty")
+	}
+	w.CurrentAsset.Asset.ID = []byte(key)
 	return nil
 }
 
@@ -79,13 +92,17 @@ func (w *KVAsset) GetKV(key string) ([]byte, error) {
 }
 
 //Payload - return the KVAsset Payload object
-func (w *KVAsset) Payload() *protobuffer.PBKVAsset {
+func (w *KVAsset) Payload() (*protobuffer.PBKVAsset, error) {
 	if w == nil {
-		return nil
+		return nil, errors.New("KV is nil")
 	}
+	if w.CurrentAsset.Asset == nil {
+		return nil, errors.New("KV has no asset")
+	}
+
 	signatureAsset := w.CurrentAsset.Asset
 	KVAsset := signatureAsset.GetKVAsset()
-	return KVAsset
+	return KVAsset, nil
 }
 
 //NewKVAsset - Setup a new KVAsset
@@ -102,33 +119,8 @@ func NewKVAsset(iddoc *IDDoc, assetType protobuffer.PBKVAssetType) (w *KVAsset, 
 	w.CurrentAsset.Asset.ID = KVAssetKey
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_KVAsset
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
+	w.CurrentAsset.Asset.Index = 1
 	w.AssetKeyFromPayloadHash()
-	return w, nil
-}
-
-//NewUpdateKVAsset - Create a NewKVAsset for updates/transfers based on a previous one
-func NewUpdateKVAsset(previousKVAsset *KVAsset, iddoc *IDDoc) (w *KVAsset, err error) {
-	if iddoc == nil {
-		return nil, errors.New("NewUpdateKVAsset - supplied IDDoc is nil")
-	}
-	if previousKVAsset == nil {
-		return nil, errors.New("NewUpdateKVAsset - supplied previousKVAsset is nil")
-	}
-	p := previousKVAsset.CurrentAsset.Asset.GetKVAsset()
-	previousType := p.GetType()
-
-	w = emptyKVAsset(previousType)
-	if previousKVAsset.DataStore != nil {
-		w.DataStore = previousKVAsset.DataStore
-	}
-	w.CurrentAsset.Asset.ID = previousKVAsset.CurrentAsset.Asset.ID
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_KVAsset
-	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
-	w.PreviousAsset = previousKVAsset.CurrentAsset
-
-	//Deep copy the old Payload to the new one
-	w.DeepCopyUpdatePayload()
-
 	return w, nil
 }
 
@@ -167,7 +159,12 @@ func (w *KVAsset) ParseChanges() (unchanged, added, deleted [][]byte, err error)
 	case *protobuffer.PBAsset_KVAsset:
 		//KVAsset
 		previousSet := g.KVAsset.AssetFields
-		currentSet := w.Payload().AssetFields
+		payload, err := w.Payload()
+		if err != nil {
+			return nil, nil, nil, errors.New("Error retrieving Payload")
+		}
+
+		currentSet := payload.AssetFields
 
 		//Unchanged & Deleted
 		for _, pID := range previousSet {
@@ -206,7 +203,7 @@ func (w *KVAsset) ParseChanges() (unchanged, added, deleted [][]byte, err error)
 }
 
 //ReBuildKVAsset an existing KVAsset from it's on chain PBSignedAsset
-func ReBuildKVAsset(sig *protobuffer.PBSignedAsset, key []byte) (w *KVAsset, err error) {
+func ReBuildKVAsset(sig *protobuffer.PBSignedAsset, key []byte) (kv *KVAsset, err error) {
 	if sig == nil {
 		return nil, errors.New("ReBuildIDDoc  - sig is nil")
 	}
@@ -214,10 +211,10 @@ func ReBuildKVAsset(sig *protobuffer.PBSignedAsset, key []byte) (w *KVAsset, err
 		return nil, errors.New("ReBuildIDDoc  - key is nil")
 	}
 
-	w = &KVAsset{}
-	w.CurrentAsset = sig
-	w.setKey(key)
-	return w, nil
+	kv = &KVAsset{}
+	kv.CurrentAsset = sig
+	kv.setKey(key)
+	return kv, nil
 }
 
 func emptyKVAsset(KVAssetType protobuffer.PBKVAssetType) (w *KVAsset) {
@@ -235,4 +232,58 @@ func emptyKVAsset(KVAssetType protobuffer.PBKVAssetType) (w *KVAsset) {
 	payload.KVAsset = KVAsset
 	w.CurrentAsset.Asset.Payload = payload
 	return w
+}
+
+//LoadKVAsset -
+func LoadKVAsset(store store.StoreInterface, kvassetID []byte) (kv *KVAsset, err error) {
+	data, err := store.Load(kvassetID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	kv, err = ReBuildKVAsset(sa, kvassetID)
+	if err != nil {
+		return nil, err
+	}
+
+	return kv, nil
+
+}
+
+//NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
+func NewUpdateKVAsset(previousKVAsset *KVAsset, iddoc *IDDoc) (kv *KVAsset, err error) {
+
+	previousType := previousKVAsset.CurrentAsset.GetAsset().Type
+
+	kv = emptyKVAsset(protobuffer.PBKVAssetType(previousType))
+	if previousKVAsset.DataStore != nil {
+		kv.DataStore = previousKVAsset.DataStore
+	}
+	kv.CurrentAsset.Asset.ID = previousKVAsset.CurrentAsset.Asset.ID
+	kv.CurrentAsset.Asset.Type = protobuffer.PBAssetType_KVAsset
+	kv.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	kv.CurrentAsset.Asset.Index = previousKVAsset.CurrentAsset.Asset.Index + 1
+
+	kv.PreviousAsset = previousKVAsset.CurrentAsset
+
+	kv.DeepCopyUpdatePayload()
+
+	return kv, nil
+}
+
+//Payload - return the wallet Previous Payload object
+func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
+	if k == nil {
+		return nil, errors.New("KVAsset is nil")
+	}
+	if k.CurrentAsset.Asset == nil {
+		return nil, errors.New("KVAsset has no asset")
+	}
+	signatureAsset := k.PreviousAsset.Asset
+	kv := signatureAsset.GetKVAsset()
+	return kv, nil
 }

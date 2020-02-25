@@ -32,7 +32,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/boolparser"
-	"github.com/qredo/assets/libs/clitools/lib/prettyjson"
+	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
