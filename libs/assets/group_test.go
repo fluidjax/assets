@@ -58,10 +58,18 @@ func Test_Group(t *testing.T) {
 
 	w.ConfigureGroup(expression, participants, testDescription)
 
-	b := proto.NewBuffer(nil)
-	b.SetDeterministic(true)
-	b.Marshal(w.CurrentAsset.Asset)
-	msg1, _ := b.DecodeRawBytes(true)
+	var b []byte
+	buff := proto.NewBuffer(b)
+	buff.SetDeterministic(true)
+	err = buff.Marshal(w.CurrentAsset.Asset)
+	print(err.Error())
+	assert.NotNil(t, err, "Error should be nil")
+	msg1 := buff.Bytes()
+
+	// b := proto.NewBuffer(nil)
+	// b.SetDeterministic(true)
+	// b.Marshal(w.CurrentAsset.Asset)
+	// msg1, _ := b.DecodeRawBytes(true)
 	res1 := sha256.Sum256(msg1)
 	fmt.Println(hex.EncodeToString(res1[:]))
 

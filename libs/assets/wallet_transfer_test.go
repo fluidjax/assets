@@ -20,11 +20,13 @@ under the License.
 package assets
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
@@ -299,5 +301,52 @@ func Test_WalletTransfer(t *testing.T) {
 
 	payload, _ := w2.Payload()
 	assert.True(t, payload.SpentBalance == 152, "Invalid total spent")
+
+}
+
+func Test_ScriptTesting(t *testing.T) {
+	seed1, _ := hex.DecodeString("af37ab062cae50f77d2a33ff8361671e80451460b1133613c797e0d743897638a7900f17a3e4cb66c2d88cb86bc49a73")
+	seed2, _ := hex.DecodeString("b442ca9a5e487f6a2fb5bbb43d0205f2ae6f3624c5eff7952005ee592fe5fee433e0b7b59f3065217b26399547b58399")
+	seed3, _ := hex.DecodeString("a59ed2f6e3666f86fa8593cdc06727a23cbc9f36f6b7e9ca38ece954614f65175be8d027e2bc24dd7b6df71ed93c9d00")
+	seed4, _ := hex.DecodeString("92c0aad97d8c03cae7ffd4d415e04c3f3115aace732f00e035f9d996498ebf9a6ff8a8053c81683d860aaaea31d86360")
+
+	msg, _ := hex.DecodeString("0804122065613663373836653964313465336662323633636666386566303835646666381a20e4cfb76d0c25c746c7bf8957e88b4ce23ab1a1d9147c7e4005d1b84db6dc36c42002280132de010a044e6f6e6512d501080112157435202b207436202b207437203e203120262070321a260a0270321220da8e7b8af72751ac651df4c2681addc451a8435d845721b7c50e9839ef38e3c91a260a0274351220e8eaa3a434e8cd3a26f1b08dc1ae9394791f6e67fef383b91af712121377c4a21a260a0274361220d5f05cd6eb4ac291d8c84495637f95a3eb3ff659dc63ba648b5d498e4b1955101a260a0274371220b642bf9658b458753562adf75263a24ebacd01e785b1d45f36452a15451506ca221a736f6d65206465736372697074696f6e20676f657320686572659a013b080112110a046b65793112096e657776616c75653312110a046b65793212096e657776616c75653212110a046b65793312096e657776616c756531")
+	iddoc1, _ := NewIDDocWithSeed(seed1, "p1")
+	iddoc2, _ := NewIDDocWithSeed(seed2, "p1")
+	iddoc3, _ := NewIDDocWithSeed(seed3, "p1")
+	iddoc4, _ := NewIDDocWithSeed(seed4, "p1")
+
+	signature1, _ := Sign(msg, iddoc1)
+	fmt.Println(hex.EncodeToString(signature1))
+	signature2, _ := Sign(msg, iddoc2)
+	fmt.Println(hex.EncodeToString(signature2))
+	signature3, _ := Sign(msg, iddoc3)
+	fmt.Println(hex.EncodeToString(signature3))
+	signature4, _ := Sign(msg, iddoc4)
+	fmt.Println(hex.EncodeToString(signature4))
+
+	aggregatedSig := signature1
+
+	_, aggregatedSig = crypto.BLSAddG1(aggregatedSig, signature2)
+	_, aggregatedSig = crypto.BLSAddG1(aggregatedSig, signature3)
+	_, aggregatedSig = crypto.BLSAddG1(aggregatedSig, signature4)
+
+	fmt.Println(hex.EncodeToString(aggregatedSig))
+
+	aggregatedPublicKey := iddoc1.CurrentAsset.GetAsset().GetIddoc().BLSPublicKey
+	_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, iddoc2.CurrentAsset.GetAsset().GetIddoc().BLSPublicKey)
+	_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, iddoc3.CurrentAsset.GetAsset().GetIddoc().BLSPublicKey)
+	_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, iddoc4.CurrentAsset.GetAsset().GetIddoc().BLSPublicKey)
+
+	fmt.Println(hex.EncodeToString(aggregatedPublicKey))
+
+	rc := crypto.BLSVerify(msg, aggregatedPublicKey, aggregatedSig)
+	assert.True(t, rc == 0, "Return should be 0")
+
+	m, _ := hex.DecodeString("0804122036323161353261613062393930386335323962636432623336343037303739381a20e4cfb76d0c25c746c7bf8957e88b4ce23ab1a1d9147c7e4005d1b84db6dc36c42003280132de010a044e6f6e6512d501080112157435202b207436202b207437203e203120262070321a260a0270321220da8e7b8af72751ac651df4c2681addc451a8435d845721b7c50e9839ef38e3c91a260a0274351220e8eaa3a434e8cd3a26f1b08dc1ae9394791f6e67fef383b91af712121377c4a21a260a0274361220d5f05cd6eb4ac291d8c84495637f95a3eb3ff659dc63ba648b5d498e4b1955101a260a0274371220b642bf9658b458753562adf75263a24ebacd01e785b1d45f36452a15451506ca221a736f6d65206465736372697074696f6e20676f657320686572659a013b080112110a046b65793112096e657776616c75653312110a046b65793212096e657776616c75653212110a046b65793312096e657776616c756531")
+	p, _ := hex.DecodeString("0c57ff98f4125a8ef403cd5b974aaf6f8450436186c8a6934f9575c2d4fc4a199ce4e4836803870abb1272c4d2cfc5600640736edb4cf7941c3ffd7ac8bdc96226af193a1f75502cefcfedce7b2ca8cbc2b1aa239352f5b71164a73db4e46e3802b9e88865eea94ace75260ffa8a785eb22434c7fa8c41caaec2fb0e52b26115b4e03bd406faed802ec60eb82094c6980bcf0922f7dc10f31718e9b5b4bc6eb0101f607b06f487af55cf0d77c6c4b210f1a8d74fde16d3aeb3cbe805916e9910")
+	s, _ := hex.DecodeString("030ea6112061f860fb4ca1b1fac4c09205b339ebebeeb6f548db5e1d4aa4e444e9cc0b8a4b0015962182482fb696bb4708")
+	rc = crypto.BLSVerify(m, p, s)
+	//	assert.True(t, rc == 0, "Return should be 0")
 
 }

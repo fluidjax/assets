@@ -47,10 +47,10 @@ MakeKV() {
 	],
 	"Transfer": [{
 		"TransferType": 1,
-		"Expression": "t1 + t2 + t3 > 1 & p",
+		"Expression": "t1 + t2 + t3 > 1 & p1",
 		"description": "Here is the transfer Type 1",
 		"participants": [
-			{"name": "p", "ID": "'$p1_assetid'"},
+			{"name": "p1", "ID": "'$p1_assetid'"},
 			{"name": "t1","ID": "'$t1_assetid'"},
 			{"name": "t2","ID": "'$t2_assetid'"},
 			{"name": "t3","ID": "'$t3_assetid'"}
@@ -98,6 +98,9 @@ PrepKVUpdate() {
 	updateJson=$(echo $updateJson | sed 's/\n//g')
 	updateKV=$(qc pkvu -j="$updateJson")
 	serializedUnsignedAsset=$(echo $updateKV | jq -r .serializedUpdate)
+	echo -----------------------------------
+	echo $serializedUnsignedAsset
+	echo -----------------------------------
 }
 #----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -106,7 +109,7 @@ SignForEachIDoc() {
 
 	#sign for each IDDoc
 	json='{"seed":"'$p1_seed'","msg":"'$serializedUnsignedAsset'"}'
-	sigP=$(qc sign -j="$json" | jq -r .signature)
+	sigP1=$(qc sign -j="$json" | jq -r .signature)
 
 	json='{"seed":"'$t1_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT1=$(qc sign -j="$json" | jq -r .signature)
@@ -125,7 +128,7 @@ SignForEachIDoc() {
 SendKV() {
 	echo SendKVUpdate - Aggreate Sign, Verify and optionally broadcast
 	json='{"sigs":[
-				{"id":"'$p1_assetid'","abbreviation":"p","signature":"'$sigP'"},
+				{"id":"'$p1_assetid'","abbreviation":"p1","signature":"'$sigP1'"},
 				{"id":"'$t1_assetid'","abbreviation":"t1","signature":"'$sigT1'"},
 				{"id":"'$t2_assetid'","abbreviation":"t2","signature":"'$sigT2'"},
 				{"id":"'$t3_assetid'","abbreviation":"t3","signature":"'$sigT3'"}

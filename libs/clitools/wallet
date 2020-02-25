@@ -47,10 +47,10 @@ MakeWallet() {
 	"currency": "BTC",
 	"Transfer": [{
 		"TransferType": 2,
-		"Expression": "t1 + t2 + t3 > 1 & p",
+		"Expression": "t1 + t2 + t3 > 1 & p1",
 		"description": "Here is the transfer Type 2",
 		"participants": [
-			{"name": "p", "ID": "'$p1_assetid'"},
+			{"name": "p1", "ID": "'$p1_assetid'"},
 			{"name": "t1","ID": "'$t1_assetid'"},
 			{"name": "t2","ID": "'$t2_assetid'"},
 			{"name": "t3","ID": "'$t3_assetid'"}
@@ -112,16 +112,38 @@ SignForEachIDoc() {
 
 	#sign for each IDDoc
 	json='{"seed":"'$p1_seed'","msg":"'$serializedUnsignedAsset'"}'
+	echo --------------------
+	echo $json
+	echo --------------------
 	sigP=$(qc sign -j="$json" | jq -r .signature)
-
+echo --------------------
+	echo $json
+	echo --------------------
 	json='{"seed":"'$t1_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT1=$(qc sign -j="$json" | jq -r .signature)
-
+echo --------------------
+	echo $json
+	echo --------------------
 	json='{	"seed":"'$t2_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT2=$(qc sign -j="$json" | jq -r .signature)
-
+echo --------------------
+	echo $json
+	echo --------------------
 	json='{	"seed":"'$t3_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT3=$(qc sign -j="$json" | jq -r .signature)
+echo --------------------
+	echo $json
+	echo --------------------
+	dump "$sigP" "sigP"
+	dump "$sigT1" "sigT1"
+	dump "$sigT2" "sigT2"
+	dump "$sigT3" "sigT3"
+
+echo --------------------
+	echo $json
+	echo --------------------
+
+
 }
 
 
@@ -131,7 +153,7 @@ SignForEachIDoc() {
 SendWallet() {
 	echo SendWallet - Aggreate Sign, Verify and optionally broadcast
 	json='{"sigs":[
-				{"id":"'$p1_assetid'","abbreviation":"p","signature":"'$sigP'"},
+				{"id":"'$p1_assetid'","abbreviation":"p1","signature":"'$sigP'"},
 				{"id":"'$t1_assetid'","abbreviation":"t1","signature":"'$sigT1'"},
 				{"id":"'$t2_assetid'","abbreviation":"t2","signature":"'$sigT2'"},
 				{"id":"'$t3_assetid'","abbreviation":"t3","signature":"'$sigT3'"}
@@ -139,7 +161,7 @@ SendWallet() {
 			"walletUpdatePayload":'$updateJson'
 		}'
 	dump "$json" "Aggregate Sign"
-	updateComplete=$(qc sw -b=true -j="$json")
+	updateComplete=$(qc sw -b=false -j="$json")
 }
 
 #----------------------------------------------------------------------------------------------------------------------------------------

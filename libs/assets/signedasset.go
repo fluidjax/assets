@@ -32,9 +32,9 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/boolparser"
-	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/keystore"
+	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/store"
 )
@@ -52,7 +52,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if iddoc == nil {
 		return errors.New("Sign - supplied IDDoc is nil")
 	}
-	msg, err := proto.Marshal(a.CurrentAsset.Asset)
+	msg, err := a.SerializeAsset()
 	if err != nil {
 		return errors.Wrap(err, "Failed to Marshall Asset in Sign")
 	}
@@ -85,7 +85,7 @@ func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
 	if iddoc == nil {
 		return false, errors.New("Verify - supplied IDDoc is nil")
 	}
-	msg, err := proto.Marshal(a.CurrentAsset.Asset)
+	msg, err := a.SerializeAsset()
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to Marshall Asset in Verify")
 	}
@@ -118,7 +118,7 @@ func (a *SignedAsset) Save() error {
 		return errors.New("SignedAsset is nil")
 	}
 	store := a.DataStore
-	data, err := proto.Marshal(a.CurrentAsset)
+	data, err := a.SerializeSignedAsset()
 	if err != nil {
 		return err
 	}
@@ -466,6 +466,10 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	if err != nil {
 		return errors.Wrap(err, "Fail to Aggregated Signatures")
 	}
+	// fmt.Println("DATA:", hex.EncodeToString(data))
+	// fmt.Println("KEY:", hex.EncodeToString(aggregatedPublicKey))
+	// fmt.Println("SIG:", hex.EncodeToString(aggregatedSig))
+
 	rc = crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
 	if rc != 0 {
 		return errors.New("Signature failed to Verify")
@@ -601,6 +605,7 @@ func (a *SignedAsset) SerializeAsset() (s []byte, err error) {
 	if a.CurrentAsset.Asset == nil {
 		return nil, errors.New("Can't serialize nil payload")
 	}
+
 	s, err = proto.Marshal(a.CurrentAsset.Asset)
 	if err != nil {
 		s = nil
@@ -617,6 +622,7 @@ func (a *SignedAsset) SerializeSignedAsset() (s []byte, err error) {
 	if err != nil {
 		s = nil
 	}
+
 	return s, err
 }
 
