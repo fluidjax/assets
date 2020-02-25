@@ -24,6 +24,7 @@ var (
 	displayBottomItem = 0
 	highlightRow      = 0
 	txhistory         []ctypes.ResultEvent
+	truths            []string
 )
 
 type SignJSON struct {

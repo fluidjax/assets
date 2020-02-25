@@ -1,8 +1,10 @@
 package qc
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
@@ -61,6 +63,8 @@ func (cliTool *CLITool) kVFromKVUpdateJSON(signedUpdate *KVUpdatePayload) (*asse
 		return nil, err
 	}
 
+	originalKV.DataStore = cliTool.NodeConn
+
 	//Make New KV based on Existing
 	updatedKV, err := assets.NewUpdateKVAsset(originalKV, newOwnerIDDoc)
 	if err != nil {
@@ -74,8 +78,31 @@ func (cliTool *CLITool) kVFromKVUpdateJSON(signedUpdate *KVUpdatePayload) (*asse
 		updatedKV.SetKV(key, []byte(value))
 	}
 
+	var truths []string
+	for _, trans := range signedUpdate.Transfer {
+
+		binParticipants := map[string][]byte{}
+		for _, v := range trans.Participants {
+			binVal, err := hex.DecodeString(v.ID)
+			if err != nil {
+				return nil, err
+			}
+			binParticipants[v.Name] = binVal
+		}
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		updatedKV.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
+		truthTable, err := updatedKV.TruthTable(transferType)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range truthTable {
+			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
+			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
+		}
+	}
+
 	updatedKV.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(signedUpdate.TransferType)
-	updatedKV.DataStore = cliTool.NodeConn
 
 	return updatedKV, nil
 }

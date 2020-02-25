@@ -61,7 +61,6 @@ func (cliTool *CLITool) CreateKVJSON(jsonParams string, broadcast bool) (err err
 			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
 			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
 		}
-
 	}
 
 	kv.Sign(iddoc)

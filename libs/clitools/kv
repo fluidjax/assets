@@ -58,7 +58,6 @@ MakeKV() {
 	}]
 	}'
 
-echo $createJSON
 	createJSON=$(echo $createJSON | tr -d '\n')
 	createJSON=$(echo $createJSON | tr -d '\r')
 
@@ -84,13 +83,13 @@ PrepKVUpdate() {
 		],
 		"transfer":[{
 			"transferType":1,
-			"expression":"different expression",
+			"expression":"t5 + t6 + t7 > 1 & p2",
 			"description":"some description goes here",
 			"participants":[
-				{"name":"p","ID":"'$newOwnerAssetID'"},
-				{"name":"t1","ID":"'$t1_assetid'"},
-				{"name":"t2","ID":"'$t2_assetid'"},
-				{"name":"t4","ID":"'$t4_assetid'"}
+				{"name":"p2","ID":"'$p2_assetid'"},
+				{"name":"t5","ID":"'$t5_assetid'"},
+				{"name":"t6","ID":"'$t6_assetid'"},
+				{"name":"t7","ID":"'$t7_assetid'"}
 				] }]
 		}'
 
@@ -134,7 +133,6 @@ SendKV() {
 			"kvUpdatePayload":'$updateJson'
 		}'
 	dump "$json" "Aggregate Sign"
-	echo qc skv -b=true -j="$json" 
 	updateComplete=$(qc skv -b=true -j="$json")
 }
 

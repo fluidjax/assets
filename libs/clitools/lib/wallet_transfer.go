@@ -1,8 +1,10 @@
 package qc
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
@@ -60,11 +62,35 @@ func (cliTool *CLITool) walletFromWalletUpdateJSON(signedUpdate *WalletUpdatePay
 	if err != nil {
 		return nil, err
 	}
-
+	originalWallet.DataStore = cliTool.NodeConn
 	//Make New Wallet based on Existing
 	updatedWallet, err := assets.NewUpdateWallet(originalWallet, newOwnerIDDoc)
 	if err != nil {
 		return nil, err
+	}
+
+	var truths []string
+	for _, trans := range signedUpdate.Transfer {
+
+		binParticipants := map[string][]byte{}
+		for _, v := range trans.Participants {
+			binVal, err := hex.DecodeString(v.ID)
+			if err != nil {
+				return nil, err
+			}
+			binParticipants[v.Name] = binVal
+		}
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		updatedWallet.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
+		truthTable, err := updatedWallet.TruthTable(transferType)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range truthTable {
+			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
+			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
+		}
 	}
 
 	//Add in the WalletTransfers - ie. payment destinations

@@ -269,7 +269,7 @@ func NewUpdateKVAsset(previousKVAsset *KVAsset, iddoc *IDDoc) (kv *KVAsset, err 
 	kv.CurrentAsset.Asset.Index = previousKVAsset.CurrentAsset.Asset.Index + 1
 
 	kv.PreviousAsset = previousKVAsset.CurrentAsset
-
+	kv.DataStore = previousKVAsset.DataStore
 	kv.DeepCopyUpdatePayload()
 
 	return kv, nil
