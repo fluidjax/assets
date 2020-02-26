@@ -9,8 +9,8 @@ import (
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
-//https://k0d.su/dkodnik/minter-go-node/src/commit/14439248926def5f6f1d334dc9a84f7d0d2e5a0a/core/minter/minter.go?lang=pl-PL
 
+//https://k0d.su/dkodnik/minter-go-node/src/commit/14439248926def5f6f1d334dc9a84f7d0d2e5a0a/core/minter/minter.go?lang=pl-PL
 
 //QredoChain -
 type QredoChain struct {
@@ -25,10 +25,10 @@ var _ abcitypes.Application = (*QredoChain)(nil)
 func NewQredoChain(db *badger.DB) *QredoChain {
 
 	adb := NewAppDB(db)
-
 	_ = adb
 	kv := &QredoChain{
-		db: adb,
+		db:           adb,
+		currentBatch: db.NewTransaction(true),
 	}
 	return kv
 }

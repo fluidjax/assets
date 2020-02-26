@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
-	"fmt"
 
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -57,7 +56,7 @@ func (app *QredoChain) processTX(tx []byte, lightWeight bool) (uint32, []abcityp
 		if err != nil {
 			return code.CodeTypeEncodingError, nil
 		}
-		code, events := app.processGroup(group, lightWeight)
+		code, events := app.processGroup(group, tx, txHash, lightWeight)
 		return uint32(code), events
 	case protobuffer.PBAssetType_Underlying:
 		underlying, err := assets.ReBuildUnderlying(signedAsset, assetID)
@@ -347,10 +346,52 @@ func (app *QredoChain) processWalletCreate(wallet *assets.Wallet, rawAsset []byt
 	return CodeTypeOK, events
 }
 
-func (app *QredoChain) processGroup(group *assets.Group, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
-	fmt.Printf("Process an Group\n")
+func (app *QredoChain) processGroup(group *assets.Group, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if app.exists(txHash) {
+		//Usually the tx cache takes care of this, but once its full, we need to stop duplicates of very old transactions
+		dumpMessage(2, "Fail to add wallet - tx already in chain\n")
+		return CodeAlreadyExists, nil
+	}
 
-	return CodeFailVerfication, events
+	exists, err := app.Get(group.Key())
+	if err != nil {
+		return CodeDatabaseFail, nil
+	}
+
+	if exists == nil {
+		return app.processGroupCreate(group, rawAsset, txHash, lightWeight)
+	} else {
+		return app.processGroupUpdate(group, rawAsset, txHash, lightWeight)
+	}
+
+	return CodeTypeOK, events
+}
+
+func (app *QredoChain) processGroupUpdate(group *assets.Group, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if lightWeight == false {
+		err := app.Set(group.Key(), txHash)
+		if err != nil {
+			return CodeDatabaseFail, nil
+		}
+		events = processTags(group.CurrentAsset.Asset.Tags)
+
+	}
+	return CodeTypeOK, events
+}
+
+func (app *QredoChain) processGroupCreate(group *assets.Group, rawAsset []byte, txHash []byte, lightWeight bool) (code TransactionCode, events []abcitypes.Event) {
+	if lightWeight == false {
+		err1 := app.Set(txHash, rawAsset)
+		if err1 != nil {
+			return CodeDatabaseFail, nil
+		}
+		err2 := app.Set(group.Key(), txHash)
+		if err2 != nil {
+			return CodeDatabaseFail, nil
+		}
+		events = processTags(group.CurrentAsset.Asset.Tags)
+	}
+	return CodeTypeOK, events
 }
 
 func (app *QredoChain) VerifyIDDoc(iddoc *assets.IDDoc) bool {

@@ -92,6 +92,10 @@ func main() {
 					return cliTool.PPConsensusSearch(query, suffix)
 				},
 			},
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// IDDOCS
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 			&cli.Command{
 				Name:    "createiddoc",
 				Aliases: []string{"cid"},
@@ -123,6 +127,10 @@ func main() {
 					return cliTool.CreateIDDoc(authref, broadcast)
 				},
 			},
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Wallets
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 			&cli.Command{
 				Name:        "createwallet",
 				Aliases:     []string{"cw"},
@@ -155,6 +163,7 @@ func main() {
 
 				},
 			},
+
 			&cli.Command{
 				Name:        "prepwalletupdate",
 				Aliases:     []string{"pwu"},
@@ -177,6 +186,31 @@ func main() {
 						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
 					}
 					return cliTool.PrepareWalletUpdateWithJSON(c.String("json"))
+
+				},
+			},
+			&cli.Command{
+				Name:        "prepgroupupdate",
+				Aliases:     []string{"pgu"},
+				Usage:       "Prepare a New Group Update Transaction for Signing",
+				Description: "Prepare a New Group Update Transaction for Signing",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+					return cliTool.PrepareGroupUpdateWithJSON(c.String("json"))
 
 				},
 			},
@@ -213,6 +247,42 @@ func main() {
 				},
 			},
 			&cli.Command{
+				Name:        "sendgroup",
+				Aliases:     []string{"sg", ""},
+				Usage:       "Aggregate Sign, Check & Broadcast Group update",
+				Description: "",
+				ArgsUsage:   "",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "json",
+						Aliases: []string{"j"},
+						Usage:   "specify json parameters",
+					},
+					&cli.BoolFlag{
+						Name:    "broadcast",
+						Aliases: []string{"b"},
+						Value:   false,
+						Usage:   "broadcast to the Qredo Network",
+					},
+				},
+				SkipFlagParsing: false,
+				HideHelp:        false,
+				Hidden:          false,
+				HelpName:        "",
+				Action: func(c *cli.Context) error {
+					if cliTool.NodeConn == nil {
+						return errors.New("Fail to connect to Node: " + cliTool.ConnectString)
+					}
+
+					broadcast := c.Bool("broadcast")
+					return cliTool.AggregateGroupSign(c.String("json"), broadcast)
+				},
+			},
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Underlying
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			&cli.Command{
 				Name:        "sendunderlying",
 				Aliases:     []string{"su"},
 				Usage:       "Create a new Underlying Transaction",
@@ -245,6 +315,10 @@ func main() {
 
 				},
 			},
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// MPC
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 			&cli.Command{
 				Name:        "sendmpc",
 				Aliases:     []string{"smpc"},
@@ -276,6 +350,10 @@ func main() {
 					return cliTool.CreateMPCWithJSON(c.String("json"), broadcast)
 				},
 			},
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// KeyValue
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 			&cli.Command{
 				Name:        "createkv",
 				Aliases:     []string{"ckv"},

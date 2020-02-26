@@ -465,10 +465,24 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	original := reflect.ValueOf(result)
 	copy := reflect.New(original.Type()).Elem()
 	TranslateRecursive(copy, original)
-
 	pp, _ := prettyjson.Marshal(copy.Interface())
-
 	fmt.Fprintf(info, string(pp))
+
+	//Modify specific fields for ease of display
+	//asset := signedAsset.Asset
+	// switch asset.Type {
+	// case protobuffer.PBAssetType_Group:
+	// 	group := signedAsset.Asset.GetGroup()
+
+	// 	data := hex.EncodeToString([]byte("AAA"))
+	// 	group.Participants["groupfield_key1"] = []byte(data)
+
+	// case protobuffer.PBAssetType_Iddoc:
+	// case protobuffer.PBAssetType_Underlying:
+	// case protobuffer.PBAssetType_KVAsset:
+	// case protobuffer.PBAssetType_Wallet:
+	// case protobuffer.PBAssetType_MPC:
+	// }
 
 	fmt.Fprintf(info, prettyStringFromSignedAsset(signedAsset))
 

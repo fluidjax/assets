@@ -27,8 +27,10 @@ package assets
 import (
 	"bytes"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/store"
 )
 
 //Payload - return the Group Payload object
@@ -55,6 +57,7 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	w.CurrentAsset.Asset.ID = GroupKey
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
+	w.CurrentAsset.Asset.Index = 1
 	w.AssetKeyFromPayloadHash()
 	return w, nil
 }
@@ -77,7 +80,10 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	w.CurrentAsset.Asset.ID = previousGroup.CurrentAsset.Asset.ID
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.CurrentAsset.Asset.Index = previousGroup.CurrentAsset.Asset.Index + 1
+
 	w.PreviousAsset = previousGroup.CurrentAsset
+	w.DataStore = previousGroup.DataStore
 	w.DeepCopyUpdatePayload()
 	return w, nil
 }
@@ -209,4 +215,24 @@ func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	payload.Group = group
 	w.CurrentAsset.Asset.Payload = payload
 	return w
+}
+
+//LoadGroup -
+func LoadGroup(store store.StoreInterface, groupAssetID []byte) (g *Group, err error) {
+	data, err := store.Load(groupAssetID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	g, err = ReBuildGroup(sa, groupAssetID)
+	if err != nil {
+		return nil, err
+	}
+
+	return g, nil
+
 }

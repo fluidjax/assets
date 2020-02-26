@@ -22,10 +22,3 @@ type CreateKVJSON struct {
 	KV       []KV       `json:"kv"`
 	Transfer []Transfer `json:"Transfer"`
 }
-
-// kv.go
-
-type KV struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
