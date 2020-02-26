@@ -444,7 +444,7 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	_, y := main.Cursor()
 	itemNumber := y + displayTopItem - 1
 
-	if itemNumber < 0 || itemNumber > len(datalines) {
+	if itemNumber < 0 || itemNumber >= len(datalines) {
 		return nil
 	}
 	res := datalines[itemNumber].result
