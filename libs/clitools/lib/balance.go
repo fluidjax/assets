@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/prettyjson"
 )
 
@@ -15,6 +16,9 @@ func (cliTool *CLITool) Balance(assetID string) (err error) {
 		return err
 	}
 
+	if data == nil {
+		return errors.New("Balance doesn't exist")
+	}
 	currentBalance := int64(binary.LittleEndian.Uint64(data))
 
 	//	addResultItem("value", hex.EncodeToString(data))

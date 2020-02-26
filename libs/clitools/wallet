@@ -88,7 +88,7 @@ PrepWalletUpdate() {
 		   	{"to":"02020200ff00","amount":30,"assetid":"00ff01"}
 		    ],
 		"transfer":[{
-			"transferType":1,
+			"transferType":2,
 			"expression":"t5 + t6 + t7 > 1 & p2",
 			"description":"some description goes here",
 			"participants":[
@@ -112,38 +112,13 @@ SignForEachIDoc() {
 
 	#sign for each IDDoc
 	json='{"seed":"'$p1_seed'","msg":"'$serializedUnsignedAsset'"}'
-	echo --------------------
-	echo $json
-	echo --------------------
 	sigP=$(qc sign -j="$json" | jq -r .signature)
-echo --------------------
-	echo $json
-	echo --------------------
 	json='{"seed":"'$t1_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT1=$(qc sign -j="$json" | jq -r .signature)
-echo --------------------
-	echo $json
-	echo --------------------
 	json='{	"seed":"'$t2_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT2=$(qc sign -j="$json" | jq -r .signature)
-echo --------------------
-	echo $json
-	echo --------------------
 	json='{	"seed":"'$t3_seed'",	"msg":"'$serializedUnsignedAsset'"}'
 	sigT3=$(qc sign -j="$json" | jq -r .signature)
-echo --------------------
-	echo $json
-	echo --------------------
-	dump "$sigP" "sigP"
-	dump "$sigT1" "sigT1"
-	dump "$sigT2" "sigT2"
-	dump "$sigT3" "sigT3"
-
-echo --------------------
-	echo $json
-	echo --------------------
-
-
 }
 
 
@@ -161,7 +136,7 @@ SendWallet() {
 			"walletUpdatePayload":'$updateJson'
 		}'
 	dump "$json" "Aggregate Sign"
-	updateComplete=$(qc sw -b=false -j="$json")
+	updateComplete=$(qc sw -b=true -j="$json")
 }
 
 #----------------------------------------------------------------------------------------------------------------------------------------

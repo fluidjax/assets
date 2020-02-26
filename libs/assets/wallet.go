@@ -78,7 +78,7 @@ func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error
 	}
 	currentPayload.SpentBalance = previousPayload.SpentBalance
 	w.DeepCopyUpdatePayload()
-
+	currentPayload.WalletTransfers = nil
 	return w, nil
 }
 
