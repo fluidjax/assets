@@ -12,6 +12,89 @@ import (
 	"github.com/qredo/assets/libs/qredochain"
 )
 
+func (cliTool *CLITool) CreateKVJSON(jsonParams string, broadcast bool) (err error) {
+	cKVJSON := &CreateKVJSON{}
+	err = json.Unmarshal([]byte(jsonParams), cKVJSON)
+	if err != nil {
+		return err
+	}
+	seedHex := cKVJSON.Ownerseed
+	iddoc, err := cliTool.GetIDDocForSeed(seedHex)
+	if err != nil {
+		return err
+	}
+
+	kv, err := assets.NewKVAsset(iddoc, protobuffer.PBKVAssetType(cKVJSON.KVAssetType))
+	kv.SetKeyString(cKVJSON.AssetID)
+	kv.DataStore = cliTool.NodeConn
+
+	//add keys
+	for _, pair := range cKVJSON.KV {
+		key := pair.Key
+		value := pair.Value
+		kv.SetKV(key, []byte(value))
+	}
+
+	if err != nil {
+		return err
+	}
+
+	var truths []string
+	for _, trans := range cKVJSON.Transfer {
+
+		binParticipants := map[string][]byte{}
+		for _, v := range trans.Participants {
+			binVal, err := hex.DecodeString(v.ID)
+			if err != nil {
+				return err
+			}
+			binParticipants[v.Name] = binVal
+		}
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		kv.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
+		truthTable, err := kv.TruthTable(transferType)
+		if err != nil {
+			return err
+		}
+
+		for _, v := range truthTable {
+			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
+			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
+		}
+	}
+
+	kv.Sign(iddoc)
+
+	txid := ""
+	if broadcast == true {
+		var code qredochain.TransactionCode
+		txid, code, err = cliTool.NodeConn.PostTx(kv)
+		if code != 0 {
+			print(code)
+			print(err.Error())
+			return errors.Wrap(err, "TX Fails verifications")
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	serializedSignedAsset, err := kv.SerializeSignedAsset()
+	if err != nil {
+		return err
+	}
+
+	res["truthtable"] = truths
+
+	addResultTextItem("txid", txid)
+	addResultBinaryItem("assetid", kv.Key())
+	addResultBinaryItem("serializedSignedAsset", serializedSignedAsset)
+	addResultSignedAsset("object", kv.CurrentAsset)
+
+	ppResult()
+	return nil
+}
+
 func (cliTool *CLITool) PrepareKVUpdateWithJSON(jsonParams string) (err error) {
 	//Load existing kv from AssetID
 	//Load all the IDDocs
@@ -36,75 +119,6 @@ func (cliTool *CLITool) PrepareKVUpdateWithJSON(jsonParams string) (err error) {
 	addResultBinaryItem("serializedUpdate", msg)
 	ppResult()
 	return nil
-}
-
-func (cliTool *CLITool) kVFromKVUpdateJSON(signedUpdate *KVUpdatePayload) (*assets.KVAsset, error) {
-	//Decode the JSON
-
-	//Get the New Owner IDDoc
-	idNewOwnerKey, err := hex.DecodeString(signedUpdate.Newowner)
-	if err != nil {
-		return nil, err
-	}
-
-	newOwnerIDDoc, err := assets.LoadIDDoc(cliTool.NodeConn, idNewOwnerKey)
-	if err != nil {
-		return nil, err
-	}
-
-	//Get the Existing KV
-	existingKVKey, err := hex.DecodeString(signedUpdate.ExistingKVAssetID)
-	if err != nil {
-		return nil, err
-	}
-
-	originalKV, err := assets.LoadKVAsset(cliTool.NodeConn, existingKVKey)
-	if err != nil {
-		return nil, err
-	}
-
-	originalKV.DataStore = cliTool.NodeConn
-
-	//Make New KV based on Existing
-	updatedKV, err := assets.NewUpdateKVAsset(originalKV, newOwnerIDDoc)
-	if err != nil {
-		return nil, err
-	}
-
-	//add keys
-	for _, pair := range signedUpdate.KV {
-		key := pair.Key
-		value := pair.Value
-		updatedKV.SetKV(key, []byte(value))
-	}
-
-	var truths []string
-	for _, trans := range signedUpdate.Transfer {
-
-		binParticipants := map[string][]byte{}
-		for _, v := range trans.Participants {
-			binVal, err := hex.DecodeString(v.ID)
-			if err != nil {
-				return nil, err
-			}
-			binParticipants[v.Name] = binVal
-		}
-		transferType := protobuffer.PBTransferType(trans.TransferType)
-		updatedKV.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
-		truthTable, err := updatedKV.TruthTable(transferType)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, v := range truthTable {
-			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
-			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
-		}
-	}
-
-	updatedKV.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(signedUpdate.TransferType)
-
-	return updatedKV, nil
 }
 
 func (cliTool *CLITool) AggregateKVSign(jsonParams string, broadcast bool) (err error) {

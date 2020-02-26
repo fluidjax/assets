@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 )
@@ -171,4 +172,218 @@ func buildKV(data *[]KV) map[string][]byte {
 		res[key] = value
 	}
 	return res
+}
+
+func (cliTool *CLITool) walletFromWalletUpdateJSON(signedUpdate *WalletUpdatePayload) (*assets.Wallet, error) {
+	//Decode the JSON
+
+	//Get the New Owner IDDoc
+	idNewOwnerKey, err := hex.DecodeString(signedUpdate.Newowner)
+	if err != nil {
+		return nil, err
+	}
+
+	newOwnerIDDoc, err := assets.LoadIDDoc(cliTool.NodeConn, idNewOwnerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get the Existing Wallet
+	existingWalletKey, err := hex.DecodeString(signedUpdate.ExistingWalletAssetID)
+	if err != nil {
+		return nil, err
+	}
+
+	originalWallet, err := assets.LoadWallet(cliTool.NodeConn, existingWalletKey)
+	if err != nil {
+		return nil, err
+	}
+	originalWallet.DataStore = cliTool.NodeConn
+	//Make New Wallet based on Existing
+	updatedWallet, err := assets.NewUpdateWallet(originalWallet, newOwnerIDDoc)
+	if err != nil {
+		return nil, err
+	}
+
+	var truths []string
+	for _, trans := range signedUpdate.Transfer {
+
+		binParticipants := map[string][]byte{}
+		for _, v := range trans.Participants {
+			binVal, err := hex.DecodeString(v.ID)
+			if err != nil {
+				return nil, err
+			}
+			binParticipants[v.Name] = binVal
+		}
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		updatedWallet.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
+		truthTable, err := updatedWallet.TruthTable(transferType)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range truthTable {
+			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
+			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
+		}
+	}
+
+	//Add in the WalletTransfers - ie. payment destinations
+	for _, wt := range signedUpdate.WalletTransfers {
+		to, err := hex.DecodeString(wt.To)
+		if err != nil {
+			return nil, err
+		}
+		assetID, err := hex.DecodeString(wt.Assetid)
+		if err != nil {
+			return nil, err
+		}
+
+		updatedWallet.AddWalletTransfer(to, wt.Amount, assetID)
+	}
+
+	updatedWallet.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(signedUpdate.TransferType)
+	updatedWallet.DataStore = cliTool.NodeConn
+
+	return updatedWallet, nil
+}
+
+func (cliTool *CLITool) kVFromKVUpdateJSON(signedUpdate *KVUpdatePayload) (*assets.KVAsset, error) {
+	//Decode the JSON
+
+	//Get the New Owner IDDoc
+	idNewOwnerKey, err := hex.DecodeString(signedUpdate.Newowner)
+	if err != nil {
+		return nil, err
+	}
+
+	newOwnerIDDoc, err := assets.LoadIDDoc(cliTool.NodeConn, idNewOwnerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get the Existing KV
+	existingKVKey, err := hex.DecodeString(signedUpdate.ExistingKVAssetID)
+	if err != nil {
+		return nil, err
+	}
+
+	originalKV, err := assets.LoadKVAsset(cliTool.NodeConn, existingKVKey)
+	if err != nil {
+		return nil, err
+	}
+
+	originalKV.DataStore = cliTool.NodeConn
+
+	//Make New KV based on Existing
+	updatedKV, err := assets.NewUpdateKVAsset(originalKV, newOwnerIDDoc)
+	if err != nil {
+		return nil, err
+	}
+
+	//add keys
+	for _, pair := range signedUpdate.KV {
+		key := pair.Key
+		value := pair.Value
+		updatedKV.SetKV(key, []byte(value))
+	}
+
+	var truths []string
+	for _, trans := range signedUpdate.Transfer {
+
+		binParticipants := map[string][]byte{}
+		for _, v := range trans.Participants {
+			binVal, err := hex.DecodeString(v.ID)
+			if err != nil {
+				return nil, err
+			}
+			binParticipants[v.Name] = binVal
+		}
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		updatedKV.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
+		truthTable, err := updatedKV.TruthTable(transferType)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range truthTable {
+			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
+			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
+		}
+	}
+
+	updatedKV.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(signedUpdate.TransferType)
+
+	return updatedKV, nil
+}
+
+func (cliTool *CLITool) groupFromGroupUpdateJSON(signedUpdate *GroupUpdatePayload) (*assets.Group, error) {
+	//Decode the JSON
+
+	//Get the New Owner IDDoc
+	idNewOwnerKey, err := hex.DecodeString(signedUpdate.Newowner)
+	if err != nil {
+		return nil, err
+	}
+
+	newOwnerIDDoc, err := assets.LoadIDDoc(cliTool.NodeConn, idNewOwnerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get the Existing Group
+	existingGroupKey, err := hex.DecodeString(signedUpdate.ExistingGroupAssetID)
+	if err != nil {
+		return nil, err
+	}
+
+	originalGroup, err := assets.LoadGroup(cliTool.NodeConn, existingGroupKey)
+	if err != nil {
+		return nil, err
+	}
+
+	originalGroup.DataStore = cliTool.NodeConn
+
+	//Make New Group based on Existing
+	updatedGroup, err := assets.NewUpdateGroup(originalGroup, newOwnerIDDoc)
+	if err != nil {
+		return nil, err
+	}
+
+	//add keys
+	payload := updatedGroup.Payload()
+	payload.Type = protobuffer.PBGroupType(signedUpdate.Group.Type)
+	payload.Description = signedUpdate.Group.Description
+
+	payload.GroupFields = buildKV(&signedUpdate.Group.GroupFields)
+	payload.Participants = buildKV(&signedUpdate.Group.Participants)
+
+	var truths []string
+	for _, trans := range signedUpdate.Transfer {
+
+		binParticipants := map[string][]byte{}
+		for _, v := range trans.Participants {
+			binVal, err := hex.DecodeString(v.ID)
+			if err != nil {
+				return nil, err
+			}
+			binParticipants[v.Name] = binVal
+		}
+		transferType := protobuffer.PBTransferType(trans.TransferType)
+		updatedGroup.AddTransfer(transferType, trans.Expression, &binParticipants, trans.Description)
+		truthTable, err := updatedGroup.TruthTable(transferType)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range truthTable {
+			x := fmt.Sprintf("%d:%s", trans.TransferType, v)
+			truths = append(truths, base64.StdEncoding.EncodeToString([]byte(x)))
+		}
+	}
+
+	updatedGroup.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType(signedUpdate.TransferType)
+
+	return updatedGroup, nil
 }
