@@ -162,3 +162,13 @@ func TranslateRecursive(copy, original reflect.Value) {
 	}
 
 }
+
+func buildKV(data *[]KV) map[string][]byte {
+	res := make(map[string][]byte)
+	for _, v := range *data {
+		key := v.Key
+		value := []byte(v.Value)
+		res[key] = value
+	}
+	return res
+}

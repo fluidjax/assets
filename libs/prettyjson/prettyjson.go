@@ -4,6 +4,7 @@ package prettyjson
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/hex"
 
 	//"encoding/hex"
 	"encoding/json"
@@ -126,30 +127,17 @@ func IsBase64(s string) bool {
 }
 
 func (f *Formatter) processString(s string) string {
-
-	//special case for Base64 - decode and print as Hex
-	// if IsBase64(s) {
 	bin, _ := base64.StdEncoding.DecodeString(s)
-	//s = hex.EncodeToString(bin)
-	//s = "BASE64" //hex.EncodeToString(bin)
-
 	retval := fmt.Sprintf("\"%s\"", string(bin))
-	return f.sprintColor(f.StringColor, retval)
-	// }
 
-	// r := []rune(s)
-	// if f.StringMaxLength != 0 && len(r) >= f.StringMaxLength {
-	// 	s = string(r[0:f.StringMaxLength]) + "..."
-	// }
-
-	// buf := &bytes.Buffer{}
-	// encoder := json.NewEncoder(buf)
-	// encoder.SetEscapeHTML(false)
-	// encoder.Encode(s)
-	// s = string(buf.Bytes())
-	// s = strings.TrimSuffix(s, "\n")
-
-	// return f.sprintColor(f.StringColor, s)
+	if strings.HasPrefix(retval, "\"2121") {
+		s := string(bin)
+		asc, _ := hex.DecodeString(s[4:])
+		retval := fmt.Sprintf("\"%s\"", string(asc))
+		return f.sprintColor(f.BoolColor, retval)
+	} else {
+		return f.sprintColor(f.StringColor, retval)
+	}
 }
 
 func (f *Formatter) processMap(m map[string]interface{}, depth int) string {

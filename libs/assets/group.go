@@ -48,7 +48,7 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	if iddoc == nil {
 		return nil, errors.New("NewGroup - supplied IDDoc is nil")
 	}
-	w = emptyGroup(groupType)
+	w = EmptyGroup(groupType)
 	w.DataStore = iddoc.DataStore
 	GroupKey, err := RandomBytes(32)
 	if err != nil {
@@ -73,7 +73,7 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	p := previousGroup.CurrentAsset.Asset.GetGroup()
 	previousType := p.GetType()
 
-	w = emptyGroup(previousType)
+	w = EmptyGroup(previousType)
 	if previousGroup.DataStore != nil {
 		w.DataStore = previousGroup.DataStore
 	}
@@ -200,7 +200,7 @@ func ReBuildGroup(sig *protobuffer.PBSignedAsset, key []byte) (w *Group, err err
 	return w, nil
 }
 
-func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
+func EmptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	w = &Group{}
 	w.CurrentAsset = &protobuffer.PBSignedAsset{}
 	//Asset

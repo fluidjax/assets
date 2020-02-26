@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/elliotchance/orderedmap v1.2.0
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/protobuf v1.3.3
 	github.com/gookit/color v1.2.2
 	github.com/jroimartin/gocui v0.4.0
 	github.com/pkg/errors v0.9.1

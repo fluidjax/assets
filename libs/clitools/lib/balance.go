@@ -10,18 +10,14 @@ import (
 )
 
 func (cliTool *CLITool) Balance(assetID string) (err error) {
-
 	data, err := cliTool.NodeConn.ConsensusSearch(assetID, ".balance")
 	if err != nil {
 		return err
 	}
-
 	if data == nil {
 		return errors.New("Balance doesn't exist")
 	}
 	currentBalance := int64(binary.LittleEndian.Uint64(data))
-
-	//	addResultItem("value", hex.EncodeToString(data))
 	addResultItem("amount", currentBalance)
 
 	original := reflect.ValueOf(res)

@@ -115,7 +115,7 @@ done
 echo Build Binary
 build
 
-
+d_flag='true'
 debug=false
 
 if [ -x "$(command -v tabset)" ]; then

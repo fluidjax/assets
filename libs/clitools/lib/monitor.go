@@ -34,6 +34,7 @@ var coldefs = orderedmap.NewOrderedMap()
 type QredoChainTX struct {
 	result  *ctypes.ResultEvent
 	balance string
+	time    time.Time
 }
 
 var connector *qredochain.NodeConnector
@@ -327,6 +328,7 @@ func showdatalinesLine(main *gocui.View, qc *QredoChainTX, count int) {
 	res := qc.result
 	tx := res.Data.(tmtypes.EventDataTx).Tx
 	chainData := res.Data.(tmtypes.EventDataTx)
+
 	txsize := fmt.Sprintf("%d", len(tx))
 	signedAsset := &protobuffer.PBSignedAsset{}
 	err := proto.Unmarshal(tx, signedAsset)
@@ -373,7 +375,7 @@ func showdatalinesLine(main *gocui.View, qc *QredoChainTX, count int) {
 		}
 	}
 
-	t := time.Now()
+	t := qc.time
 	blockHeight := PadRight(strconv.FormatInt(chainData.Height, 10), " ", 5)
 	countStr := fmt.Sprintf("%d", count)
 
@@ -468,21 +470,29 @@ func displayDetail(g *gocui.Gui, main *gocui.View) error {
 	pp, _ := prettyjson.Marshal(copy.Interface())
 	fmt.Fprintf(info, string(pp))
 
-	//Modify specific fields for ease of display
-	//asset := signedAsset.Asset
-	// switch asset.Type {
-	// case protobuffer.PBAssetType_Group:
-	// 	group := signedAsset.Asset.GetGroup()
+	asset := signedAsset.Asset
+	switch asset.Type {
+	case protobuffer.PBAssetType_Group:
 
-	// 	data := hex.EncodeToString([]byte("AAA"))
-	// 	group.Participants["groupfield_key1"] = []byte(data)
+		group := signedAsset.Asset.GetGroup()
+		for k, v := range group.Participants {
+			group.Participants[k] = append([]byte("!!"), v...)
+		}
 
-	// case protobuffer.PBAssetType_Iddoc:
-	// case protobuffer.PBAssetType_Underlying:
-	// case protobuffer.PBAssetType_KVAsset:
-	// case protobuffer.PBAssetType_Wallet:
-	// case protobuffer.PBAssetType_MPC:
-	// }
+		for k, v := range group.GroupFields {
+			group.GroupFields[k] = append([]byte("!!"), v...)
+		}
+
+	case protobuffer.PBAssetType_Iddoc:
+	case protobuffer.PBAssetType_Underlying:
+	case protobuffer.PBAssetType_KVAsset:
+		kv := signedAsset.Asset.GetKVAsset()
+		for k, v := range kv.AssetFields {
+			kv.AssetFields[k] = append([]byte("!!"), v...)
+		}
+	case protobuffer.PBAssetType_Wallet:
+	case protobuffer.PBAssetType_MPC:
+	}
 
 	fmt.Fprintf(info, prettyStringFromSignedAsset(signedAsset))
 
@@ -500,6 +510,7 @@ func txListener(g *gocui.Gui) {
 			res := QredoChainTX{
 				result:  &incoming,
 				balance: "",
+				time:    time.Now(),
 			}
 			datalines = append(datalines, &res)
 

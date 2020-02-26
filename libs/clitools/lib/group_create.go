@@ -12,18 +12,6 @@ import (
 	"github.com/qredo/assets/libs/qredochain"
 )
 
-func buildKV(data *[]KV) map[string][]byte {
-
-	res := make(map[string][]byte)
-
-	for _, v := range *data {
-		key := v.Key
-		value := []byte(v.Value)
-		res[key] = value
-	}
-	return res
-}
-
 func (cliTool *CLITool) CreateGroupJSON(jsonParams string, broadcast bool) (err error) {
 	cGroupJSON := &CreateGroupJSON{}
 	err = json.Unmarshal([]byte(jsonParams), cGroupJSON)
