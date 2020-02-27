@@ -28,7 +28,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +36,7 @@ var (
 )
 
 func Test_TruthTable(t *testing.T) {
-	store := store.NewMapstore()
+	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
@@ -55,7 +54,7 @@ func Test_TruthTable(t *testing.T) {
 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
 }
 
-func SetupIDDocs(store store.StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
+func SetupIDDocs(store DataSource) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 	idP, _ := NewIDDoc("Primary")
 	idP.DataStore = store
 	idP.Save()
@@ -76,7 +75,7 @@ func SetupIDDocs(store store.StoreInterface) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 }
 
 func Test_RuleAdd(t *testing.T) {
-	store := store.NewMapstore()
+	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 
@@ -147,7 +146,7 @@ func Test_RuleAdd(t *testing.T) {
 }
 
 func Test_AggregationAndVerify(t *testing.T) {
-	store := store.NewMapstore()
+	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 	expression := "t1 + t2 + t3 > 1 & p"
@@ -199,7 +198,7 @@ func Test_AggregationAndVerify(t *testing.T) {
 }
 
 func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
-	store := store.NewMapstore()
+	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 	expression := "t1 + t2 + t3 > 1 & p"
@@ -246,7 +245,7 @@ func Test_AggregationAndVerifyFailingTransfer(t *testing.T) {
 }
 
 func Test_WalletTransfer(t *testing.T) {
-	store := store.NewMapstore()
+	store := NewMapstore()
 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
 	idNewOwner, _ := NewIDDoc("NewOwner")
 	expression := "t1 + t2 + t3 > 1 & p"

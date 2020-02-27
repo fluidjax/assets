@@ -30,7 +30,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 )
 
 //Payload - return the Group Payload object
@@ -218,8 +217,8 @@ func EmptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 }
 
 //LoadGroup -
-func LoadGroup(store store.StoreInterface, groupAssetID []byte) (g *Group, err error) {
-	data, err := store.Load(groupAssetID)
+func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
+	data, err := store.RawGet(groupAssetID)
 	if err != nil {
 		return nil, err
 	}

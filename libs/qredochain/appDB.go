@@ -2,66 +2,58 @@ package qredochain
 
 import (
 	"encoding/binary"
+
 	"github.com/dgraph-io/badger"
 )
 
-
 const (
-	hashPath           = "hash"
-	heightPath         = "height"
-	blockHashPath         = "blockhash"
+	hashPath      = "hash"
+	heightPath    = "height"
+	blockHashPath = "blockhash"
 )
 
-
-type AppDB struct {
-	*badger.DB
-}
-
-//NewAppDB create a new Application Database object
-func NewAppDB(db *badger.DB) *AppDB {
-	d := new(AppDB)
-	d.DB = db
-	return d
-}
-
-
 //GetLastHeight get the last saved block height
-func (appDB *AppDB) GetLastHeight() uint64 {
-	result := appDB.RawGet([]byte(heightPath))
+func (app *QredoChain) GetLastHeight() (uint64, error) {
+	result, err := app.RawGet([]byte(heightPath))
+	if err != nil {
+		return 0, err
+	}
+
 	var height uint64
 
 	if result != nil {
 		height = binary.BigEndian.Uint64(result)
 	}
-	return height
+	return height, nil
 }
 
 //GetLastHeight get the last saved block height
-func (appDB *AppDB) GetLastBlockHash() []byte {
+func (app *QredoChain) GetLastBlockHash() ([]byte, error) {
 	var hash [32]byte
-	rawHash := appDB.RawGet([]byte(blockHashPath))
+	rawHash, err := app.RawGet([]byte(blockHashPath))
+	if err != nil {
+		return nil, err
+	}
 	copy(hash[:], rawHash)
-	return hash[:]
+	return hash[:], nil
 }
 
-
 //SetLastHeight get the last block height
-func (appDB *AppDB) SetLastBlockHash(hash []byte){
-	appDB.RawSet([]byte(blockHashPath), hash)
+func (app *QredoChain) SetLastBlockHash(hash []byte) error {
+	return app.RawSet([]byte(blockHashPath), hash)
 }
 
-
 //SetLastHeight get the last block height
-func (appDB *AppDB) SetLastHeight(height uint64){
+func (app *QredoChain) SetLastHeight(height uint64) error {
 	h := make([]byte, 8)
 	binary.BigEndian.PutUint64(h, height)
-	appDB.RawSet([]byte(heightPath), h)
+	return app.RawSet([]byte(heightPath), h)
 }
 
-//Get - low level get 
-func (appDB *AppDB) RawGet(key []byte) ([]byte) {
+//Get - low level get
+func (app *QredoChain) RawGet(key []byte) ([]byte, error) {
 	var res []byte
-	err := appDB.View(func(txn *badger.Txn) error {
+	err := app.DB.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(key)
 		if item == nil {
 			return nil
@@ -73,17 +65,36 @@ func (appDB *AppDB) RawGet(key []byte) ([]byte) {
 		return err
 	})
 	if err != nil {
-		return nil 
+		return nil, err
 	}
-	return res
+	return res, err
 }
 
-//Set - low level set  
-func (appDB *AppDB) RawSet(key ,value []byte) error {
-	err := appDB.Update(func(txn *badger.Txn) error {
-		e := badger.NewEntry(key,value)
+//Set - low level set
+func (app *QredoChain) RawSet(key, value []byte) error {
+	err := app.DB.Update(func(txn *badger.Txn) error {
+		e := badger.NewEntry(key, value)
 		err := txn.SetEntry(e)
 		return err
-	  })
-	 return err
+	})
+	return err
+}
+
+func (app *QredoChain) BatchGet(key []byte) ([]byte, error) {
+	var res []byte
+	item, err := app.CurrentBatch.Get(key)
+	if item == nil {
+		return nil, nil
+	}
+	err = item.Value(func(val []byte) error {
+		res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
+		return nil
+	})
+	return res, err
+}
+
+func (app *QredoChain) BatchSet(key []byte, data []byte) error {
+	txn := app.CurrentBatch
+	err := txn.Set(key, data)
+	return err
 }

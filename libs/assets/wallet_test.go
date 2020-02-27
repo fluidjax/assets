@@ -32,7 +32,7 @@ func Test_Wallet_Signing(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	store := store.NewMapstore()
+	store := NewMapstore()
 	i.DataStore = store
 	i.Save()
 	w, err := NewWallet(i, "BTC")
@@ -54,7 +54,7 @@ func Test_Wallet(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	store := store.NewMapstore()
+	store := NewMapstore()
 	i.DataStore = store
 	i.Save()
 	w, err := NewWallet(i, "BTC")

@@ -1,7 +1,7 @@
 //Mapstore is a fast simply memory based storage of key values
 //Use for testing  and in-memory caching
 
-package store
+package assets
 
 import (
 	"encoding/hex"
@@ -13,22 +13,23 @@ type Mapstore struct {
 }
 
 //NewMapstore -
-func NewMapstore() StoreInterface {
+func NewMapstore() DataSource {
 	m := &Mapstore{}
 	m.Store = make(map[string][]byte)
 	return m
 }
 
-func (m *Mapstore) Load(key []byte) ([]byte, error) {
-	//keyhash := sha256.Sum256(key)
-	//val := m.Store[hex.EncodeToString(keyhash[:])]
+func (m *Mapstore) BatchGet(key []byte) ([]byte, error) {
 	val := m.Store[hex.EncodeToString(key)]
 	return val, nil
 }
 
-func (m *Mapstore) Save(key []byte, data []byte) error {
-	//keyhash := sha256.Sum256(key)
-	//m.Store[hex.EncodeToString(keyhash[:])] = data
+func (m *Mapstore) RawGet(key []byte) ([]byte, error) {
+	val := m.Store[hex.EncodeToString(key)]
+	return val, nil
+}
+
+func (m *Mapstore) BatchSet(key []byte, data []byte) error {
 	m.Store[hex.EncodeToString(key)] = data
 	return nil
 }

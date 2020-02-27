@@ -27,7 +27,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 )
 
 //NewWallet - Setup a new Wallet
@@ -205,8 +204,8 @@ func emptyWallet() (w *Wallet) {
 }
 
 //LoadWallet -
-func LoadWallet(store store.StoreInterface, walletID []byte) (w *Wallet, err error) {
-	data, err := store.Load(walletID)
+func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
+	data, err := store.RawGet(walletID)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,6 @@ package assets
 
 import (
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 )
 
 //Core Heirachcy
@@ -57,8 +56,8 @@ type KVAsset struct {
 //SignedAsset - Asset/Previous Asset Wrapper, holding temporary objects (seed) & previousVersions
 type SignedAsset struct {
 	CurrentAsset *protobuffer.PBSignedAsset
-	//Store         *store.StoreInterface //Reference to object store (map or blockchain)
-	DataStore     store.StoreInterface
+	//Store         *DataSource //Reference to object store (map or blockchain)
+	DataStore     DataSource
 	Seed          []byte                     //If available a seed to generate keys for object
 	PreviousAsset *protobuffer.PBSignedAsset //Reference to (if any) previous object with the same key
 }

@@ -37,7 +37,6 @@ import (
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 )
 
 func (a *SignedAsset) DeepCopyUpdatePayload() {
@@ -123,14 +122,14 @@ func (a *SignedAsset) Save() error {
 	if err != nil {
 		return err
 	}
-	store.Save(a.Key(), data)
+	store.BatchSet(a.Key(), data)
 
 	return nil
 }
 
 // Load - read a SignedAsset from the store
-func Load(store store.StoreInterface, key []byte) (*protobuffer.PBSignedAsset, error) {
-	val, err := store.Load(key)
+func Load(store DataSource, key []byte) (*protobuffer.PBSignedAsset, error) {
+	val, err := store.RawGet(key)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +224,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 // participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 // transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 // recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
-func resolveExpression(store store.StoreInterface, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
+func resolveExpression(store DataSource, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	if expression == "" {
 		return "", "", errors.New("resolveExpression - expression is empty")
 	}
@@ -479,7 +478,7 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 }
 
 // buildSigKeys - Aggregated the signatures and public keys for all Participants
-func buildSigKeys(store *store.StoreInterface, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
+func buildSigKeys(store *DataSource, signers []string, currentTransfer *protobuffer.PBTransfer, aggregatedPublicKey []byte, transferSignatures []SignatureID) ([]SignatureID, []byte, error) {
 	//For each supplied signer re-build a PublicKey
 	for _, abbreviation := range signers {
 		participantID := currentTransfer.Participants[abbreviation]
@@ -651,7 +650,7 @@ func (a *SignedAsset) AddTag(key string, value []byte) {
 func (a *SignedAsset) GetWithSuffix(datasource DataSource, key []byte, suffix string) ([]byte, error) {
 	fullSuffix := []byte(suffix)
 	key = append(key[:], fullSuffix[:]...)
-	return datasource.Get(key)
+	return datasource.RawGet(key)
 }
 
 func (a *SignedAsset) SetWithSuffix(datasource DataSource, key []byte, suffix string, data []byte) error {
@@ -664,7 +663,7 @@ func (a *SignedAsset) SetWithSuffix(datasource DataSource, key []byte, suffix st
 }
 
 func (a *SignedAsset) Exists(datasource DataSource, key []byte) (bool, error) {
-	item, err := datasource.Get(key)
+	item, err := datasource.RawGet(key)
 	return item != nil, err
 }
 

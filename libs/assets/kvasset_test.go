@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +34,7 @@ func Test_KVAsset(t *testing.T) {
 	testUpdatedVal1 := []byte("Field 1 updated")
 
 	//var store *StoreInterface
-	store := store.NewMapstore()
+	store := NewMapstore()
 
 	//Generate an Idoc
 	testName := "ABC!23"
@@ -126,7 +125,7 @@ func Test_KVAsset(t *testing.T) {
 	//Sav, restore, re-check
 	ua2.Save()
 	reconstitutedData3, err := Load(store, key)
-	assert.Nil(t, err, "Error should be nil")	
+	assert.Nil(t, err, "Error should be nil")
 	rua3, err := ReBuildKVAsset(reconstitutedData3, key)
 	assert.Nil(t, err, "Error should be nil")
 

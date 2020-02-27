@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gookit/color"
 	"github.com/qredo/assets/libs/assets"
@@ -27,12 +26,12 @@ func dumpMessage(t int, msg string) {
 }
 
 func (app *QredoChain) GetIDDoc(assetID []byte) (*assets.IDDoc, error) {
-	key, err := app.Get(assetID)
+	key, err := app.RawGet(assetID)
 	if err != nil {
 		return nil, err
 	}
 
-	signedAssetBytes, err := app.Get(key)
+	signedAssetBytes, err := app.RawGet(key)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +44,11 @@ func (app *QredoChain) GetIDDoc(assetID []byte) (*assets.IDDoc, error) {
 }
 
 func (app *QredoChain) GetWallet(assetID []byte) (*assets.Wallet, error) {
-	key, err := app.Get(assetID)
+	key, err := app.RawGet(assetID)
 	if err != nil {
 		return nil, err
 	}
-	signedAssetBytes, err := app.Get(key)
+	signedAssetBytes, err := app.RawGet(key)
 	if err != nil {
 		return nil, err
 	}
@@ -62,11 +61,11 @@ func (app *QredoChain) GetWallet(assetID []byte) (*assets.Wallet, error) {
 }
 
 func (app *QredoChain) GetGroup(assetID []byte) (*assets.Group, error) {
-	key, err := app.Get(assetID)
+	key, err := app.RawGet(assetID)
 	if err != nil {
 		return nil, err
 	}
-	signedAssetBytes, err := app.Get(key)
+	signedAssetBytes, err := app.RawGet(key)
 	if err != nil {
 		return nil, err
 	}
@@ -76,41 +75,6 @@ func (app *QredoChain) GetGroup(assetID []byte) (*assets.Group, error) {
 		return nil, err
 	}
 	return assets.ReBuildGroup(msg, key)
-}
-
-func (app *QredoChain) BatchGet(key []byte) ([]byte, error) {
-	var res []byte
-	item, err := app.currentBatch.Get(key)
-	if item == nil {
-		return nil, nil
-	}
-	err = item.Value(func(val []byte) error {
-		res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
-		return nil
-	})
-	return res, err
-}
-
-func (app *QredoChain) Get(key []byte) ([]byte, error) {
-	var res []byte
-	err := app.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
-		if item == nil {
-			return nil
-		}
-		err = item.Value(func(val []byte) error {
-			res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
-			return nil
-		})
-		return err
-	})
-	return res, err
-}
-
-func (app *QredoChain) BatchSet(key []byte, data []byte) error {
-	txn := app.currentBatch
-	err := txn.Set(key, data)
-	return err
 }
 
 //Make index 0 padded 8 char

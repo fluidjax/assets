@@ -21,7 +21,6 @@ package assets
 import (
 	"testing"
 
-	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,7 +60,7 @@ func Test_Save_Load(t *testing.T) {
 	i, err := NewIDDoc(testName)
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	store := store.NewMapstore()
+	store := NewMapstore()
 	i.DataStore = store
 	key := i.Key()
 	i.Save()

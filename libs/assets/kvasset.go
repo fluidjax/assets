@@ -30,7 +30,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 )
 
 //SetKV - set the KV Field value
@@ -235,8 +234,8 @@ func emptyKVAsset(KVAssetType protobuffer.PBKVAssetType) (w *KVAsset) {
 }
 
 //LoadKVAsset -
-func LoadKVAsset(store store.StoreInterface, kvassetID []byte) (kv *KVAsset, err error) {
-	data, err := store.Load(kvassetID)
+func LoadKVAsset(store DataSource, kvassetID []byte) (kv *KVAsset, err error) {
+	data, err := store.RawGet(kvassetID)
 	if err != nil {
 		return nil, err
 	}

@@ -80,8 +80,12 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 	}, nil
 }
 
+func (nc *NodeConnector) BatchGet(assetID []byte) ([]byte, error) {
+	return nil, nil
+}
+
 //Load by AssetID
-func (nc *NodeConnector) Load(assetID []byte) ([]byte, error) {
+func (nc *NodeConnector) RawGet(assetID []byte) ([]byte, error) {
 	txid, err := nc.SingleRawConsensusSearch(assetID)
 	if err != nil {
 		return nil, err
@@ -92,7 +96,7 @@ func (nc *NodeConnector) Load(assetID []byte) ([]byte, error) {
 }
 
 //Save (key)
-func (nc *NodeConnector) Save(key []byte, serializedData []byte) error {
+func (nc *NodeConnector) BatchSet(key []byte, serializedData []byte) error {
 	return nil
 }
 

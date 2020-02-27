@@ -27,7 +27,6 @@ import (
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/store"
 )
 
 //NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
@@ -127,8 +126,8 @@ func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 }
 
 //LoadIDDoc -
-func LoadIDDoc(store store.StoreInterface, iddocID []byte) (i *IDDoc, err error) {
-	data, err := store.Load(iddocID)
+func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
+	data, err := store.RawGet(iddocID)
 	if err != nil {
 		return nil, err
 	}

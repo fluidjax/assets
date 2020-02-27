@@ -12,9 +12,9 @@ import (
 
 //QredoChain -
 type QredoChain struct {
-	db           *AppDB
-	currentBatch *badger.Txn
-	height       uint64
+	DB           *badger.DB
+	CurrentBatch *badger.Txn
+	Height       uint64
 }
 
 var _ abcitypes.Application = (*QredoChain)(nil)
@@ -22,19 +22,22 @@ var _ abcitypes.Application = (*QredoChain)(nil)
 //NewQredoChain -
 func NewQredoChain(db *badger.DB) *QredoChain {
 
-	adb := NewAppDB(db)
-	_ = adb
 	kv := &QredoChain{
-		db:           adb,
-		currentBatch: db.NewTransaction(true),
+		DB:           db,
+		CurrentBatch: db.NewTransaction(true),
 	}
 	return kv
 }
 
 //Info -
 func (app *QredoChain) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
-	lastHeight := int64(app.db.GetLastHeight())
-	lastBlockHash := app.db.GetLastBlockHash()
+	lh, err := app.GetLastHeight()
+	if err != nil {
+		return abcitypes.ResponseInfo{}
+	}
+	lastHeight := int64(lh)
+
+	lastBlockHash, _ := app.GetLastBlockHash()
 	if lastHeight == 0 {
 		return abcitypes.ResponseInfo{}
 	}
@@ -61,12 +64,12 @@ func (app *QredoChain) Commit() abcitypes.ResponseCommit {
 	//		 long as it is deterministic - it must not be a function of anything that did not come from the
 	//		 BeginBlock/DeliverTx/EndBlock methods.
 
-	app.currentBatch.Commit()
+	app.CurrentBatch.Commit()
 
 	hash := sha256.Sum256([]byte("TEST"))
 
-	app.db.SetLastBlockHash(hash[:])
-	app.db.SetLastHeight(app.height)
+	app.SetLastBlockHash(hash[:])
+	app.SetLastHeight(app.Height)
 
 	return abcitypes.ResponseCommit{Data: hash[:]}
 }
@@ -80,7 +83,7 @@ func (app *QredoChain) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitype
 
 	switch reqQuery.Path {
 	case "V": //V = get Value
-		err := app.db.View(func(txn *badger.Txn) error {
+		err := app.DB.View(func(txn *badger.Txn) error {
 			item, err := txn.Get(reqQuery.Data)
 
 			if err != nil && err != badger.ErrKeyNotFound {
@@ -104,7 +107,7 @@ func (app *QredoChain) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitype
 		}
 	case "I": //I = indirect value
 
-		err := app.db.View(func(txn *badger.Txn) error {
+		err := app.DB.View(func(txn *badger.Txn) error {
 			//item, err := txn.Get(reqQuery.Data)
 			txid, err := txn.Get(reqQuery.Data)
 			if err != nil && err != badger.ErrKeyNotFound {
@@ -151,11 +154,11 @@ func (app *QredoChain) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.Res
 	//			 We may seek to generalize this in the future.
 	// The LastCommitInfo and ByzantineValidators can be used to determine rewards and punishments for the validators.
 	//			 NOTE validators here do not include pubkeys.
-	app.height = uint64(req.Header.Height)
+	app.Height = uint64(req.Header.Height)
 	//app.db.SetLastHeight(height)
 	//fmt.Printf("Current block is %d", app.db.GetLastHeight())
 
-	app.currentBatch = app.db.NewTransaction(true)
+	app.CurrentBatch = app.DB.NewTransaction(true)
 	return abcitypes.ResponseBeginBlock{}
 }
 
