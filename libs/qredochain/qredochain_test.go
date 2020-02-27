@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/qredo/assets/libs/logger"
-	"github.com/qredo/assets/libs/store"
 
 	"github.com/qredo/assets/libs/assets"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +40,7 @@ func Test_LoadSave(t *testing.T) {
 }
 
 func Test_ChainPutGet(t *testing.T) {
-	//StartTestChain() //included in TestMain()
+	StartTestChain()
 
 	i, err := assets.NewIDDoc("1st Ref")
 	i.DataStore = app
@@ -60,19 +59,20 @@ func Test_ChainPutGet(t *testing.T) {
 	testKey := []byte("TestKey")
 
 	//Make a test transaction
-	app.currentBatch = app.db.NewTransaction(true)
-	err = app.Save(testKey, testData)
+	app.CurrentBatch = app.DB.NewTransaction(true)
+
+	err = app.BatchSet(testKey, testData)
 
 	//testKey, _ = hex.DecodeString("B8F4D3CBFFFFD9D4D12A69AD8236F2A1295B4DCEBE018C7D6307FF7FAABD0CF9")
 
 	assert.Nil(t, err, "Save returned error")
-	app.currentBatch.Commit()
+	app.CurrentBatch.Commit()
 
-	app.currentBatch = app.db.NewTransaction(false)
-	retrievedData, err := app.Load(testKey)
+	app.CurrentBatch = app.DB.NewTransaction(false)
+	retrievedData, err := app.BatchGet(testKey)
 	assert.NotNil(t, retrievedData, "Retrieve data is nil")
 	assert.True(t, string(retrievedData) == string(testData), "Failed to retrieve data")
-	app.currentBatch.Commit()
+	app.CurrentBatch.Commit()
 
 }
 
@@ -130,7 +130,7 @@ func Test_IDOC(t *testing.T) {
 	compareAssets(t, data2.Response.GetValue(), serializedIDDoc, i.Key())
 
 	//Badger Consensus DB - Local Search
-	ltx, err := app.Get(txidBytes)
+	ltx, err := app.RawGet(txidBytes)
 	assert.Nil(t, err, "Error should be nil", err)
 	compareAssets(t, ltx, serializedIDDoc, i.Key())
 
@@ -153,7 +153,7 @@ func Test_IDOC(t *testing.T) {
 	//Local Post
 	i3, txid3, serializedIDDoc3, _ := buildTestIDDocLocal(t)
 	txidBytes3, _ := hex.DecodeString(txid3)
-	retID3, err6 := app.Get(txidBytes3)
+	retID3, err6 := app.RawGet(txidBytes3)
 	assert.Nil(t, err6, "Error should be nil", err6)
 	compareAssets(t, retID3, serializedIDDoc3, i3.Key())
 }
@@ -163,7 +163,7 @@ func Test_Subscribe(t *testing.T) {
 }
 
 func Test_IDDocPostTX(t *testing.T) {
-	store := store.NewChainstore()
+	store := assets.NewMapstore()
 
 	i, err := assets.NewIDDoc("1st Ref")
 	i.DataStore = store
@@ -192,7 +192,7 @@ func Test_IDDocPostTX(t *testing.T) {
 }
 
 func Test_WalletPostTX(t *testing.T) {
-	store := store.NewChainstore()
+	store := assets.NewMapstore()
 
 	i, err := assets.NewIDDoc("1st Ref")
 	i.DataStore = store
@@ -252,7 +252,7 @@ func Test_NodeConnector(t *testing.T) {
 }
 
 func Test_BadgerIDDocPostTX(t *testing.T) {
-	store := store.NewChainstore()
+	store := assets.NewMapstore()
 
 	i, err := assets.NewIDDoc("1st Ref")
 	i.DataStore = store

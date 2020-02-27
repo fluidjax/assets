@@ -20,10 +20,8 @@ under the License.
 package bitcoin
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/qredo/assets/libs/qredochain"
 	"github.com/stretchr/testify/assert"
 )
@@ -125,19 +123,19 @@ func Test_GetBlockHash(t *testing.T) {
 	assert.Equal(t, blockhashString, "00000000700e92a916b46b8b91a14d1303d5d91ef0b09eecc3151fb958fd9a2e", "Invalid blockhash for height 10")
 }
 
-func Test_ListSinceBlock(t *testing.T) {
-	client, err := BTCTestNetConnector()
-	assert.Nil(t, err, "Error should be nil")
+// func Test_ListSinceBlock(t *testing.T) {
+// 	client, err := BTCTestNetConnector()
+// 	assert.Nil(t, err, "Error should be nil")
 
-	blockHash, err := chainhash.NewHashFromStr("000000000000011f443d9b796854152ff874867580786f7271a1f9855377e13c")
+// 	blockHash, err := chainhash.NewHashFromStr("000000000000011f443d9b796854152ff874867580786f7271a1f9855377e13c")
 
-	nextBlockHash, newTXCount, err := client.ProcessRecentTransactions(blockHash, 6)
-	assert.Nil(t, err, "Error should be nil")
-	assert.Nil(t, err, "Error should be nil")
-	fmt.Println("New Mature Transactions Count ", newTXCount)
-	fmt.Println("Next BlockHash ", nextBlockHash)
+// 	nextBlockHash, newTXCount, err := client.ProcessRecentTransactions(blockHash, 6)
+// 	assert.Nil(t, err, "Error should be nil")
+// 	assert.Nil(t, err, "Error should be nil")
+// 	fmt.Println("New Mature Transactions Count ", newTXCount)
+// 	fmt.Println("Next BlockHash ", nextBlockHash)
 
-}
+// }
 
 func BTCTestNetConnector() (*UnderlyingConnector, error) {
 	nc, err := qredochain.NewNodeConnector("127.0.0.1:26657", "NODEID", nil, nil)

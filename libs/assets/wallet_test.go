@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/qredo/assets/libs/store"
 	"github.com/stretchr/testify/assert"
 )
 
