@@ -1,20 +1,32 @@
 #!/bin/bash
 
 
+set -e
+d_flag=false
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 DATADIR=$DIR/data
-
-
 hasNode=$(qc status -silent)
 if [ $? -ne 0 ]; then
     echo "Error Connecting to QredoChain Node"
 	exit 1
 fi
 
+while getopts 'd' flag; do
+  case "${flag}" in
+    d) d_flag='true' ;;
+   esac
+done
 
-set -e
+if [ -x "$(command -v tabset)" ]; then
+    tabset happy
+fi
 
-dump (){
+#shift $(($OPTIND - 1))
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+dump() {
 	if [ $d_flag = 'true' ]; then
 		echo "debug $debug"
 		echo $2
@@ -23,6 +35,7 @@ dump (){
 		echo -e "\033[40;38;5;82m $res  \033[0m"
 	fi
 }
+
 
 
 
@@ -98,10 +111,8 @@ PrepKVUpdate() {
 	updateJson=$(echo $updateJson | sed 's/\n//g')
 	updateKV=$(qc pkvu -j="$updateJson")
 	serializedUnsignedAsset=$(echo $updateKV | jq -r .serializedUpdate)
-	echo -----------------------------------
-	echo $serializedUnsignedAsset
-	echo -----------------------------------
 }
+
 #----------------------------------------------------------------------------------------------------------------------------------------
 
 SignForEachIDoc() {
@@ -142,36 +153,11 @@ SendKV() {
 #----------------------------------------------------------------------------------------------------------------------------------------
 
 
-d_flag='false'
 
-while getopts 'd' flag; do
-  case "${flag}" in
-    d) d_flag='true' ;;
-   esac
-done
-
-
-echo Build Binary
-build
-
-
-debug=false
-
-if [ -x "$(command -v tabset)" ]; then
-    tabset happy
-fi
-
-#----------------------------------------------------------------------------------------------------------------------------------------
-
-
-source $DATADIR/assets
-MakeKV
+ source $DATADIR/assets
+ MakeKV
 PrepKVUpdate
 SignForEachIDoc
 SendKV
 
-
-
-
-
-    
+echo $newKVID

@@ -1,18 +1,29 @@
 #!/bin/bash
 
 
+set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 DATADIR=$DIR/data
-
-
 hasNode=$(qc status -silent)
 if [ $? -ne 0 ]; then
     echo "Error Connecting to QredoChain Node"
 	exit 1
 fi
+while getopts 'd' flag; do
+  case "${flag}" in
+    d) d_flag='true' ;;
+   esac
+done
+if [ -x "$(command -v tabset)" ]; then
+    tabset happy
+fi
+shift $(($OPTIND - 1))e
+incomingID=$1
 
 
-set -e
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
 
 dump (){
 	if [ $d_flag = 'true' ]; then
@@ -24,10 +35,9 @@ dump (){
 	fi
 }
 
-newGroupID=$1
 
 
-#----------------------------------------------------------------------------------------------------------------------------------------
+
 
 #----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -35,7 +45,7 @@ PrepGroupUpdate() {
 	echo Prepare Updated Group serialized TX for Signing 
 
 	updateJson='{
-		"existingGroupAssetID":"'$newGroupID'",
+		"existingGroupAssetID":"'$incomingID'",
 		"newowner":"'$p1_assetid'",
 		"transferType":1,
 		"group":{
@@ -103,28 +113,9 @@ SendGroup() {
 #----------------------------------------------------------------------------------------------------------------------------------------
 
 
-d_flag='false'
-
-while getopts 'd' flag; do
-  case "${flag}" in
-    d) d_flag='true' ;;
-   esac
-done
-
 
 echo Build Binary
 build
-
-d_flag='true'
-debug=false
-
-if [ -x "$(command -v tabset)" ]; then
-    tabset happy
-fi
-
-#----------------------------------------------------------------------------------------------------------------------------------------
-
-
 source $DATADIR/assets
 PrepGroupUpdate
 SignForEachIDoc

@@ -173,7 +173,7 @@ PrepGroupUpdate
 SignForEachIDoc
 SendGroup
 
-
+echo $newGroupID 
 
 
 
