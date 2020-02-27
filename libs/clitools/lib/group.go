@@ -71,7 +71,6 @@ func (cliTool *CLITool) CreateGroupJSON(jsonParams string, broadcast bool) (err 
 		txid, code, err = cliTool.NodeConn.PostTx(group)
 		if code != 0 {
 			print(code)
-			print(err.Error())
 			return errors.Wrap(err, "TX Fails verifications")
 		}
 		if err != nil {
@@ -159,7 +158,6 @@ func (cliTool *CLITool) AggregateGroupSign(jsonParams string, broadcast bool) (e
 		var code qredochain.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(updatedGroup)
 		if code != 0 {
-			print(err.Error())
 			return errors.Wrap(err, "TX Fails verifications")
 		}
 		if err != nil {

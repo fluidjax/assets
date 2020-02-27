@@ -77,3 +77,31 @@ func (m *MPC) Payload() (*protobuffer.PBMPC, error) {
 	}
 	return m.CurrentAsset.Asset.GetMPC(), nil
 }
+
+func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+	assetID := m.Key()
+	exists, err := m.Exists(datasource, assetID)
+	if err != nil {
+		return CodeDatabaseFail
+	}
+	if exists == true {
+		//MPC is immutable so if this AssetID already has a value we can't update it.
+		return CodeAlreadyExists
+	}
+
+	payload, err := m.Payload()
+	if err != nil {
+		return CodeTypeEncodingError
+	}
+
+	address := payload.Address
+	walletAssetID := payload.AssetID
+
+	if deliver == true {
+		//Commit
+		m.SetWithSuffix(datasource, assetID, ".as2ad", address)
+		m.SetWithSuffix(datasource, address, ".ad2as", walletAssetID)
+
+	}
+	return CodeTypeOK
+}

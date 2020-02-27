@@ -145,3 +145,64 @@ func LoadIDDoc(store store.StoreInterface, iddocID []byte) (i *IDDoc, err error)
 	return iddoc, nil
 
 }
+
+func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+	assetID := i.Key()
+	exists, err := i.Exists(datasource, assetID)
+	if err != nil {
+		return CodeDatabaseFail
+	}
+	if exists == true {
+		//IDDoc is immutable so if this AssetID already has a value we can't update it.
+		return CodeAlreadyExists
+	}
+
+	//Check the IDDoc is valid
+	if i.VerifyIDDoc() == false {
+		return CodeFailVerfication
+	}
+
+	//Add pointer from AssetID to the txHash of the Object
+	if deliver == true {
+
+		code := i.AddCoreMappings(datasource, rawTX, txHash)
+		if code != 0 {
+			return CodeDatabaseFail
+		}
+		//events = processTags(iddoc.CurrentAsset.Asset.Tags)
+	}
+	return CodeTypeOK
+}
+
+func (i *IDDoc) VerifyIDDoc() bool {
+	//Check signature
+	verify, err := i.Verify(i)
+	if err != nil {
+		return false
+	}
+	if verify == false {
+		return false
+	}
+
+	//Check Payload fields
+	payload, err := i.Payload()
+	if err != nil {
+		return false
+	}
+	if payload == nil {
+		return false
+	}
+
+	if payload.AuthenticationReference == "" ||
+		payload.BeneficiaryECPublicKey == nil ||
+		payload.SikePublicKey == nil ||
+		payload.BLSPublicKey == nil {
+		return false
+	}
+
+	if i.CurrentAsset.Asset.Index != 0 {
+		return false
+	}
+
+	return true
+}

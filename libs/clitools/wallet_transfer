@@ -54,8 +54,8 @@ PrepWalletUpdate() {
 		"transferType":2,
 		"currency":"BTC",
 		"walletTransfers":[
-		    {"to":"01010100ff00","amount":20,"assetid":"00ff00"},
-		   	{"to":"02020200ff00","amount":30,"assetid":"00ff01"}
+		    {"to":"01010100ff00","amount":200,"assetid":"00ff00"},
+		   	{"to":"02020200ff00","amount":300,"assetid":"00ff01"}
 		    ],
 		"transfer":[{
 			"transferType":2,

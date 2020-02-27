@@ -50,7 +50,6 @@ func (cliTool *CLITool) CreateMPCWithJSON(jsonParams string, broadcast bool) (er
 		var code qredochain.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(mpc)
 		if code != 0 {
-			print(err.Error())
 			return errors.Wrap(err, "TX Fails verifications")
 		}
 		if err != nil {

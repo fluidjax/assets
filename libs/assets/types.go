@@ -76,3 +76,18 @@ type TransferParticipant struct {
 	IDDoc        *IDDoc
 	Abbreviation string
 }
+
+const (
+	CodeTypeOK                  = 0
+	CodeTypeEncodingError       = 1
+	CodeTypeBadNonce            = 2
+	CodeTypeUnauthorized        = 3
+	CodeAlreadyExists           = 4
+	CodeDatabaseFail            = 5
+	CodeFailVerfication         = 6
+	CodeTypeHTTPError           = 7
+	CodeConsensusBalanceError   = 8
+	CodeConsensusError          = 9
+	CodeInsufficientFunds       = 10
+	CodeTendermintInternalError = -32603
+)

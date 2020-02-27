@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gookit/color"
 	"github.com/qredo/assets/libs/assets"
@@ -77,14 +78,7 @@ func (app *QredoChain) GetGroup(assetID []byte) (*assets.Group, error) {
 	return assets.ReBuildGroup(msg, key)
 }
 
-func (app *QredoChain) GetWithSuffix(key []byte, suffix string) ([]byte, error) {
-	fullSuffix := []byte(suffix)
-	key = append(key[:], fullSuffix[:]...)
-	return app.Get(key)
-}
-
-func (app *QredoChain) Get(key []byte) ([]byte, error) {
-
+func (app *QredoChain) BatchGet(key []byte) ([]byte, error) {
 	var res []byte
 	item, err := app.currentBatch.Get(key)
 	if item == nil {
@@ -95,51 +89,28 @@ func (app *QredoChain) Get(key []byte) ([]byte, error) {
 		return nil
 	})
 	return res, err
-
-	// var res []byte
-	// err := app.db.View(func(txn *badger.Txn) error {
-	// 	item, err := txn.Get(key)
-	// 	if item == nil {
-	// 		return nil
-	// 	}
-	// 	err = item.Value(func(val []byte) error {
-	// 		res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
-	// 		return nil
-	// 	})
-	// 	return err
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return res, err
 }
 
-func (app *QredoChain) SetWithSuffix(key []byte, suffix string, data []byte) error {
-
-	suffixBytes := []byte(suffix)
-	fullkey := append(key[:], suffixBytes[:]...)
-
-	//Display
-	//fmt.Println("SET: ", hex.EncodeToString(key), suffix, " = ", hex.EncodeToString(data))
-	//fmt.Println("FULL KEY ", hex.EncodeToString(fullkey))
-
-	return app.Set(fullkey, data)
+func (app *QredoChain) Get(key []byte) ([]byte, error) {
+	var res []byte
+	err := app.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(key)
+		if item == nil {
+			return nil
+		}
+		err = item.Value(func(val []byte) error {
+			res = append([]byte{}, val...) //this copies the item so we can use it outside the closure
+			return nil
+		})
+		return err
+	})
+	return res, err
 }
 
-func (app *QredoChain) Set(key []byte, data []byte) error {
+func (app *QredoChain) BatchSet(key []byte, data []byte) error {
 	txn := app.currentBatch
 	err := txn.Set(key, data)
 	return err
-}
-
-func (app *QredoChain) exists(key []byte) bool {
-	item, _ := app.Get(key)
-	return item != nil
-}
-
-func KeySuffix(key []byte, suffix string) []byte {
-	suffixBytes := []byte(suffix)
-	return append(key, suffixBytes...)
 }
 
 //Make index 0 padded 8 char

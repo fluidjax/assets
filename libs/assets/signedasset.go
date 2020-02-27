@@ -22,6 +22,7 @@ package assets
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -645,4 +646,75 @@ func (a *SignedAsset) AddTag(key string, value []byte) {
 	}
 	a.CurrentAsset.Asset.Tags[key] = value
 
+}
+
+func (a *SignedAsset) GetWithSuffix(datasource DataSource, key []byte, suffix string) ([]byte, error) {
+	fullSuffix := []byte(suffix)
+	key = append(key[:], fullSuffix[:]...)
+	return datasource.Get(key)
+}
+
+func (a *SignedAsset) SetWithSuffix(datasource DataSource, key []byte, suffix string, data []byte) error {
+	suffixBytes := []byte(suffix)
+	fullkey := append(key[:], suffixBytes[:]...)
+	// println("SET1 ", hex.EncodeToString(key))
+	// println("SET2 ", hex.EncodeToString(data))
+	// println("SET3 ", hex.EncodeToString(fullkey))
+	return datasource.BatchSet(fullkey, data)
+}
+
+func (a *SignedAsset) Exists(datasource DataSource, key []byte) (bool, error) {
+	item, err := datasource.Get(key)
+	return item != nil, err
+}
+
+func (a *SignedAsset) BatchExists(datasource DataSource, key []byte) (bool, error) {
+	item, err := datasource.BatchGet(key)
+	return item != nil, err
+}
+
+func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) uint32 {
+	err1 := datasource.BatchSet(txHash, rawTX)
+	if err1 != nil {
+		return CodeDatabaseFail
+	}
+	err2 := datasource.BatchSet(a.Key(), txHash)
+	if err2 != nil {
+		return CodeDatabaseFail
+	}
+	return CodeTypeOK
+}
+
+func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) (code uint32) {
+	currentBalance, code := a.getBalanceKey(datasource, assetID)
+	newBalance := currentBalance - amount
+	if newBalance < 0 {
+		return CodeConsensusBalanceError
+	}
+	return a.setBalanceKey(datasource, assetID, newBalance)
+}
+
+func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) (code uint32) {
+	currentBalance, code := a.getBalanceKey(datasource, assetID)
+	newBalance := currentBalance + amount
+	return a.setBalanceKey(datasource, assetID, newBalance)
+}
+func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) (code uint32) {
+	//Convert new balance to bytes and save for AssetID
+	newBalanceBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
+	err := a.SetWithSuffix(datasource, assetID, ".balance", newBalanceBytes)
+	if err != nil {
+		return CodeConsensusBalanceError
+	}
+	return 0
+}
+
+func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, code uint32) {
+	currentBalanceBytes, err := a.GetWithSuffix(datasource, assetID, ".balance")
+	if currentBalanceBytes == nil || err != nil {
+		return 0, CodeConsensusBalanceError
+	}
+	currentBalance := int64(binary.LittleEndian.Uint64(currentBalanceBytes))
+	return currentBalance, 0
 }

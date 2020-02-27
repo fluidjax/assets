@@ -236,3 +236,32 @@ func LoadGroup(store store.StoreInterface, groupAssetID []byte) (g *Group, err e
 	return g, nil
 
 }
+
+func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+	assetID := g.Key()
+	exists, err := g.Exists(datasource, assetID)
+	if err != nil {
+		return CodeDatabaseFail
+	}
+	//Wallet is mutable, if exists allow update
+
+	if exists == false {
+		//This is a new Wallet
+		if deliver == true {
+			//Commit
+			code := g.AddCoreMappings(datasource, rawTX, txHash)
+			if code != 0 {
+				return CodeDatabaseFail
+			}
+		}
+	} else {
+		if deliver == true {
+			//Commit
+			code := g.AddCoreMappings(datasource, rawTX, txHash)
+			if code != 0 {
+				return CodeDatabaseFail
+			}
+		}
+	}
+	return CodeTypeOK
+}

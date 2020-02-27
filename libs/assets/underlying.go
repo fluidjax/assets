@@ -74,3 +74,48 @@ func (u *Underlying) Payload() (*protobuffer.PBUnderlying, error) {
 	}
 	return u.CurrentAsset.Asset.GetUnderlying(), nil
 }
+func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+	assetID := u.Key()
+	exists, err := u.Exists(datasource, assetID)
+	if err != nil {
+		return CodeDatabaseFail
+	}
+	if exists == true {
+		//Underlying is immutable so if this AssetID already has a value we can't update it.
+		return CodeAlreadyExists
+	}
+
+	payload, err := u.Payload()
+	if err != nil {
+		return CodeTypeEncodingError
+	}
+
+	address := []byte(payload.Address)
+	amount := payload.Amount
+	underlyingTxID := []byte(payload.TxID)
+
+	underlyingUTxIDExists, err := u.GetWithSuffix(datasource, underlyingTxID, ".UTxID")
+	if err != nil || underlyingUTxIDExists != nil {
+		return CodeConsensusError
+	}
+
+	if deliver == true {
+		//Add in a KV for the underlying UTxID, so we don't eneter it twice
+		err = u.SetWithSuffix(datasource, underlyingTxID, ".UTxID", []byte("1"))
+		if err != nil {
+			return CodeDatabaseFail
+		}
+
+		//underlying has Crypto Address - get AssetID from KV Store
+		assetID, err := u.GetWithSuffix(datasource, address, ".ad2as")
+		if err != nil {
+			return CodeTypeEncodingError
+		}
+		code := u.addToBalanceKey(datasource, assetID, amount)
+		if code != 0 {
+			return code
+		}
+	}
+
+	return CodeTypeOK
+}

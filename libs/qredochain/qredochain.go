@@ -75,6 +75,6 @@ func (app *QredoChain) Load(key []byte) ([]byte, error) {
 }
 
 func (app *QredoChain) Save(key []byte, data []byte) error {
-	return app.Set(key, data)
+	return app.BatchSet(key, data)
 
 }

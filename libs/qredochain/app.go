@@ -4,8 +4,6 @@ import (
 	"crypto/sha256"
 
 	"github.com/dgraph-io/badger"
-	"github.com/gogo/protobuf/proto"
-	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
@@ -50,22 +48,6 @@ func (app *QredoChain) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
 //SetOption -
 func (app *QredoChain) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
 	return abcitypes.ResponseSetOption{}
-}
-
-func decodeTX(data []byte) (*protobuffer.PBSignedAsset, error) {
-	signedAsset := &protobuffer.PBSignedAsset{}
-
-	err := proto.Unmarshal(data, signedAsset)
-	if err != nil {
-		return nil, err
-	}
-	return signedAsset, nil
-}
-
-//DeliverTx -
-func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	code, events := app.processTX(req.Tx, false)
-	return types.ResponseDeliverTx{Code: code, Events: events}
 }
 
 //Commit -
@@ -191,6 +173,12 @@ func (app *QredoChain) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 	//					like checking signatures and account balances, but not running code in a virtual machine.
 	// Transactions where ResponseCheckTx.Code != 0 will be rejected - they will not be broadcast to other nodes or included in a proposal block.
 	// Tendermint attributes no other value to the response code
-	code, _ := app.processTX(req.Tx, true)
+	code, _ := app.processTX(req.Tx, false)
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
+}
+
+//DeliverTx -
+func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+	code, events := app.processTX(req.Tx, true)
+	return types.ResponseDeliverTx{Code: code, Events: events}
 }

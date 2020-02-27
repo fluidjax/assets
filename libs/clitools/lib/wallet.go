@@ -62,7 +62,6 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 		var code qredochain.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(wallet)
 		if code != 0 {
-			print(err.Error())
 			return errors.Wrap(err, "TX Fails verifications")
 		}
 		if err != nil {
@@ -148,7 +147,6 @@ func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (
 		var code qredochain.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(updatedWallet)
 		if code != 0 {
-			print(err.Error())
 			return errors.Wrap(err, "TX Fails verifications")
 		}
 		if err != nil {

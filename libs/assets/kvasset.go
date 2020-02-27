@@ -287,3 +287,34 @@ func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
 	kv := signatureAsset.GetKVAsset()
 	return kv, nil
 }
+
+func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+	assetID := k.Key()
+	exists, err := k.Exists(datasource, assetID)
+	if err != nil {
+		return CodeDatabaseFail
+	}
+	//Wallet is mutable, if exists allow update
+
+	if exists == false {
+		//This is a new Wallet
+		if deliver == true {
+			//Commit
+			code := k.AddCoreMappings(datasource, rawTX, txHash)
+			if code != 0 {
+				return CodeDatabaseFail
+			}
+		}
+
+	} else {
+		if deliver == true {
+			//Commit
+			code := k.AddCoreMappings(datasource, rawTX, txHash)
+			if code != 0 {
+				return CodeDatabaseFail
+			}
+		}
+
+	}
+	return CodeTypeOK
+}

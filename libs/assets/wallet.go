@@ -20,6 +20,8 @@ under the License.
 package assets
 
 import (
+	"bytes"
+
 	"math"
 
 	"github.com/golang/protobuf/proto"
@@ -220,4 +222,91 @@ func LoadWallet(store store.StoreInterface, walletID []byte) (w *Wallet, err err
 
 	return wallet, nil
 
+}
+
+func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+	assetID := w.Key()
+
+	exists, err := w.Exists(datasource, assetID)
+	if err != nil {
+		return CodeDatabaseFail
+	}
+
+	// if exists == true {
+	// 	println("EXISTS-", hex.EncodeToString(assetID))
+	// } else {
+	// 	println("NOTEXISTS-", hex.EncodeToString(assetID))
+	// }
+
+	//Wallet is mutable, if exists allow update
+
+	if exists == false {
+		//This is a new Wallet
+		//println("New Wallet", hex.EncodeToString(w.Key()))
+		if deliver == true {
+			//Commit
+			code := w.AddCoreMappings(datasource, rawTX, txHash)
+			if code != 0 {
+				return CodeDatabaseFail
+			}
+			//Set Balance to 0
+			w.setBalanceKey(datasource, w.Key(), 0)
+		}
+	} else {
+		//This is a wallet update
+		//println("Wallet Update")
+
+		//events = processTags(wallet.CurrentAsset.Asset.Tags)
+
+		//Loop through all the transfers out and update their destinations
+		payload, err := w.Payload()
+		if err != nil {
+			return CodeFailVerfication
+		}
+
+		currentBalance, code := w.getBalanceKey(datasource, assetID)
+		if code != 0 {
+			return code
+		}
+
+		//Check we have enough - Pass 1
+		var totalOutgoing int64
+		for _, wt := range payload.WalletTransfers {
+			res := bytes.Compare(wt.AssetID, assetID)
+			if res == 0 {
+				//this is money coming back to self, just ignore it
+				continue
+			}
+			totalOutgoing = totalOutgoing + wt.Amount
+		}
+
+		if totalOutgoing > currentBalance {
+			//println("Eject")
+			return CodeInsufficientFunds
+		}
+
+		//We have enough funds, do the database updates for transfer Pass 2
+		if deliver == true {
+			//println("Deliver")
+			code := w.AddCoreMappings(datasource, rawTX, txHash)
+			if code != 0 {
+				return CodeDatabaseFail
+			}
+			var totalToSubtract int64
+
+			for _, wt := range payload.WalletTransfers {
+				res := bytes.Compare(wt.AssetID, assetID)
+				if res == 0 {
+					//this is money coming back to self, just ignore it
+					continue
+				}
+				amount := wt.Amount
+				destinationAssetID := wt.AssetID
+				w.addToBalanceKey(datasource, destinationAssetID, amount)
+				totalToSubtract += amount
+			}
+			w.subtractFromBalanceKey(datasource, assetID, totalToSubtract)
+		}
+	}
+	return CodeTypeOK
 }
