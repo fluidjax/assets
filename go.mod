@@ -8,6 +8,7 @@ require (
 	github.com/btcsuite/btcutil v1.0.1
 	github.com/dgraph-io/badger v1.6.0
 	github.com/elliotchance/orderedmap v1.2.0
+	github.com/ethereum/go-ethereum v1.9.11
 	github.com/fatih/color v1.9.0
 	github.com/go-kit/kit v0.10.0
 	github.com/gogo/protobuf v1.3.1
