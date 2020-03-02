@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 type UnderlyingJSON struct {
@@ -48,7 +47,7 @@ func (cliTool *CLITool) CreateUnderlyingWithJSON(jsonParams string, broadcast bo
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(under)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")

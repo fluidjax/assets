@@ -2,18 +2,17 @@ package qredochain
 
 import (
 	"github.com/qredo/assets/libs/assets"
-	"github.com/tendermint/abci/example/code"
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
 )
 
-func (app *QredoChain) processTX(tx []byte, deliver bool) (uint32, []abcitypes.Event) {
+func (app *QredoChain) processTX(tx []byte, deliver bool) (assets.TransactionCode, []abcitypes.Event) {
 	//Decode the Asset
 
 	txAsset, _, txHash, err := assets.BuildAssetFromTX(tx)
 	if err != nil {
-		return code.CodeTypeEncodingError, nil
+		return assets.CodeTypeEncodingError, nil
 	}
 	code := txAsset.ConsensusProcess(app, tx, txHash, deliver)
 	return code, nil

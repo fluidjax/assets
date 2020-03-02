@@ -223,7 +223,7 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 
 }
 
-func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
 	assetID := w.Key()
 
 	exists, err := w.Exists(datasource, assetID)

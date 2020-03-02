@@ -145,7 +145,7 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 
 }
 
-func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
 	assetID := i.Key()
 	exists, err := i.Exists(datasource, assetID)
 	if err != nil {

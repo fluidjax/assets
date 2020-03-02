@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 type MPCJSON struct {
@@ -47,7 +46,7 @@ func (cliTool *CLITool) CreateMPCWithJSON(jsonParams string, broadcast bool) (er
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(mpc)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")

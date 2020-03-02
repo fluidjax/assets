@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 func (cliTool *CLITool) CreateIDDoc(authref string, broadcast bool) (err error) {
@@ -27,7 +26,7 @@ func (cliTool *CLITool) CreateIDDoc(authref string, broadcast bool) (err error) 
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(iddoc)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")

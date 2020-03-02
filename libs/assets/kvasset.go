@@ -287,7 +287,7 @@ func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
 	return kv, nil
 }
 
-func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
 	assetID := k.Key()
 	exists, err := k.Exists(datasource, assetID)
 	if err != nil {

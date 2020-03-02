@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) (err error) {
@@ -59,7 +58,7 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(wallet)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")
@@ -144,7 +143,7 @@ func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(updatedWallet)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")

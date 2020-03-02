@@ -672,7 +672,7 @@ func (a *SignedAsset) BatchExists(datasource DataSource, key []byte) (bool, erro
 	return item != nil, err
 }
 
-func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) uint32 {
+func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) TransactionCode {
 	err1 := datasource.BatchSet(txHash, rawTX)
 	if err1 != nil {
 		return CodeDatabaseFail
@@ -684,7 +684,7 @@ func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHas
 	return CodeTypeOK
 }
 
-func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) (code uint32) {
+func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) (code TransactionCode) {
 	currentBalance, code := a.getBalanceKey(datasource, assetID)
 	newBalance := currentBalance - amount
 	if newBalance < 0 {
@@ -693,12 +693,12 @@ func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []by
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
 
-func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) (code uint32) {
+func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) (code TransactionCode) {
 	currentBalance, code := a.getBalanceKey(datasource, assetID)
 	newBalance := currentBalance + amount
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
-func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) (code uint32) {
+func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) (code TransactionCode) {
 	//Convert new balance to bytes and save for AssetID
 	newBalanceBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
@@ -709,7 +709,7 @@ func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBa
 	return 0
 }
 
-func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, code uint32) {
+func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, code TransactionCode) {
 	currentBalanceBytes, err := a.GetWithSuffix(datasource, assetID, ".balance")
 	if currentBalanceBytes == nil || err != nil {
 		return 0, CodeConsensusBalanceError

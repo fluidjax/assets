@@ -90,7 +90,7 @@ func (conn *UnderlyingConnector) ProcessRecentTransactions(blockhash *chainhash.
 	return nextBlockHash, count, nil
 }
 
-func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, address []byte, currency protobuffer.PBCryptoCurrency, amount int64) (txid string, code qredochain.TransactionCode, err error) {
+func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, address []byte, currency protobuffer.PBCryptoCurrency, amount int64) (txid string, code assets.TransactionCode, err error) {
 	underlying, err := assets.NewUnderlying()
 	if err != nil {
 		return txid, code, err

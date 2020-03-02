@@ -78,7 +78,7 @@ func (m *MPC) Payload() (*protobuffer.PBMPC, error) {
 	return m.CurrentAsset.Asset.GetMPC(), nil
 }
 
-func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
 	assetID := m.Key()
 	exists, err := m.Exists(datasource, assetID)
 	if err != nil {

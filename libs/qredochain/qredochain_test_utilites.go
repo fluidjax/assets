@@ -104,9 +104,9 @@ func buildTestIDDoc(t *testing.T, nc *NodeConnector) (*assets.IDDoc, string, []b
 	serializedIDDoc, err := i.SerializeSignedAsset()
 	assert.Nil(t, err, "Error should be nil", err)
 
-	txid, errorCode, err := nc.PostTx(i)
+	txid, chainerr := nc.PostTx(i)
 	fmt.Println(txid)
-	assert.True(t, errorCode == CodeTypeOK, "Error should be nil", err)
+	assert.Nil(t, chainerr, "Error should be nil")
 	time.Sleep(2 * time.Second)
 	return i, txid, serializedIDDoc, nil
 }

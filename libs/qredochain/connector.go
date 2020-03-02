@@ -12,30 +12,26 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/datastore"
 	"github.com/qredo/assets/libs/logger"
 	"github.com/qredo/assets/libs/protobuffer"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/bytes"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	rpcTypes "github.com/tendermint/tendermint/rpc/lib/types"
 )
 
-type TransactionCode uint32
+type ResultPOSTTxCommit struct {
+	CheckTx   abci.ResponseCheckTx   `json:"check_tx"`
+	DeliverTx abci.ResponseDeliverTx `json:"deliver_tx"`
+	Hash      bytes.HexBytes         `json:"hash"`
+	Height    string                 `json:"height"`
+}
 
-const (
-	CodeTypeOK                TransactionCode = 0
-	CodeTypeEncodingError                     = 1
-	CodeTypeBadNonce                          = 2
-	CodeTypeUnauthorized                      = 3
-	CodeAlreadyExists                         = 4
-	CodeDatabaseFail                          = 5
-	CodeFailVerfication                       = 6
-	CodeTypeHTTPError                         = 7
-	CodeConsensusBalanceError                 = 8
-	CodeConsensusError                        = 9
-	CodeInsufficientFunds                     = 10
-
-	CodeTendermintInternalError = -32603
-)
+type RPCPostResponse struct {
+}
 
 const (
 	nodeConnectionTimeout = time.Second * 600
@@ -110,15 +106,14 @@ func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, num
 }
 
 // PostTx posts a transaction to the chain and returns the transaction ID
-func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code TransactionCode, err error) {
+func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, assetErr *assets.AssetsError) {
 	// //serialize the whole transaction
 	serializedTX, err := asset.SerializeSignedAsset()
 	if err != nil {
-		return "", CodeTypeEncodingError, err
+		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to serialize Asset")
+
 	}
 	base64EncodedTX := base64.StdEncoding.EncodeToString(serializedTX)
-
-	// // TODO: use net/rpc
 
 	//broadcast_tx_commit - broadcast and wait until its in a new block
 	//broadcast_tx_async  - broadcast and return - no checks
@@ -135,48 +130,74 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, code Transact
 
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
-		return "", CodeTypeHTTPError, errors.Wrap(err, "post to blockchain node")
+		return "", assets.NewAssetsError(assets.CodeTypeHTTPError, "Failed Connect to QredoChain node")
+
 	}
 	req.Header.Set("Content-Type", "text/plain;")
 
 	resp, err := nc.HttpClient.Do(req)
 	if err != nil {
-		return "", CodeTypeHTTPError, errors.Wrap(err, "post to blockchain node")
+		return "", assets.NewAssetsError(assets.CodeTypeHTTPError, "Failed to post to  QredoChain node")
 	}
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
+	jsonResp, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
-	}
-	var f interface{}
-	err2 := json.Unmarshal(b, &f)
-	if err2 != nil {
-		return
+		return "", assets.NewAssetsError(assets.CodeTypeHTTPError, "Failed to read from QredoChain node")
 	}
 
-	data := f.(map[string]interface{})
+	rpcResp := rpcTypes.RPCResponse{}
+	err = rpcResp.UnmarshalJSON(jsonResp)
+	if err != nil {
+		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Reeponse from QredoChain node")
+	}
 
-	if data["result"] == nil {
-		if data["error"] != nil {
-			errdata := data["error"].(map[string]interface{})
-			codef64 := errdata["code"].(float64)
-			code = TransactionCode(codef64)
-			return "", code, errors.New("Failed to add new TX")
-		} else {
-			return "", CodeAlreadyExists, errors.New("Failed to decode response")
+	rbtxc := &ResultPOSTTxCommit{}
+	print(string(rpcResp.Result))
+	err = json.Unmarshal(rpcResp.Result, rbtxc)
+	if err != nil {
+		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Reeponse from QredoChain node")
+	}
+
+	if rbtxc.CheckTx.Code != 0 {
+		//There was some actionable error
+		err := errors.New(string(rbtxc.CheckTx.Data))
+		return "", &assets.AssetsError{
+			Code:  assets.TransactionCode(rbtxc.CheckTx.Code),
+			Error: err,
 		}
 	}
 
-	// pp, _ := prettyjson.Marshal(data)
-	//	fmt.Println(string(pp))
+	//No error code
+	if rbtxc.Hash == nil {
+		return "", assets.NewAssetsError(assets.TransactionCode(rbtxc.CheckTx.Code), "No TxID returned")
+	}
 
-	result := data["result"].(map[string]interface{})
-	txID = result["hash"].(string)
-	checktx := result["check_tx"].(map[string]interface{})
-	codef64 := checktx["code"].(float64)
-	code = TransactionCode(codef64)
-	return txID, code, err
+	txID = rbtxc.Hash.String()
+	return txID, nil
+
+	// data := f.(map[string]interface{})
+
+	// if data["result"] == nil {
+	// 	if data["error"] != nil {
+	// 		errdata := data["error"].(map[string]interface{})
+	// 		codef64 := errdata["code"].(float64)
+	// 		code = assets.TransactionCode(codef64)
+	// 		return "", code, errors.New("Failed to add new TX")
+	// 	} else {
+	// 		return "", assets.CodeAlreadyExists, errors.New("Failed to decode response")
+	// 	}
+	// }
+
+	// // pp, _ := prettyjson.Marshal(data)
+	// //	fmt.Println(string(pp))
+
+	// result := data["result"].(map[string]interface{})
+	// txID = result["hash"].(string)
+	// checktx := result["check_tx"].(map[string]interface{})
+	// codef64 := checktx["code"].(float64)
+	// code = assets.TransactionCode(codef64)
+	// return txID, code, err
 }
 
 func (nc *NodeConnector) GetTx(txHash string) ([]byte, error) {

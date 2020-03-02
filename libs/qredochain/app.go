@@ -177,11 +177,12 @@ func (app *QredoChain) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 	// Transactions where ResponseCheckTx.Code != 0 will be rejected - they will not be broadcast to other nodes or included in a proposal block.
 	// Tendermint attributes no other value to the response code
 	code, _ := app.processTX(req.Tx, false)
-	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 0}
+	data := []byte("Hello from chris")
+	return abcitypes.ResponseCheckTx{Code: uint32(code), Data: data, GasWanted: 0}
 }
 
 //DeliverTx -
 func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	code, events := app.processTX(req.Tx, true)
-	return types.ResponseDeliverTx{Code: code, Events: events}
+	return types.ResponseDeliverTx{Code: uint32(code), Events: events}
 }

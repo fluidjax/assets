@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 func (cliTool *CLITool) CreateGroupJSON(jsonParams string, broadcast bool) (err error) {
@@ -67,7 +66,7 @@ func (cliTool *CLITool) CreateGroupJSON(jsonParams string, broadcast bool) (err 
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(group)
 		if code != 0 {
 			print(code)
@@ -155,7 +154,7 @@ func (cliTool *CLITool) AggregateGroupSign(jsonParams string, broadcast bool) (e
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(updatedGroup)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
-	"github.com/qredo/assets/libs/qredochain"
 )
 
 func (cliTool *CLITool) CreateKVJSON(jsonParams string, broadcast bool) (err error) {
@@ -67,7 +66,7 @@ func (cliTool *CLITool) CreateKVJSON(jsonParams string, broadcast bool) (err err
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(kv)
 		if code != 0 {
 			print(code)
@@ -159,7 +158,7 @@ func (cliTool *CLITool) AggregateKVSign(jsonParams string, broadcast bool) (err 
 
 	txid := ""
 	if broadcast == true {
-		var code qredochain.TransactionCode
+		var code assets.TransactionCode
 		txid, code, err = cliTool.NodeConn.PostTx(updatedKV)
 		if code != 0 {
 			return errors.Wrap(err, "TX Fails verifications")

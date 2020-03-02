@@ -22,7 +22,16 @@ package assets
 import (
 	"bytes"
 	"crypto/rand"
+
+	"github.com/pkg/errors"
 )
+
+func NewAssetsError(code TransactionCode, description string) *AssetsError {
+	return &AssetsError{
+		Code:  code,
+		Error: errors.New(description),
+	}
+}
 
 //RandomBytes - generate n random bytes
 func RandomBytes(n int) ([]byte, error) {

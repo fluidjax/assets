@@ -74,7 +74,7 @@ func (u *Underlying) Payload() (*protobuffer.PBUnderlying, error) {
 	}
 	return u.CurrentAsset.Asset.GetUnderlying(), nil
 }
-func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
 	assetID := u.Key()
 	exists, err := u.Exists(datasource, assetID)
 	if err != nil {

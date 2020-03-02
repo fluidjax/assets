@@ -236,7 +236,7 @@ func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
 
 }
 
-func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) uint32 {
+func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
 	assetID := g.Key()
 	exists, err := g.Exists(datasource, assetID)
 	if err != nil {
