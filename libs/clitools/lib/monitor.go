@@ -1,4 +1,4 @@
-package qc
+package lib
 
 import (
 	"context"

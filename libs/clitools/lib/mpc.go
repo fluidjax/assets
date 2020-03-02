@@ -1,4 +1,4 @@
-package qc
+package lib
 
 import (
 	"encoding/hex"
@@ -46,13 +46,10 @@ func (cliTool *CLITool) CreateMPCWithJSON(jsonParams string, broadcast bool) (er
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(mpc)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(mpc)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 

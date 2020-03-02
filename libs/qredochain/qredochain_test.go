@@ -85,15 +85,15 @@ func Test_External_Query(t *testing.T) {
 	i.AddTag("tagkey", []byte("tagvalue"))
 	assert.Nil(t, err, "Error should be nil", err)
 
-	txid, errorCode, err := nc.PostTx(i)
-	assert.True(t, errorCode == CodeFailVerfication, "Error should not be nil", err)
+	txid, assetsError := nc.PostTx(i)
+	assert.Nil(t, assetsError, "Error should not be nil", err)
 
 	i.Sign(i)
-	txid, errorCode, err = nc.PostTx(i)
+	txid, assetsError = nc.PostTx(i)
+	assert.Nil(t, assetsError, "Error should not be nil", err)
+
 	print("TXID ", txid, "\n")
 	print("Key  ", hex.EncodeToString(i.Key()), "\n")
-
-	assert.True(t, errorCode == CodeTypeOK, "Error should be nil", err)
 
 	assert.Nil(t, err, "Error should be nil", err)
 	assert.NotNil(t, txid, "TXID shouldnt be nil", err)

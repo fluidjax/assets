@@ -1,4 +1,4 @@
-package qc
+package lib
 
 import (
 	"encoding/binary"
@@ -15,6 +15,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+// VerifyTX -
 func (cliTool *CLITool) VerifyTX(iddocID string, tx string) error {
 
 	key, err := hex.DecodeString(iddocID)

@@ -1,4 +1,4 @@
-package qc
+package lib
 
 import (
 	"encoding/base64"
@@ -66,14 +66,10 @@ func (cliTool *CLITool) CreateKVJSON(jsonParams string, broadcast bool) (err err
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(kv)
-		if code != 0 {
-			print(code)
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(kv)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 
@@ -158,13 +154,10 @@ func (cliTool *CLITool) AggregateKVSign(jsonParams string, broadcast bool) (err 
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(updatedKV)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(updatedKV)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 

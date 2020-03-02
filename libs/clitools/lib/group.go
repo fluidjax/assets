@@ -1,4 +1,4 @@
-package qc
+package lib
 
 import (
 	"encoding/base64"
@@ -66,14 +66,10 @@ func (cliTool *CLITool) CreateGroupJSON(jsonParams string, broadcast bool) (err 
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(group)
-		if code != 0 {
-			print(code)
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(group)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 
@@ -154,13 +150,10 @@ func (cliTool *CLITool) AggregateGroupSign(jsonParams string, broadcast bool) (e
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(updatedGroup)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(updatedGroup)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 

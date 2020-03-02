@@ -1,9 +1,8 @@
-package qc
+package lib
 
 import (
 	"encoding/hex"
 
-	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 )
 
@@ -26,13 +25,10 @@ func (cliTool *CLITool) CreateIDDoc(authref string, broadcast bool) (err error) 
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(iddoc)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(iddoc)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 

@@ -1,10 +1,9 @@
-package qc
+package lib
 
 import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
 )
@@ -47,13 +46,10 @@ func (cliTool *CLITool) CreateUnderlyingWithJSON(jsonParams string, broadcast bo
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(under)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(under)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 

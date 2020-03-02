@@ -1,4 +1,4 @@
-package qc
+package lib
 
 import (
 	"encoding/base64"
@@ -11,6 +11,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//CreateWalletWithJSON -
 func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) (err error) {
 	cwJSON := &CreateWalletJSON{}
 	err = json.Unmarshal([]byte(jsonParams), cwJSON)
@@ -58,16 +59,12 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(wallet)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(wallet)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
-
 	serializedSignedAsset, err := wallet.SerializeSignedAsset()
 	if err != nil {
 		return err
@@ -143,13 +140,10 @@ func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (
 
 	txid := ""
 	if broadcast == true {
-		var code assets.TransactionCode
-		txid, code, err = cliTool.NodeConn.PostTx(updatedWallet)
-		if code != 0 {
-			return errors.Wrap(err, "TX Fails verifications")
-		}
-		if err != nil {
-			return err
+		var assetsError *assets.AssetsError
+		txid, assetsError = cliTool.NodeConn.PostTx(updatedWallet)
+		if assetsError != nil {
+			return assetsError.Err
 		}
 	}
 

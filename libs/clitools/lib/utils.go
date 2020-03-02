@@ -1,4 +1,6 @@
-package qc
+package lib
+
+//
 
 import (
 	"encoding/base64"
@@ -164,6 +166,7 @@ func TranslateRecursive(copy, original reflect.Value) {
 
 }
 
+//
 func buildKV(data *[]KV) map[string][]byte {
 	res := make(map[string][]byte)
 	for _, v := range *data {
