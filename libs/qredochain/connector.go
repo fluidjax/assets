@@ -105,7 +105,7 @@ func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, num
 	return resultRaw, err
 }
 
-// PostTx posts a transaction to the chain and returns the transaction ID
+//StandalonePostTx posts a transaction to the chain and returns the transaction ID
 func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, assetsError *assets.AssetsError) {
 	// //serialize the whole transaction
 	serializedTX, err := asset.SerializeSignedAsset()
@@ -153,7 +153,7 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, assetsError *
 	}
 
 	rbtxc := &ResultPOSTTxCommit{}
-	print(string(rpcResp.Result))
+	//print(string(rpcResp.Result))
 	err = json.Unmarshal(rpcResp.Result, rbtxc)
 	if err != nil {
 		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Reeponse from QredoChain node")

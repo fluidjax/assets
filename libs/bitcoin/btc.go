@@ -80,8 +80,8 @@ func (conn *UnderlyingConnector) ProcessRecentTransactions(blockhash *chainhash.
 			amount := int64(tx.Amount)
 			TxID := []byte(tx.TxID)
 			address := []byte(tx.Address)
-			txid, code, err := conn.BroadcastUnderlyingChainDeposit(TxID, address, protobuffer.PBCryptoCurrency_BTC, amount)
-			if code != 0 || err != nil {
+			txid, err := conn.BroadcastUnderlyingChainDeposit(TxID, address, protobuffer.PBCryptoCurrency_BTC, amount)
+			if err != nil {
 				return blockhash, 0, err
 			}
 			fmt.Printf("Underlying ADD: Address: %v  TXID: %v \n", address, txid)
@@ -90,15 +90,15 @@ func (conn *UnderlyingConnector) ProcessRecentTransactions(blockhash *chainhash.
 	return nextBlockHash, count, nil
 }
 
-func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, address []byte, currency protobuffer.PBCryptoCurrency, amount int64) (txid string, code assets.TransactionCode, err error) {
+func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, address []byte, currency protobuffer.PBCryptoCurrency, amount int64) (txid string, err error) {
 	underlying, err := assets.NewUnderlying()
 	if err != nil {
-		return txid, code, err
+		return txid, err
 	}
 
 	payload, err := underlying.Payload()
 	if err != nil {
-		return txid, code, err
+		return txid, err
 	}
 
 	payload.Type = protobuffer.PBUnderlyingType_Deposit
@@ -108,5 +108,6 @@ func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, ad
 	payload.Address = address
 	payload.TxID = TxID
 	underlying.AddTag("address", []byte(address))
-	return conn.NodeConnector.PostTx(underlying)
+	txid, assetError := conn.NodeConnector.PostTx(underlying)
+	return txid, assetError.Err
 }

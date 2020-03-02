@@ -74,20 +74,20 @@ func (u *Underlying) Payload() (*protobuffer.PBUnderlying, error) {
 	}
 	return u.CurrentAsset.Asset.GetUnderlying(), nil
 }
-func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
+func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
 	assetID := u.Key()
 	exists, err := u.Exists(datasource, assetID)
 	if err != nil {
-		return CodeDatabaseFail
+		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 	if exists == true {
 		//Underlying is immutable so if this AssetID already has a value we can't update it.
-		return CodeAlreadyExists
+		return NewAssetsError(CodeCantUpdateImmutableAsset, "Failed - Underlying already Exists, attempt to update immutable asset")
 	}
 
 	payload, err := u.Payload()
 	if err != nil {
-		return CodeTypeEncodingError
+		return NewAssetsError(CodeDatabaseFail, "Fail to determine Underlying Payload")
 	}
 
 	address := []byte(payload.Address)
@@ -96,26 +96,27 @@ func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHas
 
 	underlyingUTxIDExists, err := u.GetWithSuffix(datasource, underlyingTxID, ".UTxID")
 	if err != nil || underlyingUTxIDExists != nil {
-		return CodeConsensusError
+		return NewAssetsError(CodeConsensusUnderlyingTXExists, "Consensus Error - Underlying Transaction already exists")
+
 	}
 
 	if deliver == true {
 		//Add in a KV for the underlying UTxID, so we don't eneter it twice
 		err = u.SetWithSuffix(datasource, underlyingTxID, ".UTxID", []byte("1"))
 		if err != nil {
-			return CodeDatabaseFail
+			return NewAssetsError(CodeDatabaseFail, "Fail to create Underlying Transaction Exists flag")
 		}
 
 		//underlying has Crypto Address - get AssetID from KV Store
 		assetID, err := u.GetWithSuffix(datasource, address, ".ad2as")
 		if err != nil {
-			return CodeTypeEncodingError
+			return NewAssetsError(CodeDatabaseFail, "Fail to get address using address to asset lookup")
 		}
-		code := u.addToBalanceKey(datasource, assetID, amount)
-		if code != 0 {
-			return code
+		assetError := u.addToBalanceKey(datasource, assetID, amount)
+		if assetError != nil {
+			return NewAssetsError(CodeConsensusBalanceFailToAddUnderlying, "Fail to address underlying Transaction to Address Balance")
 		}
 	}
 
-	return CodeTypeOK
+	return nil
 }

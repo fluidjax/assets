@@ -7,15 +7,15 @@ import (
 	"github.com/tendermint/tendermint/libs/kv"
 )
 
-func (app *QredoChain) processTX(tx []byte, deliver bool) (assets.TransactionCode, []abcitypes.Event) {
+func (app *QredoChain) processTX(tx []byte, deliver bool) ([]abcitypes.Event, *assets.AssetsError) {
 	//Decode the Asset
 
 	txAsset, _, txHash, err := assets.BuildAssetFromTX(tx)
 	if err != nil {
-		return assets.CodeTypeEncodingError, nil
+		return nil, assets.NewAssetsErrorWithError(assets.CodeFailToRebuildAsset, "Fail to Rebuild Asset from TX", err)
 	}
-	code := txAsset.ConsensusProcess(app, tx, txHash, deliver)
-	return code, nil
+	assetError := txAsset.ConsensusProcess(app, tx, txHash, deliver)
+	return nil, assetError
 }
 
 func processTags(tags map[string][]byte) []types.Event {

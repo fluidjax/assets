@@ -15,11 +15,9 @@ type TransactionCode uint32
 */
 const (
 	CodeTypeOK                TransactionCode = 0
-	CodeTypeEncodingError     TransactionCode = 1
 	CodeTypeBadNonce          TransactionCode = 2
 	CodeTypeUnauthorized      TransactionCode = 3
 	CodeAlreadyExists         TransactionCode = 4
-	CodeDatabaseFail          TransactionCode = 5
 	CodeFailVerfication       TransactionCode = 6
 	CodeTypeHTTPError         TransactionCode = 7
 	CodeConsensusBalanceError TransactionCode = 8
@@ -27,8 +25,24 @@ const (
 	CodeInsufficientFunds     TransactionCode = 10
 	CodeSerializationError    TransactionCode = 11
 	CodeIsNil                 TransactionCode = 12
-	CodeMarshallError         TransactionCode = 13
-	CodeUnMarshallError       TransactionCode = 14
+
+	CodeFailToRebuildAsset       TransactionCode = 100
+	CodeDatabaseFail             TransactionCode = 101
+	CodeCantUpdateImmutableAsset TransactionCode = 102
+	CodeTypeEncodingError        TransactionCode = 103
+	CodePayloadEncodingError     TransactionCode = 104
+
+	CodeConsensusErrorFailtoVerifySignature TransactionCode = 200
+	CodeConsensusErrorEmptyPayload          TransactionCode = 201
+	CodeConsensusMissingFields              TransactionCode = 202
+	CodeConsensusIndexNotZero               TransactionCode = 203
+	CodeConsensusUnderlyingTXExists         TransactionCode = 204
+	CodeConsensusInsufficientFunds          TransactionCode = 205
+	CodeConsensusSignedAssetFailtoVerify    TransactionCode = 206
+
+	CodeConsensusBalanceFailToAddUnderlying TransactionCode = 205
+
+	CodeCLIError TransactionCode = 300
 
 	CodeTendermintInternalError TransactionCode = 999
 )
@@ -47,6 +61,10 @@ func (ae *AssetsError) Wrap(assetsError *AssetsError, errorString string) {
 	}
 	err := errors.Wrap(assetsError.Err, errorString)
 	ae.Err = err
+}
+
+func (ae *AssetsError) Error() error {
+	return ae.Err
 }
 
 func NewAssetsErrorWithError(code TransactionCode, newDescription string, existingError error) *AssetsError {

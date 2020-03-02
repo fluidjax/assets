@@ -75,7 +75,8 @@ func Test_Group(t *testing.T) {
 	w.Sign(i)
 
 	assert.NotNil(t, w.CurrentAsset.Signature, "Signature is empty")
-	res, err := w.Verify(i)
+	assetsError := w.Verify(i)
+	assert.Nil(t, assetsError, "Error should be nil")
 
 	c := proto.NewBuffer(nil)
 	c.SetDeterministic(true)
@@ -84,8 +85,6 @@ func Test_Group(t *testing.T) {
 	res2 := sha256.Sum256(msg2)
 	fmt.Println(hex.EncodeToString(res2[:]))
 
-	assert.Nil(t, err, "Error should be nil")
-	assert.True(t, res, "Verify should be true")
 	w.Save()
 
 	retrieved, err := Load(i.DataStore, w.Key())

@@ -176,13 +176,24 @@ func (app *QredoChain) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 	//					like checking signatures and account balances, but not running code in a virtual machine.
 	// Transactions where ResponseCheckTx.Code != 0 will be rejected - they will not be broadcast to other nodes or included in a proposal block.
 	// Tendermint attributes no other value to the response code
-	code, _ := app.processTX(req.Tx, false)
-	data := []byte("Hello from chris")
-	return abcitypes.ResponseCheckTx{Code: uint32(code), Data: data, GasWanted: 0}
+	events, assetsError := app.processTX(req.Tx, false)
+	var code uint32
+	var data []byte
+	if assetsError != nil {
+		data = []byte(assetsError.Err.Error())
+		code = uint32(assetsError.Code)
+	}
+	return abcitypes.ResponseCheckTx{Code: code, Data: data, Events: events}
 }
 
 //DeliverTx -
 func (app *QredoChain) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	code, events := app.processTX(req.Tx, true)
-	return types.ResponseDeliverTx{Code: uint32(code), Events: events}
+	events, assetsError := app.processTX(req.Tx, true)
+	var code uint32
+	var data []byte
+	if assetsError != nil {
+		data = []byte(assetsError.Err.Error())
+		code = uint32(assetsError.Code)
+	}
+	return types.ResponseDeliverTx{Code: code, Data: data, Events: events}
 }

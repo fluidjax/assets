@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func PostTx(base64EncodedTX string, host string) (txID string, err error) {
+func StandalonePostTx(base64EncodedTX string, host string) (txID string, err error) {
 
 	// TODO: use net/rpc
 	body := strings.NewReader(`{

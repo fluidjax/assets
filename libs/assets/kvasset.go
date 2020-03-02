@@ -287,11 +287,11 @@ func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
 	return kv, nil
 }
 
-func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
+func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
 	assetID := k.Key()
 	exists, err := k.Exists(datasource, assetID)
 	if err != nil {
-		return CodeDatabaseFail
+		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 	//Wallet is mutable, if exists allow update
 
@@ -299,21 +299,21 @@ func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash [
 		//This is a new Wallet
 		if deliver == true {
 			//Commit
-			code := k.AddCoreMappings(datasource, rawTX, txHash)
-			if code != 0 {
-				return CodeDatabaseFail
+			assetsError := k.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 			}
 		}
 
 	} else {
 		if deliver == true {
 			//Commit
-			code := k.AddCoreMappings(datasource, rawTX, txHash)
-			if code != 0 {
-				return CodeDatabaseFail
+			assetsError := k.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 			}
 		}
 
 	}
-	return CodeTypeOK
+	return nil
 }

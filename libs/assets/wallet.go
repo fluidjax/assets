@@ -223,12 +223,12 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 
 }
 
-func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
+func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
 	assetID := w.Key()
 
 	exists, err := w.Exists(datasource, assetID)
 	if err != nil {
-		return CodeDatabaseFail
+		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 
 	// if exists == true {
@@ -244,9 +244,9 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 		//println("New Wallet", hex.EncodeToString(w.Key()))
 		if deliver == true {
 			//Commit
-			code := w.AddCoreMappings(datasource, rawTX, txHash)
-			if code != 0 {
-				return CodeDatabaseFail
+			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 			}
 			//Set Balance to 0
 			w.setBalanceKey(datasource, w.Key(), 0)
@@ -260,12 +260,12 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 		//Loop through all the transfers out and update their destinations
 		payload, err := w.Payload()
 		if err != nil {
-			return CodeFailVerfication
+			return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
 		}
 
-		currentBalance, code := w.getBalanceKey(datasource, assetID)
-		if code != 0 {
-			return code
+		currentBalance, assetsError := w.getBalanceKey(datasource, assetID)
+		if assetsError != nil {
+			return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to fetch Current Balance")
 		}
 
 		//Check we have enough - Pass 1
@@ -281,15 +281,15 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 
 		if totalOutgoing > currentBalance {
 			//println("Eject")
-			return CodeInsufficientFunds
+			return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Outgoing > CurrentBalance")
 		}
 
 		//We have enough funds, do the database updates for transfer Pass 2
 		if deliver == true {
 			//println("Deliver")
-			code := w.AddCoreMappings(datasource, rawTX, txHash)
-			if code != 0 {
-				return CodeDatabaseFail
+			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 			}
 			var totalToSubtract int64
 
@@ -307,5 +307,5 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 			w.subtractFromBalanceKey(datasource, assetID, totalToSubtract)
 		}
 	}
-	return CodeTypeOK
+	return nil
 }

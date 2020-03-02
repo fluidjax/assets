@@ -65,6 +65,7 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 			return assetsError.Err
 		}
 	}
+
 	serializedSignedAsset, err := wallet.SerializeSignedAsset()
 	if err != nil {
 		return err

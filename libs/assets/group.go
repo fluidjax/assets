@@ -236,11 +236,11 @@ func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
 
 }
 
-func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
+func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
 	assetID := g.Key()
 	exists, err := g.Exists(datasource, assetID)
 	if err != nil {
-		return CodeDatabaseFail
+		return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to access database")
 	}
 	//Wallet is mutable, if exists allow update
 
@@ -248,19 +248,31 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 		//This is a new Wallet
 		if deliver == true {
 			//Commit
-			code := g.AddCoreMappings(datasource, rawTX, txHash)
-			if code != 0 {
-				return CodeDatabaseFail
+			err := g.AddCoreMappings(datasource, rawTX, txHash)
+			if err != nil {
+				return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Add Core Mappings")
+			}
+		} else {
+			//Check
+			assetsError := g.VerifyGroup()
+			if assetsError != nil {
+				return assetsError
 			}
 		}
+
 	} else {
 		if deliver == true {
 			//Commit
-			code := g.AddCoreMappings(datasource, rawTX, txHash)
-			if code != 0 {
-				return CodeDatabaseFail
+			assetsError := g.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Add Core Mappings")
 			}
 		}
 	}
-	return CodeTypeOK
+	return nil
+}
+
+func (g *Group) VerifyGroup() *AssetsError {
+	//fy, err := g.Verify()
+	return nil
 }

@@ -37,13 +37,9 @@ func (cliTool *CLITool) VerifyTX(iddocID string, tx string) error {
 	signedAsset.CurrentAsset = msg
 	signedAsset.DataStore = cliTool.NodeConn
 
-	v, err := signedAsset.Verify(iddoc)
+	assetError := signedAsset.Verify(iddoc)
 	if err != nil {
-		return err
-	}
-
-	if v != true {
-		return errors.New("TX fails to verify")
+		return assetError.Error()
 	}
 
 	return nil

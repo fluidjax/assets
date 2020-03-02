@@ -211,7 +211,6 @@ fi
 
 source $DATADIR/assets
 MakeWallet
-read 
 VerifyWallet
 SendMPC
 SendUnderLying

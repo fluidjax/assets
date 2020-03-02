@@ -145,63 +145,62 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 
 }
 
-func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode {
+func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
 	assetID := i.Key()
 	exists, err := i.Exists(datasource, assetID)
 	if err != nil {
-		return CodeDatabaseFail
+		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 	if exists == true {
 		//IDDoc is immutable so if this AssetID already has a value we can't update it.
-		return CodeAlreadyExists
+		return NewAssetsError(CodeCantUpdateImmutableAsset, "Failed - IDDOC already Exists, attempt to update immutable asset")
 	}
 
 	//Check the IDDoc is valid
-	if i.VerifyIDDoc() == false {
-		return CodeFailVerfication
+	assetsError := i.VerifyIDDoc()
+	if assetsError != nil {
+		return assetsError
 	}
 
 	//Add pointer from AssetID to the txHash of the Object
 	if deliver == true {
 
-		code := i.AddCoreMappings(datasource, rawTX, txHash)
-		if code != 0 {
-			return CodeDatabaseFail
+		assetsError := i.AddCoreMappings(datasource, rawTX, txHash)
+		if assetsError != nil {
+			return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 		}
 		//events = processTags(iddoc.CurrentAsset.Asset.Tags)
 	}
-	return CodeTypeOK
+	return nil
 }
 
-func (i *IDDoc) VerifyIDDoc() bool {
+func (i *IDDoc) VerifyIDDoc() *AssetsError {
 	//Check signature
-	verify, err := i.Verify(i)
-	if err != nil {
-		return false
-	}
-	if verify == false {
-		return false
+	assetError := i.Verify(i)
+	if assetError != nil {
+		return assetError
 	}
 
 	//Check Payload fields
 	payload, err := i.Payload()
 	if err != nil {
-		return false
+		return NewAssetsError(CodePayloadEncodingError, "Consensus Error - Fail to determine IDDoc Payload")
 	}
 	if payload == nil {
-		return false
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus Error - IDDoc - Empty Payload")
 	}
 
 	if payload.AuthenticationReference == "" ||
 		payload.BeneficiaryECPublicKey == nil ||
 		payload.SikePublicKey == nil ||
 		payload.BLSPublicKey == nil {
-		return false
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus Error - IDDoc - Empty Public Key")
 	}
 
 	if i.CurrentAsset.Asset.Index != 0 {
-		return false
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus Error - IDDoc - Index must be Zero")
+
 	}
 
-	return true
+	return nil
 }

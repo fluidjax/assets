@@ -72,36 +72,33 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 }
 
 // Verify the Signature of the Asset (including the Payload)
-func (a *SignedAsset) Verify(iddoc *IDDoc) (bool, error) {
+func (a *SignedAsset) Verify(iddoc *IDDoc) *AssetsError {
 	if a == nil {
-		return false, errors.New("SignedAsset is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "SignedAsset is nil")
 	}
 	if a.CurrentAsset == nil {
-		return false, errors.New("CurrentAsset is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "CurrentAsset is nil")
 	}
 	if a.CurrentAsset.Signature == nil {
-		return false, errors.New("Asset is unsigned")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Asset is not signed")
 	}
 	if iddoc == nil {
-		return false, errors.New("Verify - supplied IDDoc is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "IDDoc for signing is nil")
 	}
 	msg, err := a.SerializeAsset()
 	if err != nil {
-		return false, errors.Wrap(err, "Failed to Marshall Asset in Verify")
-	}
-	if iddoc == nil {
-		return false, errors.New("Verify - supplied IDDoc is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Failed to Marshall Asset in Verify")
 	}
 	payload, err := iddoc.Payload()
 	if err != nil {
-		return false, errors.Wrap(err, "Failed to retrieve Payload")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Failed to Retrieve Payload")
 	}
 	blsPK := payload.GetBLSPublicKey()
 	rc := crypto.BLSVerify(msg, blsPK, a.CurrentAsset.Signature)
 	if rc != 0 {
-		return false, errors.New("Verification of Asset failed")
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Signature Failed to verify")
 	}
-	return true, nil
+	return nil
 }
 
 // Key Return the AssetKey
@@ -672,48 +669,55 @@ func (a *SignedAsset) BatchExists(datasource DataSource, key []byte) (bool, erro
 	return item != nil, err
 }
 
-func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) TransactionCode {
-	err1 := datasource.BatchSet(txHash, rawTX)
-	if err1 != nil {
-		return CodeDatabaseFail
+func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) (err error) {
+	err = datasource.BatchSet(txHash, rawTX)
+	if err != nil {
+		return err
 	}
-	err2 := datasource.BatchSet(a.Key(), txHash)
-	if err2 != nil {
-		return CodeDatabaseFail
+	err = datasource.BatchSet(a.Key(), txHash)
+	if err != nil {
+		return err
 	}
-	return CodeTypeOK
+	return nil
 }
 
-func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) (code TransactionCode) {
-	currentBalance, code := a.getBalanceKey(datasource, assetID)
+func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) *AssetsError {
+	currentBalance, assetsError := a.getBalanceKey(datasource, assetID)
+	if assetsError != nil {
+		return assetsError
+	}
+
 	newBalance := currentBalance - amount
 	if newBalance < 0 {
-		return CodeConsensusBalanceError
+		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Newbalance is less than Zero")
 	}
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
 
-func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) (code TransactionCode) {
-	currentBalance, code := a.getBalanceKey(datasource, assetID)
+func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) *AssetsError {
+	currentBalance, assetsError := a.getBalanceKey(datasource, assetID)
+	if assetsError != nil {
+		return assetsError
+	}
 	newBalance := currentBalance + amount
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
-func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) (code TransactionCode) {
+func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) *AssetsError {
 	//Convert new balance to bytes and save for AssetID
 	newBalanceBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
 	err := a.SetWithSuffix(datasource, assetID, ".balance", newBalanceBytes)
 	if err != nil {
-		return CodeConsensusBalanceError
+		return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Set Balance Key")
 	}
-	return 0
+	return nil
 }
 
-func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, code TransactionCode) {
+func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, assetError *AssetsError) {
 	currentBalanceBytes, err := a.GetWithSuffix(datasource, assetID, ".balance")
 	if currentBalanceBytes == nil || err != nil {
-		return 0, CodeConsensusBalanceError
+		return 0, NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Get Balance Key")
 	}
 	currentBalance := int64(binary.LittleEndian.Uint64(currentBalanceBytes))
-	return currentBalance, 0
+	return currentBalance, nil
 }

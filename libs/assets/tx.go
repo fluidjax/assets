@@ -9,7 +9,7 @@ import (
 
 //TXAsset - generic wrapper for All Transactions
 type TXAsset interface {
-	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) TransactionCode
+	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool)  *AssetsError
 }
 
 type DataSource interface {

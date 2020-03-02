@@ -29,17 +29,16 @@ func Test_IDDoc_Misc(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	err = i.Sign(nil)
 	assert.NotNil(t, err, "Error should not be nil")
-	_, err = i.Verify(nil)
-	assert.NotNil(t, err, "Error should not be nil")
+	assetError := i.Verify(nil)
+	assert.NotNil(t, assetError, "Error should not be nil")
 }
 
 func Test_IDDoc(t *testing.T) {
 	i, err := NewIDDoc("chris")
 	assert.Nil(t, err, "Error should be nil")
 	i.Sign(i)
-	res, err := i.Verify(i)
-	assert.Nil(t, err, "Error should be nil")
-	assert.True(t, res, "Verify should be true")
+	assetError := i.Verify(i)
+	assert.Nil(t, assetError, "Error should be nil")
 }
 
 func Test_Serialize_IDDoc(t *testing.T) {

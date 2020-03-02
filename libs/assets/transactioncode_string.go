@@ -9,34 +9,70 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[CodeTypeOK-0]
-	_ = x[CodeTypeEncodingError-1]
 	_ = x[CodeTypeBadNonce-2]
 	_ = x[CodeTypeUnauthorized-3]
 	_ = x[CodeAlreadyExists-4]
-	_ = x[CodeDatabaseFail-5]
 	_ = x[CodeFailVerfication-6]
 	_ = x[CodeTypeHTTPError-7]
 	_ = x[CodeConsensusBalanceError-8]
 	_ = x[CodeConsensusError-9]
 	_ = x[CodeInsufficientFunds-10]
+	_ = x[CodeSerializationError-11]
+	_ = x[CodeIsNil-12]
+	_ = x[CodeFailToRebuildAsset-100]
+	_ = x[CodeDatabaseFail-101]
+	_ = x[CodeCantUpdateImmutableAsset-102]
+	_ = x[CodeTypeEncodingError-103]
+	_ = x[CodePayloadEncodingError-104]
+	_ = x[CodeConsensusErrorFailtoVerifySignature-200]
+	_ = x[CodeConsensusErrorEmptyPayload-201]
+	_ = x[CodeConsensusMissingFields-202]
+	_ = x[CodeConsensusIndexNotZero-203]
+	_ = x[CodeConsensusUnderlyingTXExists-204]
+	_ = x[CodeConsensusInsufficientFunds-205]
+	_ = x[CodeConsensusSignedAssetFailtoVerify-206]
+	_ = x[CodeConsensusBalanceFailToAddUnderlying-205]
+	_ = x[CodeCLIError-300]
 	_ = x[CodeTendermintInternalError-999]
 }
 
 const (
-	_TransactionCode_name_0 = "CodeTypeOKCodeTypeEncodingErrorCodeTypeBadNonceCodeTypeUnauthorizedCodeAlreadyExistsCodeDatabaseFailCodeFailVerficationCodeTypeHTTPErrorCodeConsensusBalanceErrorCodeConsensusErrorCodeInsufficientFunds"
-	_TransactionCode_name_1 = "CodeTendermintInternalError"
+	_TransactionCode_name_0 = "CodeTypeOK"
+	_TransactionCode_name_1 = "CodeTypeBadNonceCodeTypeUnauthorizedCodeAlreadyExists"
+	_TransactionCode_name_2 = "CodeFailVerficationCodeTypeHTTPErrorCodeConsensusBalanceErrorCodeConsensusErrorCodeInsufficientFundsCodeSerializationErrorCodeIsNil"
+	_TransactionCode_name_3 = "CodeFailToRebuildAssetCodeDatabaseFailCodeCantUpdateImmutableAssetCodeTypeEncodingErrorCodePayloadEncodingError"
+	_TransactionCode_name_4 = "CodeConsensusErrorFailtoVerifySignatureCodeConsensusErrorEmptyPayloadCodeConsensusMissingFieldsCodeConsensusIndexNotZeroCodeConsensusUnderlyingTXExistsCodeConsensusInsufficientFundsCodeConsensusSignedAssetFailtoVerify"
+	_TransactionCode_name_5 = "CodeCLIError"
+	_TransactionCode_name_6 = "CodeTendermintInternalError"
 )
 
 var (
-	_TransactionCode_index_0 = [...]uint8{0, 10, 31, 47, 67, 84, 100, 119, 136, 161, 179, 200}
+	_TransactionCode_index_1 = [...]uint8{0, 16, 36, 53}
+	_TransactionCode_index_2 = [...]uint8{0, 19, 36, 61, 79, 100, 122, 131}
+	_TransactionCode_index_3 = [...]uint8{0, 22, 38, 66, 87, 111}
+	_TransactionCode_index_4 = [...]uint8{0, 39, 69, 95, 120, 151, 181, 217}
 )
 
 func (i TransactionCode) String() string {
 	switch {
-	case 0 <= i && i <= 10:
-		return _TransactionCode_name_0[_TransactionCode_index_0[i]:_TransactionCode_index_0[i+1]]
+	case i == 0:
+		return _TransactionCode_name_0
+	case 2 <= i && i <= 4:
+		i -= 2
+		return _TransactionCode_name_1[_TransactionCode_index_1[i]:_TransactionCode_index_1[i+1]]
+	case 6 <= i && i <= 12:
+		i -= 6
+		return _TransactionCode_name_2[_TransactionCode_index_2[i]:_TransactionCode_index_2[i+1]]
+	case 100 <= i && i <= 104:
+		i -= 100
+		return _TransactionCode_name_3[_TransactionCode_index_3[i]:_TransactionCode_index_3[i+1]]
+	case 200 <= i && i <= 206:
+		i -= 200
+		return _TransactionCode_name_4[_TransactionCode_index_4[i]:_TransactionCode_index_4[i+1]]
+	case i == 300:
+		return _TransactionCode_name_5
 	case i == 999:
-		return _TransactionCode_name_1
+		return _TransactionCode_name_6
 	default:
 		return "TransactionCode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
