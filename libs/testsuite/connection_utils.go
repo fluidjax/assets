@@ -32,6 +32,16 @@ func ShutDown() {
 }
 
 func StartTestChain() {
+	//Check if there is a Node already running, and use it
+	var err error
+	nc, err = qredochain.NewNodeConnector("127.0.0.1:26657", "NODEID", nil, nil)
+	if err == nil {
+		defer func() {
+			nc.Stop()
+		}()
+		return
+	}
+	//If no running Node start one
 	go InitiateChain()
 	ready = make(chan bool, 1)
 	<-ready //wait for server to come up
@@ -64,17 +74,16 @@ func InitiateChain() {
 		fmt.Fprintf(os.Stderr, "%v", err)
 		os.Exit(2)
 	}
-
 	defer func() {
 		nc.Stop()
 		db.Close()
 		tnode.Stop()
 		tnode.Wait()
 	}()
-
 	done = make(chan bool, 1)
 	ready <- true //notify the server is up
 	<-done        //wait
+
 }
 
 func prettyStringFromSignedAsset(signedAsset *protobuffer.PBSignedAsset) string {

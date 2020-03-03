@@ -10,6 +10,7 @@ import (
 func Test_IDDoc(t *testing.T) {
 	StartTestChain()
 
+
 	//Standard build
 	i := BuildTestIDDoc(t)
 	txid, chainErr := nc.PostTx(i)
