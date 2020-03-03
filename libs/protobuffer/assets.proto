@@ -142,7 +142,7 @@ message PBUnderlying {
     PBCryptoCurrency CryptoCurrencyCode = 2; // Which cryptocurrency chain this relates to.
     bytes Proof                         = 3; // Merkle proof of the transaction - allows nodes to easily determine validity
     int64 Amount                        = 4; // Value of the transaction  
-    bytes Address                      = 5; // Address money was sent to.
+    bytes Address                       = 5; // Address money was sent to.
     bytes TxID                          = 6; // Credits this Asset ID
 }
 
