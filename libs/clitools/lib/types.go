@@ -35,7 +35,7 @@ type SignJSON struct {
 type CreateWalletJSON struct {
 	TransferType int64      `json:"transferType"`
 	Ownerseed    string     `json:"ownerseed"`
-	Currency     string     `json:"currency"`
+	Currency     int64      `json:"currency"`
 	Transfer     []Transfer `json:"Transfer"`
 }
 
@@ -109,7 +109,7 @@ type WalletUpdatePayload struct {
 	ExistingWalletAssetID string           `json:"existingWalletAssetID"`
 	Newowner              string           `json:"newowner"`
 	TransferType          int64            `json:"transferType"`
-	Currency              string           `json:"currency"`
+	Currency              int64            `json:"currency"`
 	WalletTransfers       []WalletTransfer `json:"walletTransfers"`
 	Transfer              []Transfer       `json:"transfer"`
 }

@@ -240,7 +240,7 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 	assetID := g.Key()
 	exists, err := g.Exists(datasource, assetID)
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to access database")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}
 	//Wallet is mutable, if exists allow update
 
@@ -250,7 +250,7 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 			//Commit
 			err := g.AddCoreMappings(datasource, rawTX, txHash)
 			if err != nil {
-				return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Add Core Mappings")
+				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
 		} else {
 			//Check
@@ -265,7 +265,7 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 			//Commit
 			assetsError := g.AddCoreMappings(datasource, rawTX, txHash)
 			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Add Core Mappings")
+				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
 		}
 	}

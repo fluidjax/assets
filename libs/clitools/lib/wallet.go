@@ -24,7 +24,7 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 		return err
 	}
 
-	wallet, err := assets.NewWallet(iddoc, cwJSON.Currency)
+	wallet, err := assets.NewWallet(iddoc, protobuffer.PBCryptoCurrency(cwJSON.Currency))
 	wallet.DataStore = cliTool.NodeConn
 	if err != nil {
 		return err

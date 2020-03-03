@@ -52,7 +52,7 @@ PrepWalletUpdate() {
 		"existingWalletAssetID":"'$incomingID'",
 		"newowner":"'$b1_assetid'",
 		"transferType":2,
-		"currency":"BTC",
+		"currency":1,
 		"walletTransfers":[
 		    {"to":"01010100ff00","amount":200,"assetid":"00ff00"},
 		   	{"to":"02020200ff00","amount":300,"assetid":"00ff01"}

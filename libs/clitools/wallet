@@ -44,7 +44,7 @@ MakeWallet() {
 	{
 	"transferType": 0,
 	"ownerseed":"'$p1_seed'",
-	"currency": "BTC",
+	"currency": 1,
 	"Transfer": [{
 		"TransferType": 2,
 		"Expression": "t1 + t2 + t3 > 1 & p1",
@@ -82,7 +82,7 @@ PrepWalletUpdate() {
 		"existingWalletAssetID":"'$newWalletID'",
 		"newowner":"'$b1_assetid'",
 		"transferType":2,
-		"currency":"BTC",
+		"currency":1,
 		"walletTransfers":[
 		    {"to":"01010100ff00","amount":20,"assetid":"00ff00"},
 		   	{"to":"02020200ff00","amount":30,"assetid":"00ff01"}

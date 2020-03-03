@@ -74,6 +74,7 @@ func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, er
 	Payload.Iddoc = iddoc
 
 	i.CurrentAsset.Asset.Payload = Payload
+	i.CurrentAsset.Asset.Index = 1
 	i.setKey(KeyFromSeed(seed))
 	return i, nil
 }
@@ -146,60 +147,76 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 }
 
 func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
-	assetID := i.Key()
-	exists, err := i.Exists(datasource, assetID)
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
-	}
-	if exists == true {
-		//IDDoc is immutable so if this AssetID already has a value we can't update it.
-		return NewAssetsError(CodeCantUpdateImmutableAsset, "Failed - IDDOC already Exists, attempt to update immutable asset")
-	}
 
 	//Check the IDDoc is valid
-	assetsError := i.VerifyIDDoc()
+	assetsError := i.VerifyIDDoc(datasource)
 	if assetsError != nil {
 		return assetsError
 	}
 
 	//Add pointer from AssetID to the txHash of the Object
 	if deliver == true {
-
+		//Check  103 & 104
 		assetsError := i.AddCoreMappings(datasource, rawTX, txHash)
 		if assetsError != nil {
-			return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 		}
 		//events = processTags(iddoc.CurrentAsset.Asset.Tags)
 	}
 	return nil
 }
 
-func (i *IDDoc) VerifyIDDoc() *AssetsError {
-	//Check signature
+func (i *IDDoc) VerifyIDDoc(datasource DataSource) *AssetsError {
+	//Check 6
+	assetID := i.Key()
+	if assetID == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
+	}
+
+	exists, err := i.Exists(datasource, assetID)
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+	}
+
+	//Check 4
+	if exists == true {
+		//IDDoc is immutable so if this AssetID already has a value we can't update it.
+		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
+	}
+	//check 9.1
+	payload, err := i.Payload()
+	if err != nil {
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+	}
+	//check 9
+	if payload == nil {
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	}
+	//check 11
+	if payload.AuthenticationReference == "" {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:AuthenticationReference")
+	}
+	//check 11
+	if payload.BeneficiaryECPublicKey == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:BeneficiaryECPublicKey")
+	}
+	//check 11
+	if payload.SikePublicKey == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:SikePublicKey")
+	}
+	//check 11
+	if payload.BLSPublicKey == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:BLSPublicKey")
+	}
+	//Check 7
+	if i.CurrentAsset.Asset.Index != 1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	//Signed Asset Check
 	assetError := i.Verify(i)
 	if assetError != nil {
 		return assetError
-	}
-
-	//Check Payload fields
-	payload, err := i.Payload()
-	if err != nil {
-		return NewAssetsError(CodePayloadEncodingError, "Consensus Error - Fail to determine IDDoc Payload")
-	}
-	if payload == nil {
-		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus Error - IDDoc - Empty Payload")
-	}
-
-	if payload.AuthenticationReference == "" ||
-		payload.BeneficiaryECPublicKey == nil ||
-		payload.SikePublicKey == nil ||
-		payload.BLSPublicKey == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus Error - IDDoc - Empty Public Key")
-	}
-
-	if i.CurrentAsset.Asset.Index != 0 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus Error - IDDoc - Index must be Zero")
-
 	}
 
 	return nil

@@ -291,7 +291,7 @@ func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash [
 	assetID := k.Key()
 	exists, err := k.Exists(datasource, assetID)
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}
 	//Wallet is mutable, if exists allow update
 
@@ -301,7 +301,7 @@ func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash [
 			//Commit
 			assetsError := k.AddCoreMappings(datasource, rawTX, txHash)
 			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
 		}
 
@@ -310,7 +310,7 @@ func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash [
 			//Commit
 			assetsError := k.AddCoreMappings(datasource, rawTX, txHash)
 			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
 		}
 

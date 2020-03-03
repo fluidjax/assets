@@ -73,30 +73,34 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 
 // Verify the Signature of the Asset (including the Payload)
 func (a *SignedAsset) Verify(iddoc *IDDoc) *AssetsError {
+
+	//Check 2
 	if a == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "SignedAsset is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Signed Asset is nil")
 	}
 	if a.CurrentAsset == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "CurrentAsset is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Current Asset is nil")
 	}
 	if a.CurrentAsset.Signature == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Asset is not signed")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
 	}
 	if iddoc == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "IDDoc for signing is nil")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:IDDoc is nil")
 	}
 	msg, err := a.SerializeAsset()
 	if err != nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Failed to Marshall Asset in Verify")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Serialize Asset")
 	}
 	payload, err := iddoc.Payload()
 	if err != nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Failed to Retrieve Payload")
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Retrieve Payload")
 	}
+
+	//Check 3
 	blsPK := payload.GetBLSPublicKey()
 	rc := crypto.BLSVerify(msg, blsPK, a.CurrentAsset.Signature)
 	if rc != 0 {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Signature Failed to verify")
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
 	}
 	return nil
 }
@@ -689,7 +693,7 @@ func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []by
 
 	newBalance := currentBalance - amount
 	if newBalance < 0 {
-		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Newbalance is less than Zero")
+		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus:Error:Check:Balance:Newbalance is less than Zero")
 	}
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
@@ -708,7 +712,7 @@ func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBa
 	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
 	err := a.SetWithSuffix(datasource, assetID, ".balance", newBalanceBytes)
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Set Balance Key")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Balance:Fail to Set Balance Key")
 	}
 	return nil
 }
@@ -716,7 +720,7 @@ func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBa
 func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, assetError *AssetsError) {
 	currentBalanceBytes, err := a.GetWithSuffix(datasource, assetID, ".balance")
 	if currentBalanceBytes == nil || err != nil {
-		return 0, NewAssetsError(CodeDatabaseFail, "Consensus - Fail to Get Balance Key")
+		return 0, NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Balance:Fail to Get Balance Key")
 	}
 	currentBalance := int64(binary.LittleEndian.Uint64(currentBalanceBytes))
 	return currentBalance, nil

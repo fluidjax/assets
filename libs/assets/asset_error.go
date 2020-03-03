@@ -39,6 +39,7 @@ const (
 	CodeConsensusUnderlyingTXExists         TransactionCode = 204
 	CodeConsensusInsufficientFunds          TransactionCode = 205
 	CodeConsensusSignedAssetFailtoVerify    TransactionCode = 206
+	CodeConsensusWalletNoTransferRules      TransactionCode = 207
 
 	CodeConsensusBalanceFailToAddUnderlying TransactionCode = 205
 

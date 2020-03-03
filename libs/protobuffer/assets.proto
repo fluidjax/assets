@@ -63,7 +63,7 @@ message PBTransfer {                  //Defined for each Transfer type an expres
 
 //Asset Definitons
 message PBWallet {
-    string Currency                             = 1;
+    PBCryptoCurrency Currency                   = 1;
     int64 SpentBalance                          = 2; //total of all outgoing spends = previous + sum of Asset Transfer
     repeated PBWalletTransfer WalletTransfers   = 3;
     string Description                          = 11;
@@ -85,9 +85,9 @@ message PBWalletTransfer {
 
 message PBGroup {
     PBGroupType Type                = 1;
-    map<string, bytes> GroupFields  = 2; 
-    map<string, bytes> Participants = 3;
-    string Description              = 4; 
+    map<string, bytes> GroupFields  = 2;  //expresssion
+    map<string, bytes> Participants = 3;  //list of IDDocs
+    string Description              = 4;  //description of the group
 }
 
 

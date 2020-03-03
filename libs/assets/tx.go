@@ -9,7 +9,7 @@ import (
 
 //TXAsset - generic wrapper for All Transactions
 type TXAsset interface {
-	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool)  *AssetsError
+	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError
 }
 
 type DataSource interface {
@@ -19,11 +19,14 @@ type DataSource interface {
 }
 
 //BuildAssetFromTX -
-func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte, err error) {
+func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte, assetsError *AssetsError) {
 	signedAsset := &protobuffer.PBSignedAsset{}
-	err = proto.Unmarshal(tx, signedAsset)
+
+	//Check 5
+	err := proto.Unmarshal(tx, signedAsset)
 	if err != nil {
-		return nil, nil, nil, err
+		assetsError := NewAssetsErrorWithError(CodeFailToRebuildAsset, "Consensus:Error:Check:Invalid Asset Type", err)
+		return nil, nil, nil, assetsError
 	}
 	assetID = signedAsset.Asset.GetID()
 	txHash = TxHash(tx)
@@ -42,6 +45,13 @@ func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte
 	case protobuffer.PBAssetType_KVAsset:
 		txAsset, err = ReBuildKVAsset(signedAsset, assetID)
 	}
+
+	//Check 5
+	if err != nil {
+		assetsError = NewAssetsErrorWithError(CodeFailToRebuildAsset, "Consensus:Error:Check:Invalid Asset Rebuild", err)
+		return nil, nil, nil, assetsError
+	}
+
 	return txAsset, assetID, txHash, nil
 }
 

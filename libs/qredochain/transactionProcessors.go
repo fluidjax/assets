@@ -12,7 +12,7 @@ func (app *QredoChain) processTX(tx []byte, deliver bool) ([]abcitypes.Event, *a
 
 	txAsset, _, txHash, err := assets.BuildAssetFromTX(tx)
 	if err != nil {
-		return nil, assets.NewAssetsErrorWithError(assets.CodeFailToRebuildAsset, "Fail to Rebuild Asset from TX", err)
+		return nil, err
 	}
 	assetError := txAsset.ConsensusProcess(app, tx, txHash, deliver)
 	return nil, assetError

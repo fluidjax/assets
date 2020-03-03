@@ -30,7 +30,7 @@ import (
 )
 
 //NewWallet - Setup a new Wallet
-func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
+func NewWallet(iddoc *IDDoc, currency protobuffer.PBCryptoCurrency) (w *Wallet, err error) {
 	if iddoc == nil {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
@@ -52,6 +52,7 @@ func NewWallet(iddoc *IDDoc, currency string) (w *Wallet, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	currentPayload.Currency = currency
 
 	return w, nil
@@ -226,37 +227,30 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
 	assetID := w.Key()
 
+	//Check 4 - Mutability
 	exists, err := w.Exists(datasource, assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 
-	// if exists == true {
-	// 	println("EXISTS-", hex.EncodeToString(assetID))
-	// } else {
-	// 	println("NOTEXISTS-", hex.EncodeToString(assetID))
-	// }
-
-	//Wallet is mutable, if exists allow update
-
 	if exists == false {
-		//This is a new Wallet
-		//println("New Wallet", hex.EncodeToString(w.Key()))
 		if deliver == true {
-			//Commit
+			//New Wallet Deliver
 			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
 			if assetsError != nil {
 				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 			}
-			//Set Balance to 0
 			w.setBalanceKey(datasource, w.Key(), 0)
+		} else {
+			//New Wallet - Check
+			assetError := w.VerifyWallet(datasource)
+			if assetError != nil {
+				return assetError
+			}
 		}
 	} else {
 		//This is a wallet update
-		//println("Wallet Update")
-
 		//events = processTags(wallet.CurrentAsset.Asset.Tags)
-
 		//Loop through all the transfers out and update their destinations
 		payload, err := w.Payload()
 		if err != nil {
@@ -307,5 +301,81 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 			w.subtractFromBalanceKey(datasource, assetID, totalToSubtract)
 		}
 	}
+	return nil
+}
+
+func (w *Wallet) VerifyAllSignatures(datasource DataSource) *AssetsError {
+
+	//Check the signature for ALL the participants
+	//For each supplied signer re-build a PublicKey
+	// var aggregatedPublicKey []byte
+	// var transferSignatures []SignatureID
+
+	// for abbreviation, participantID := range w.CurrentAsset.Signers {
+	// 	signedAsset, err := Load(w.DataStore, participantID)
+	// 	if err != nil {
+	// 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
+	// 	}
+	// 	iddoc, err := ReBuildIDDoc(signedAsset, participantID)
+	// 	if err != nil {
+	// 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
+	// 	}
+	// 	pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
+	// 	if aggregatedPublicKey == nil {
+	// 		aggregatedPublicKey = pubKey
+	// 	} else {
+	// 		_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+	// 	}
+	// 	sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
+	// 	transferSignatures = append(transferSignatures, sigID)
+	// }
+	// return nil
+	return nil
+}
+
+func (w *Wallet) VerifyWallet(datasource DataSource) *AssetsError {
+
+	//Check 6
+	assetID := w.Key()
+	if assetID == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
+	}
+
+	//Signed Asset Check
+	assetError := w.VerifyAllSignatures(datasource)
+	if assetError != nil {
+		return assetError
+	}
+
+	//check 9.1
+	payload, err := w.Payload()
+	if err != nil {
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+	}
+	//check 9
+	if payload == nil {
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	}
+	//check 11
+	if payload.Currency == 0 {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Currency")
+	}
+	//check 11
+	if payload.SpentBalance != 0 {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Balance Starts at 0")
+	}
+
+	//Check 7
+	if w.CurrentAsset.Asset.Index != 1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	if w.CurrentAsset.Asset.Transferlist == nil {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+	if len(w.CurrentAsset.Asset.Transferlist) == 0 {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+
 	return nil
 }

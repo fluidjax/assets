@@ -82,16 +82,16 @@ func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byt
 	assetID := m.Key()
 	exists, err := m.Exists(datasource, assetID)
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}
 	if exists == true {
 		//MPC is immutable so if this AssetID already has a value we can't update it.
-		return NewAssetsError(CodeCantUpdateImmutableAsset, "Failed - MPC already Exists, attempt to update immutable asset")
+		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
 	}
 
 	payload, err := m.Payload()
 	if err != nil {
-		return NewAssetsError(CodePayloadEncodingError, "Fail to determine MPC Payload")
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
 	}
 
 	address := payload.Address
@@ -101,12 +101,12 @@ func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byt
 		//Commit
 		err = m.SetWithSuffix(datasource, assetID, ".as2ad", address)
 		if err != nil {
-			return NewAssetsError(CodeDatabaseFail, "Consensus Fail to Add Asset to Address Mapping")
+			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
 		}
 
 		err = m.SetWithSuffix(datasource, address, ".ad2as", walletAssetID)
 		if err != nil {
-			return NewAssetsError(CodeDatabaseFail, "Consensus Fail to Add Address to Asset Mapping")
+			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
 		}
 
 	}

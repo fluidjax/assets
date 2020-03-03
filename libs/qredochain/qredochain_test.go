@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/qredo/assets/libs/logger"
+	"github.com/qredo/assets/libs/protobuffer"
 
 	"github.com/qredo/assets/libs/assets"
 	"github.com/stretchr/testify/assert"
@@ -199,7 +200,7 @@ func Test_WalletPostTX(t *testing.T) {
 	assert.Nil(t, err, "Error should be nil")
 	err = i.Sign(i)
 
-	w, err := assets.NewWallet(i, "BTC")
+	w, err := assets.NewWallet(i, protobuffer.PBCryptoCurrency_BTC)
 	wallet, err := w.Payload()
 	wallet.SpentBalance = 100
 
