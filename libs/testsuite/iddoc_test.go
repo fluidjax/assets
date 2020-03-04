@@ -10,7 +10,6 @@ import (
 func Test_IDDoc(t *testing.T) {
 	StartTestChain()
 
-
 	//Standard build
 	i := BuildTestIDDoc(t)
 	txid, chainErr := nc.PostTx(i)
@@ -44,13 +43,12 @@ func Test_IDDoc(t *testing.T) {
 	assert.NotNil(t, chainErr, "Error should not be nil")
 	assert.True(t, chainErr.Code == assets.CodeFailToRebuildAsset, "Incorrect Error code")
 
-	//Error: Post Twice - Fail to rebuild
+	//Error: Post Twice - duplicate TX block by tendermint
 	i = BuildTestIDDoc(t)
-	i.CurrentAsset.Asset.ID = nil
 	txid, chainErr = nc.PostTx(i)
 	txid, chainErr = nc.PostTx(i)
 	assert.NotNil(t, chainErr, "Error should not be nil")
-	assert.True(t, chainErr.Code == assets.CodeFailToRebuildAsset, "Incorrect Error code")
+	assert.True(t, chainErr.Code == assets.CodeTypeTendermintInternalError, "Incorrect Error code")
 
 	//Error: Missing AuthenticationReference
 	i = BuildTestIDDoc(t)
@@ -105,4 +103,5 @@ func Test_IDDoc(t *testing.T) {
 	txid, chainErr = nc.PostTx(i)
 	assert.NotNil(t, chainErr, "Error should not be nil")
 	assert.True(t, chainErr.Code == assets.CodeCantUpdateImmutableAsset, "Incorrect Error code")
+
 }

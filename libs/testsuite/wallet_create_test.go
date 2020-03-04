@@ -69,7 +69,7 @@ func Test_Wallet_Create(t *testing.T) {
 	assert.True(t, txid == "", "TXID should be empty")
 	wallet.CurrentAsset.Asset.Payload = tempPayload
 
-	//Error: Non zero balance
+	//Error: Ngeative Starting zero balance
 	payload, _ := wallet.Payload()
 	payload.SpentBalance = -100
 	txid, chainErr = nc.PostTx(wallet)
@@ -78,7 +78,7 @@ func Test_Wallet_Create(t *testing.T) {
 	assert.True(t, txid == "", "TXID should be empty")
 	wallet.CurrentAsset.Asset.Payload = tempPayload
 
-	//Error: Non zero balance
+	//Error: Positive Starting zero balance
 	payload, _ = wallet.Payload()
 	payload.SpentBalance = 1
 	txid, chainErr = nc.PostTx(wallet)

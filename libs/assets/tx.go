@@ -29,6 +29,10 @@ func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte
 		return nil, nil, nil, assetsError
 	}
 	assetID = signedAsset.Asset.GetID()
+	if assetID == nil {
+		print("here")
+	}
+
 	txHash = TxHash(tx)
 
 	switch signedAsset.Asset.GetType() {

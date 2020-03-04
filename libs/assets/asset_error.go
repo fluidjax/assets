@@ -42,6 +42,7 @@ const (
 	CodeConsensusWalletNoTransferRules      TransactionCode = 207
 
 	CodeConsensusBalanceFailToAddUnderlying TransactionCode = 205
+	CodeTypeTendermintInternalError         TransactionCode = 999
 
 	CodeCLIError TransactionCode = 300
 

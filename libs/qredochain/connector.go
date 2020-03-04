@@ -149,14 +149,17 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, assetsError *
 	rpcResp := rpcTypes.RPCResponse{}
 	err = rpcResp.UnmarshalJSON(jsonResp)
 	if err != nil {
-		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Reeponse from QredoChain node")
+		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Response from QredoChain node")
+	}
+
+	if rpcResp.Error != nil {
+		return "", assets.NewAssetsError(assets.CodeTypeTendermintInternalError, rpcResp.Error.Error())
 	}
 
 	rbtxc := &ResultPOSTTxCommit{}
-	//print(string(rpcResp.Result))
 	err = json.Unmarshal(rpcResp.Result, rbtxc)
 	if err != nil {
-		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Reeponse from QredoChain node")
+		return "", assets.NewAssetsError(assets.CodeTypeEncodingError, "Failed to decode RPC Response Result from QredoChain node")
 	}
 
 	if rbtxc.CheckTx.Code != 0 {
