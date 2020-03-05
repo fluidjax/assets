@@ -1,11 +1,51 @@
 # Qredochain
 
+<style type='text/css'>
+body {
+    counter-reset: h1
+}
+
+h1 {
+    counter-reset: h2
+}
+
+h2 {
+    counter-reset: h3
+}
+
+h3 {
+    counter-reset: h4
+}
+
+h1:before {
+    counter-increment: h1;
+    content: counter(h1) ". "
+}
+
+h2:before {
+    counter-increment: h2;
+    content: counter(h1) "." counter(h2) ". "
+}
+
+h3:before {
+    counter-increment: h3;
+    content: counter(h1) "." counter(h2) "." counter(h3) ". "
+}
+
+h4:before {
+    counter-increment: h4;
+    content: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) ". "
+}</style>
 
 
 <div style="width: 960px; height: 720px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:960px; height:720px" src="https://www.lucidchart.com/documents/embeddedchart/a5538bbd-5613-42b9-8830-7dca81439d14" id="ATsDLcAtcDZ8"></iframe></div>
 
 
+
+
 note: I use the BTC chain as an example throughout this document, BTC is the first implemented external cryptocurrency, however the addition of other coins is planned once BTC has been completed.
+
+# Introduction
 
 
 Qredochain is a blockchain based on Tendermint. There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library' a Golang library which incorporates the Protobuffer definitions and functionality for creating, pasrsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances is stored in a Badger Key/Value database, the internal Tendermint KV database is only used minimally.
@@ -24,26 +64,31 @@ Similarly a Peg-out transaction releases the locked-up funds from a Peg-In back 
 
 
 ---
-
-## Contents
-
-1. Signed Asset 
-1. Asset
-1. Consensus immutable/mutable
-1. IDDoc
-1. Group
-1. Wallet
-1. Peg-In (Underlying Transaction)
-1. MPC - Mapping
-1. Peg-Out
-1. KVAsset
+# Contents
+   
+1. Header
+1. Introduction
+1. Contents
+1. Assets
+    1. Signed Asset 
+    1. Asset
+    1. Consensus immutable/mutable
+1. Payloads    
+    1. IDDoc
+    1. Group
+    1. Wallet
+    1. Peg-In (Underlying Transaction)
+    1. MPC - Mapping
+    1. Peg-Out
+    1. KVAsset
 1. Crystalisation
 1. Example Usage
 
 ---
 
+# Assets
 
-# 1. Signed Asset - Outer wrapper to hold the signature
+## Signed Asset - Outer wrapper to hold the signature
 
 Every asset on the Qredochain is contained within an outer wrapper (PBSignedAsset) defined in protobuffers below.
 
@@ -72,7 +117,7 @@ A signature can be verified by obtaining the IDDoc for each Signer(#), which con
 
 ---
 
-# 2. Asset - Wrapper to contain all Types of Qredochain transactions
+## Asset - Wrapper to contain all Types of Qredochain transactions
 
 A PBAsset is a further container which wraps every type of Asset. It contains information appropriate to All Assets, including its ID (a hash of the Payload)
 
@@ -110,15 +155,15 @@ All updated Transactions contain a further set of rules which define the require
 
 ---
 
-# 3. Consensus Rules - Different types of Assets
+## Consensus Rules - Different types of Assets
 
-## Immutable Asset
+### Immutable Asset
 When a immutable asset is posted to the chain, it is checked to ensure it adheres to a number of rules
 Mandatory fields are not empty
 The aggregated Signature verifies against an aggregated Public key of  Signer(s)
 
 
-## Mutable Asset
+### Mutable Asset
 A mutable asset has a number of addition consensus rules
 1) It must include a set of TransferRules, which defines who is required to Sign an Updated version of the Asset before it is accepted into the chain.
 
@@ -170,19 +215,12 @@ If we have Signatures for T1, T3 & P, but not for T2. This is substituted as
 This evaluates to 1 (true), so the signature is valid, and the Transaction passes BLS Signature Verification.
 
 
-## Asset Payload
+# Payloads
 Within each PBAsset is the Payload, which is data specific to the Asset Type
-
-The following assets are available
-
-
-
-
-
 
 
 ---
-## 4. IDDoc - Identity Document
+## IDDoc - Identity Document
 
 An immutable Identity, the AssetID is the hash of the serialised Asset
 This Transaction contains public keys for individual users. All the Keys are derived from a single Seed, the seed is stored by the User, using this seed, they can generate Private Keys for the Public Keys in the Identity Doucment as required.
@@ -201,7 +239,7 @@ message PBIDDoc {
 
 
 ---
-## 5. Trustee Group (Group)
+## Trustee Group (Group)
 
 
 ```
@@ -243,7 +281,7 @@ The primary benefit of this indirect approach is that the Trustee Group can be u
 
 ---
 
-## 6. Wallet
+## Wallet
 
 A Wallet updates funds in the Qredochain. 
 A BTC Address produced by the MPC are associated with Wallets, via MPC transactions.
@@ -274,7 +312,7 @@ message PBWallet {
 
 ---
 
-## 7. Peg-In (Underlying)
+## Peg-In (Underlying)
 
 A Peg-In (alias: Underlying) transaction is made by the watcher to indicate the creation of a new UTXO whose address has a mapping on the Qredochain. 
 As the Peg-In transaction is commited to the chain, the consensus rules, (after determining that the UTXO hasn't been previous processed), adds the incoming amount to the Wallet's balance.
@@ -294,7 +332,7 @@ message PBUnderlying {
 
 ---
 
-## 8. MPC 
+## MPC 
 
 An MPC transaction is generated by the MPC Cluster, it creates a mapping between underlying BTC Addresses and their beneficiary Qredochain Wallet (AssetID).
 
@@ -312,13 +350,13 @@ message PBMPC {
 
 ---
 
-## 9. Peg-Out
+## Peg-Out
 
 Peg-Out is a MPC generated transaction upon the broadcast of the settlement transaction. It confirms that a Bitcoin Node has accept the underlying BTC Transaction, it reduces the balance of the Qredochain Wallet, and unlocks it to enable further transfers
 
 ---
 
-## 10. KVAsset
+## KVAsset
 
 
 A KVAsset is simply a wrapper around a set of Keys & Values.
@@ -345,7 +383,7 @@ The Public Keys for the MPC nodes, the Watcher service, and any other permission
 
 ---
 
-## 11. Crystalisation
+# Crystalisation
 
 The values of each  UTXOs once added to the Qredochain do not remain tied to the Wallet they originally fund.  At any point a crystalisation process can be performed, mapping UTXOs on an underlying chain to Balances stored in a Qredochain Wallet.
 The sum of all UTXOs will match the sum of all Qredochain Wallet balances.
@@ -355,12 +393,12 @@ When a settlement of the Assets is required, the transactions generated by the c
 
 ---
 
-## 12. Example Usage
+# Example Usage
 
 Here we walk though a typical workflow purely from the Qredochain Transaction point of view. A majority of the communiction between parties, such as obtaining signatures from other trustees is handled by the Matrix Communication Protocol.
 
 
-### Funding - Addings fund to your account
+## Funding - Addings fund to your account
 1. Alice, Bob & Charlie & Dave create their IDDocument, each IDDoc is added to the Qredochain and assigned an AssetID
 1. Alice creates a Wallet Asset of type Bitcoin (BTC), its added to the Qredochain and assigned AssetID (Wallet_Alice). The Wallet has a transfer rule which requires either Charle or Dave to additional sign any updates to the Wallet (expression: `Charlie | Dave & Alice')
 1. The Watcher detects new Wallet_Alice and requests the MPC to issue a new BTC Address based on the Asset_ID.
@@ -372,7 +410,7 @@ Here we walk though a typical workflow purely from the Qredochain Transaction po
 1. Funding this address can be repeated at will, and simply increases the balance in the database key.
 
 
-### Spending - Sending funds to other parties
+## Spending - Sending funds to other parties
 1. Alice arranges to send Bob some BTC
 1. Alice creates an update Wallet_A transaction, which transfers some of the BTC to another Wallet_Bob, the transaction is signed by Alice and either Charlie or Dave, and the signatures aggregated into a single signature. The update is broadcast to the QredoChain
 1. As the Wallet Update is commited to the Chain, the Qredo consensus rules deduct the transferred amount from Wallet_Alice.Balance key and add it to Wallet_Bob.Balance.
@@ -380,7 +418,7 @@ Here we walk though a typical workflow purely from the Qredochain Transaction po
 
 
 
-### Settlement - Getting funds out of Qredo
+## Settlement - Getting funds out of Qredo
 1. Alice constructs an update to Wallet_Alice, the type is settlement, and the required signatures from either Dave or Charlie are obtained, to make it valid.
 1. The Update is committed to the Qredochain, locking the Wallet from any further updates
 1. The watcher detects a settlement, crystalizes the chain, and sends the resultant transaction to the MPC for signing.
