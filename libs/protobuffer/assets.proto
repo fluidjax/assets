@@ -2,6 +2,7 @@ syntax = "proto3";
 package protobuffer;
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
+
 //This option to force determinstic serializations 
 option (gogoproto.stable_marshaler_all) = true;
 
@@ -42,6 +43,8 @@ enum PBAssetType {
     Wallet               = 5;
     MPC                  = 6;
 }                              
+
+
 enum PBTransferType {
     UndefinedTransferType = 0;
     None                  = 1;
