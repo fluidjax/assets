@@ -39,6 +39,39 @@ h4:before {
 # Qredochain
 
 
+- [Introduction](#introduction)
+- [Assets](#assets)
+  * [Signed Asset - Outer wrapper to hold the signature](#signed-asset---outer-wrapper-to-hold-the-signature)
+  * [Asset - Wrapper to contain all Types of Qredochain transactions](#asset---wrapper-to-contain-all-types-of-qredochain-transactions)
+  * [Consensus Rules - Different types of Assets](#consensus-rules---different-types-of-assets)
+    + [New Asset (Immutable & Mutable Assets)](#new-asset--immutable---mutable-assets-)
+    + [Updated Asset (Mutable Asset)](#updated-asset--mutable-asset-)
+    + [Update - TransferRules](#update---transferrules)
+    + [Transfer example](#transfer-example)
+- [Payloads](#payloads)
+  * [IDDoc - Identity Document](#iddoc---identity-document)
+  * [Trustee Group (Group)](#trustee-group--group-)
+  * [Wallet](#wallet)
+    + [Setup](#setup)
+    + [Adding Funds](#adding-funds)
+    + [Reducing Funds](#reducing-funds)
+    + [Fees](#fees)
+  * [Peg-In (Underlying)](#peg-in--underlying-)
+  * [MPC](#mpc)
+  * [Peg-Out](#peg-out)
+  * [KVAsset](#kvasset)
+- [Crystalisation](#crystalisation)
+- [Example Usage](#example-usage)
+  * [Funding - Addings fund to your account](#funding---addings-fund-to-your-account)
+  * [Spending - Sending funds to other parties](#spending---sending-funds-to-other-parties)
+  * [Settlement - Getting funds out of Qredo](#settlement---getting-funds-out-of-qredo)
+
+
+---
+
+
+# Introduction
+
 <div style="width: 960px; height: 720px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:960px; height:720px" src="https://www.lucidchart.com/documents/embeddedchart/a5538bbd-5613-42b9-8830-7dca81439d14" id="ATsDLcAtcDZ8"></iframe></div>
 
 An overview of the Qredo System, this document covers the "Tendermint Node - Qredochain" and the "Watcher"
@@ -46,10 +79,7 @@ An overview of the Qredo System, this document covers the "Tendermint Node - Qre
 
 note: I use the BTC chain as an external CryptoCurrency throughout this document, BTC is the first implemented external cryptocurrency, however the addition of other coins is planned during later phases of developement.
 
-# Introduction
-
-
-Qredochain is a blockchain based on Tendermint. There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library' a Golang library which incorporates the Protobuffer definitions and functionality for creating, pasrsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances is stored in a Badger Key/Value database, the internal Tendermint KV database is only used minimally.
+Qredochain is a blockchain based on Tendermint. There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library' a Golang library which incorporates the Protobuffer definitions and functionality for creating, pasrsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances are stored in a Badger Key/Value database, the internal Tendermint KV database is only used minimally.
 
 Qredochain  is effectively a side chain which temporarily and safely captures Cryptocurrency from other blockchains and facilitates rapid and cheap transfers between its other Qredochain users. Additionally, it enables the attachment of a range of conditions which requires pre-specified parties to authorise a transfer. Authorisation is given using Aggregated BLS Signatures.
 
@@ -62,31 +92,9 @@ As funds are deposited into the generated Addresses and reach the pre-requites n
 
 Similarly a Peg-out transaction releases the locked-up funds from a Peg-In back to a new address on the  underlying Blockchain. 
 
+All Qredochain Assets are encoded using Googles protobuffers. The full definition  
 
 
----
-# Contents
-   
-1. Header
-1. Introduction
-1. Contents
-1. Assets
-    1. Signed Asset 
-    1. Asset
-    1. Consensus immutable/mutable
-1. Payloads    
-    1. IDDoc
-    1. Group
-    1. Wallet
-    1. Peg-In (Underlying Transaction)
-    1. MPC - Mapping
-    1. Peg-Out
-    1. KVAsset
-1. Crystalisation
-1. Example Usage
-1. Consensus Rules
-
----
 
 # Assets
 
@@ -159,15 +167,45 @@ All updated Transactions contain a further set of rules which define the require
 
 ## Consensus Rules - Different types of Assets
 
-### Immutable Asset
-When a immutable asset is posted to the chain, it is checked to ensure it adheres to a number of rules
+Any transaction is either a New Asset, where the AssetID doesn't already exist, or, where permitted (ie. mutable), it is an Updated Asset, where it updates a previous Asset with new data. An 'Updated Asset' can update both a previous 'Updated Asset' or could be the first update in the chain, updating the first 'New Asset'
+
+ ```"New_Asset" > "Updated_Asset" > "Updated_Asset" >  "Updated_Asset" ....```
+
+### New Asset (Immutable & Mutable Assets)
+Both mutable and immutable assets have a 'New Asset' transaction type. A 'New Asset' transaction is the first transaction for any given AssetID.
+A number of consensus rules are applied to every 'New Asset'
+The primary objective of the Consensus Ruleset is to ensure security.
+The rules which are checked before each Transaction is added to the Chain is the core mechanism for the security of the system. 
+
 Mandatory fields are not empty
 The aggregated Signature verifies against an aggregated Public key of  Signer(s)
 
+1. Transaction doesnt already exist.
+1. AssetID **does not** already exist.
+1. Asset Index equals 1
+1. The AssetID must be equal to the sha256 hash of the serialized Asset.
+1. Assets are correctly formatted - contain all mandatory fields
+1. Based on the self declared signers, the signature verifies - The composition of declare signers is not a consensus rule, it could be simply the Principal (Owner of the Wallet) or an agregated signaure of every particpiant in the Expressions. This is left to the User facing application to enforce. Additional signers at this stage do not offer any additional security, but may be required as part of an audit trail.
 
-### Mutable Asset
+"New Assets" have additional checks specific to their types (eg. A wallet has checks relating to their balances) these are detailed in their own sections below.
+
+
+
+### Updated Asset (Mutable Asset)
 A mutable asset has a number of addition consensus rules
-1) It must include a set of TransferRules, which defines who is required to Sign an Updated version of the Asset before it is accepted into the chain.
+To check an "Updated Asset" the previous verious's transaction is obtained and rebuild into an Asset object, it is then used together with the new "Updated Asset" to perform a number of checks.
+
+1. Transaction doesnt already exist.
+1. AssetID **does** already exist.
+1. Asset Index equals the previous + 1
+1. Assets are correctly formatted - contain all mandatory fields
+1. Based on the self declared signers, the signature verifies 
+1. The declared signers are sufficent to return true when their signatures are used in the expression from the previous version of the Asset.
+
+
+### Update - TransferRules
+
+A mutable asset, either a "New Asset" or "Updated Asset" requires TransferRules which defines who is required to Sign any future "Updated Asset" to make it valid. TansferRules take the form:
 
 
 ```
@@ -179,8 +217,9 @@ message PBTransfer {
 }
 ```
 
-The Participants fields is represented by an Abbreviation and a IDDoc Asset ID.
-A concrete example of a PBTransfer: 
+### Transfer example
+
+Here is a  concrete example with the Transfer fields completed.
 
 ```
 message PBTransfer {               
@@ -195,12 +234,12 @@ message PBTransfer {
 }
 ```
 
-A User wants to create an Update to the exsiting asset using the PBTransfer specified above, the Update Transaction must:
+The Participants fields is represented by an Abbreviation and a IDDoc Asset ID.
+A concrete example of a PBTransfer: 
 
-1. Have the same AssetID
-1. Index = Previous Index + 1
-1. TransferType = Settlement
-1. The signers of the Transfer must be sufficient to make the expression  '(T1+T2+T3)>1 & P' return true. 
+A User who wants to create an Update to the exsiting asset using the PBTransfer specified above, the Update Transaction must obey all the consensus rule but importantly must fullfil the TransferRule :-
+
+The signers of the Transfer must be sufficient to make the expression  '(T1+T2+T3)>1 & P' return true. 
     The PBSignedAsset (outer wrapper) will could contain the following field.
 
       map<string, bytes> Signers = {
@@ -237,8 +276,7 @@ message PBIDDoc {
 }
 ```
 
-
-
+There are no addition consensus rules beyond those specified in the standard "New Asset" Consensus Rules above.
 
 ---
 ## Trustee Group (Group)
@@ -281,6 +319,10 @@ We can now replace the expression with
 
 The primary benefit of this indirect approach is that the Trustee Group can be updated without effecting any Wallets where it has been used, say, for example where an employee who is a trustee of many wallets leaves their employment. A new user is able to be assigned as a trustee of many wallets by updating a single Trustee Group.
 
+
+
+There are no addition consensus rules beyond those specified in the standard "Updated Asset" Consensus Rules above.
+
 ---
 
 ## Wallet
@@ -312,6 +354,47 @@ message PBWallet {
 ```
 
 
+Wallets have additional Rules to enable them to retain balances.
+In addition to either the Asset Update or Asset Creation rules above, a wallet must also ensure that the balance it stores doesnt lose or create money either by 
+error or malice.
+
+### Setup
+1. Upon creation a wallet is assigned a Zero balance, this is stored in the consensus KV store using the key
+    [AssetID].balance
+
+### Adding Funds
+There are 2 valid ways to add funds to the total stored in a wallet
+1. An external funding transaction, when a Peg-In (Underlying) transaction is made by the watcher which notifies the Qredochain that a previous issued address has new funds. The MPC transaction is used to find which Wallet (AssetID) is associated with this external transaction. As the Peg-In transaction is committed to the chain. The AssetID balance is update
+
+    ```[AssetID].balance = [AssetID].balance + incoming_external_funds```
+
+1. A Wallet Update transfers funds to other AssetID using the WalletTransfer field as this transaction is comitted the balance of a wallet is incrememted by the amount transfered from the other Wallet.
+
+    ```[AssetID].balance = [AssetID].balance + fund_from_other_wallet```
+
+### Reducing Funds
+There is one way to reduce the balance of a Wallet, this mechanism can be used to transfer funds to other assetsIDs within the Qredo system, or as part of a Peg-Out settlement transaction, where the funds are removed from the system and underlying funds in the BTC chain are unlocked and transferred to an address of the owners choosing.
+1. Wallet transfers, where a wallet update includes a WalletTransfer (specifiying the recipient AssetID and the amount), for **each** transfer the balance of the Wallet is reduce by the amount transferred. Before the transaction is declared valid, a check is made to ensure that the sum of add Reducing transaction doesn't leave a balance of less than zero.
+
+    ```[AssetID].balance = [AssetID].balance - funds_transferred_to_other_wallet ```
+
+
+1. Where a Wallet transfer is of the type 'Settlement', the balance of the wallet is reduced by the funds settled, again a check is made to ensure it doesn't result in a less than zero wallet.
+
+    ```[AssetID].balance = [AssetID].balance - settled_funds```
+
+
+### Fees
+Fees can be added to any Wallet Update by simply adding additional WalletTransfer entries. At present this is automatically implemented by the external programs generating transactions,  However, if mandatory fees are required a KVAsset could be created with 
+    1. The AssetID of the Qredo Fee Wallet,
+    1. The fee amount.
+A new consensus rule added, to ensure that all Wallet Update transactions include a WalletTransfer to Qredo as specified in the KVAsset
+
+
+
+
+
+
 ---
 
 ## Peg-In (Underlying)
@@ -328,15 +411,24 @@ message PBUnderlying {
     bytes Proof                         = 3; // Merkle proof of the transaction - allows nodes to easily determine validity
     int64 Amount                        = 4; // Value of the transaction  
     bytes Address                       = 5; // Address money was sent to.
-    bytes TxID                          = 6; // Credits this Asset ID
+    bytes TxID                          = 6; // The underlying TxID of the external transaction
 }
 ```
+
+Peg-In are immutable Assets which adhere to the standard "New Asset" ruleset above,
+
+1. In addition as the asset is committed to the chain it obtains the MPC transaction (detailed below) which maps the BTC Address (Field #5) in the PBUnderlying message to the AssetID (of the related wallet), and updates the balance of the AssetID (wallet) incrementing it by the amount transferred.
+1. A check is made to ensure that the TxID doesn't already exist in the Qredochain. An a new KV field is created where the Key is the TxID, to ensure no further copies of the same external UTXO can be added subsequently.
+1. Because the PBUnderlying Transaction can't be trusted, the Qredochain node checks a BTC node to confirm that the details in the Underlying Transaction actually exist at sufficient depth in the BTC Chain. (Mechanism not finalized, but possibly by SPV)
+
 
 ---
 
 ## MPC 
 
-An MPC transaction is generated by the MPC Cluster, it creates a mapping between underlying BTC Addresses and their beneficiary Qredochain Wallet (AssetID).
+An MPC transaction is generated by the MPC Cluster, it creates a mapping between underlying BTC Addresses and their beneficiary Qredochain Wallet (AssetID). It also notifies the Owner of a Wallet of the address where they can deposit external BTC funds, to fund their Qredochain wallet.
+
+The MPC is used by the Underlying (Peg-in) transaction to map incoming funds to Qredochain Wallets.
 
 Bitcoin UTXO >> MPC >> Wallet
 
@@ -350,11 +442,15 @@ message PBMPC {
 }
 ```
 
+The MPC Transaction needs to be signed by members of the MPC network.
+These MPC members public keys are held in a pre-defined KVAsset.
+
+
 ---
 
 ## Peg-Out
 
-Peg-Out is a MPC generated transaction upon the broadcast of the settlement transaction. It confirms that a Bitcoin Node has accept the underlying BTC Transaction, it reduces the balance of the Qredochain Wallet, and unlocks it to enable further transfers
+Peg-Out is a MPC generated transaction upon the broadcast of the settlement transaction. It confirms that a Bitcoin Node has accepted the underlying BTC Transaction, it reduces the balance of the Qredochain Wallet, and unlocks it to enable further transfers
 
 ---
 
@@ -362,7 +458,7 @@ Peg-Out is a MPC generated transaction upon the broadcast of the settlement tran
 
 
 A KVAsset is simply a wrapper around a set of Keys & Values.
-The immutable field contains a set of keys which can't be changed in any updates. This rule is enforced as a consensus rule. 
+KVAsset are mutable and can be updated. However there are fields within each KVAsset which can be made imutable, these are specified in the "Immutable" field. It contains a set of keys which can't be changed in any updates. This rule is enforced as a consensus rule. 
 
 
 ```
@@ -381,6 +477,9 @@ Settlement Underlying Fees.
 When a user wishes to settle out of the Qredo system by using a settlement transaction, the underlying chain eg. Bitcoin Chain, requires a fee to be paid. As the underlying chain's fee changes the amount a user needs to pay will vary. This fee can be communicated to users within the Qredo system be looking up a value in a KVAsset. The value would represent a fee as Satoshis/Byte, and parties within the system can determine the appropriate fee.
 
 The Public Keys for the MPC nodes, the Watcher service, and any other permissioned services on the Qredo Network will have entries in a KVAsset, attached to theses Assets are conditions which will require a number of Signatures before they can be updated.
+
+1. An updated KVAsset cant change/delete any field which is present in the Immutable set (Field #3)
+1. An updated KVAsset must contain all the Immutable fields specified in the previous version (new ones can be added)
 
 
 ---
@@ -428,77 +527,6 @@ Here we walk though a typical workflow purely from the Qredochain Transaction po
 1. The MPC creates a new Address to accept the unspent funds/change from the transaction, this is added to the BTC_Node for monitoring, and a MPC transaction is add to the Qredochain, where the Wallet mapping is empty.
 1. The MPC signs the transactions and broadcasts them to the underlying blockchain 
 1. The MPC creates a PEG-OUT Qredochain transaction finalizing the settlement, which updates the wallet balance and unlocks the wallet, allowing further updates.
-
-
-
-
-
-# Consensus Rules
-The primary objective of the Consensus Ruleset is to ensure security.
-The rules which are checked before each Transaction is added to the Chain is the core mechanism for the security of the system. Any transaction is either a New Asset, where the AssetID doesn't already exist, or, where permitted (ie. mutable), it is an Updated Asset, where it updates a previous Asset with new data.
-
-## New Asset (creation):
-1. Transaction doesnt already exist.
-1. AssetID **doesn't** already exist.
-1. Asset Index equals 1
-1. The AssetID must be equal to the sha256 hash of the serialized Asset.
-1. Assets are correctly formatted - contain all mandatory fields
-1. Based on the self declared signers, the signature verifies - The composition of declare signers is not a consensus rule, it could be simply the Principal (Owner of the Wallet) or an agregated signaure of every particpiant in the Expressions. This is left to the User facing application to enforce. Additional signers at this stage do not offer any additional security, but may be required as part of an audit trail.
-
-
-## Updated Update: (mutable Assets only)
-To check an update the Previous verious is obtained and used in many of the checks.
-1. Transaction doesnt already exist.
-1. AssetID **does** already exist.
-1. Asset Index equals the previous + 1
-1. Assets are correctly formatted - contain all mandatory fields
-1. Based on the self declared signers, the signature verifies 
-1. The declared signers are sufficent to return true when their signatures are used in the expression from the previous version of the Asset.
-
-
-## Wallet
-Wallets have additional Rules to enable them to retain balances.
-In addition to either the Asset Update or Asset Creation rules above, a wallet must also ensure that the balance it stores doesnt lose or create money either by 
-error or malice.
-
-### Setup
-1. Upon creation a wallet is assigned a Zero balance, this is stored in the consensus KV store using the key
-    [AssetID].balance
-
-### Adding Funds
-There are 2 valid ways to add funds to the total stored in a wallet
-1. An external funding transaction, when a Peg-In (Underlying) transaction is made by the watcher which notifies the Qredochain that a previous issued address has new funds. The MPC transaction is used to find which Wallet (AssetID) is associated with this external transaction. As the Peg-In transaction is committed to the chain. The AssetID balance is update
-
-    ```[AssetID].balance = [AssetID].balance + incoming_external_funds```
-
-1. A Wallet Update transfers funds to other AssetID using the WalletTransfer field as this transaction is comitted the balance of a wallet is incrememted by the amount transfered from the other Wallet.
-
-    ```[AssetID].balance = [AssetID].balance + fund_from_other_wallet```
-
-### Reducing Funds
-There is one way to reduce the balance of a Wallet, this mechanism can be used to transfer funds to other assetsIDs within the Qredo system, or as part of a Peg-Out settlement transaction, where the funds are removed from the system and underlying funds in the BTC chain are unlocked and transferred to an address of the owners choosing.
-1. Wallet transfers, where a wallet update includes a WalletTransfer (specifiying the recipient AssetID and the amount), for **each** transfer the balance of the Wallet is reduce by the amount transferred. Before the transaction is declared valid, a check is made to ensure that the sum of add Reducing transaction doesn't leave a balance of less than zero.
-
-    ```[AssetID].balance = [AssetID].balance - funds_transferred_to_other_wallet ```
-
-
-1. Where a Wallet transfer is of the type 'Settlement', the balance of the wallet is reduced by the funds settled, again a check is made to ensure it doesn't result in a less than zero wallet.
-
-    ```[AssetID].balance = [AssetID].balance - settled_funds```
-
-
-
-### Fees
-Fees can be added to any Wallet Update by simply adding additional WalletTransfer entries. At present this is automatically implemented by the external programs generating transactions,  However, if mandatory fees are required a KVAsset could be created with 
-    1. The AssetID of the Qredo Fee Wallet,
-    1. The fee amount.
-A new consensus rule added, to ensure that all Wallet Update transactions include a WalletTransfer to Qredo as specified in the KVAsset
-
-
-
-
-
-
 
 
 
