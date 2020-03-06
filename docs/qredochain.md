@@ -1,5 +1,4 @@
-
-<div><style type='text/css'>
+<style type='text/css'>
 body {
     counter-reset: h1
 }
@@ -34,7 +33,7 @@ h3:before {
 h4:before {
     counter-increment: h4;
     content: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) ". "
-}</style></div>
+}</style>
 
 # Qredochain
 
