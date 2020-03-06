@@ -134,7 +134,7 @@ The Signers are represented by the AssetID of their Identity Document (IDDoc), w
 Consensus Rule: Abbreviations must be unique and alphanumeric:  ^[a-zA-Z0-9]+$
 
 A signature can be verified by obtaining the IDDoc for each Signer(Field 3.bytes), which contains their BLS Public Key, each of their keys BLS added together to create a single aggregate Public Key 
-	
+    
  The signature (#Field 1) is an aggregation of all the signatures from each of the signers.
 
 ---
@@ -152,7 +152,7 @@ message PBAsset {
     PBTransferType TransferType           = 5;   //If an update to an existing asset (ie. Index >1), this holds the type of update
     map<string, PBTransfer> Transferlist  = 6;   //A list of Transfer Rules
     map<string,bytes> Tags                = 7;   //Key/Values associated (unused?)
-    oneof Payload {                              
+    oneof Payload {
         PBWallet Wallet                   = 15;
         PBGroup Group                     = 16;
         PBIDDoc Iddoc                     = 17;
@@ -227,7 +227,7 @@ A mutable asset, either a "New Asset" or "Updated Asset" requires TransferRules 
 
 ```
 message PBTransfer {               
-    PBTransferType Type             = 1;	
+    PBTransferType Type             = 1;    
     string Expression               = 2; 
     map<string, bytes> Participants = 3;
     string Description              = 4; 
@@ -243,14 +243,14 @@ Here is a  concrete example with the Transfer fields completed.
 
 ```
 message PBTransfer {               
-    PBTransferType 			= Settlement_Enum
-    Expression              	= ‘(T1+T2+T3)>1 & P’
-    Participants 			= 
-				abbrev:’T1’, iddoc:’ASSETID_IDDOC_FOR_USER_T1’
-				abbrev:’T2’,’iddoc:'ASSETID_IDDOC_FOR_USER_T2’
-				abbrev:’T3’,’iddoc:’ASSETID_IDDOC_FOR_USER_T3’
-                abbrev:’P’ ,’iddoc:’ASSETID_IDDOC_FOR_USER_P’
-    Description              	= “some textual description”; 
+    PBTransferType      = Settlement_Enum
+    Expression          = ‘(T1+T2+T3)>1 & P’
+    Participants        = 
+        abbrev:’T1’, iddoc:’ASSETID_IDDOC_FOR_USER_T1’
+        abbrev:’T2’,’iddoc:'ASSETID_IDDOC_FOR_USER_T2’
+        abbrev:’T3’,’iddoc:’ASSETID_IDDOC_FOR_USER_T3’
+        abbrev:’P’ ,’iddoc:’ASSETID_IDDOC_FOR_USER_P’
+    Description         = “some textual description”; 
 }
 ```
 
@@ -263,15 +263,15 @@ The signers of the Transfer must be sufficient to make the expression  '(T1+T2+T
     The PBSignedAsset (outer wrapper) will could contain the following field.
 
       map<string, bytes> Signers = {
-           	    abbrev:’T1’, iddoc:’Signature_of_Asset_Created_by_User_T1’
-				abbrev:’T3’,’iddoc:’Signature_of_Asset_Created_by_User_T3’
-                abbrev:’P’ ,’iddoc:’Signature_of_Asset_Created_by_User_P’
+          abbrev:’T1’, iddoc:’Signature_of_Asset_Created_by_User_T1’
+          abbrev:’T3’,’iddoc:’Signature_of_Asset_Created_by_User_T3’
+          abbrev:’P’ ,’iddoc:’Signature_of_Asset_Created_by_User_P’
       }
-	
+    
 
 As the expression is parsed When the expression is parser - If a signature is available for a supplied Abbreviation the abbreviation is replaced by the Number 1, if it is not available it is replaced with 0.
 If we have Signatures for T1, T3 & P, but not for T2. This is substituted as
-		‘(1+0+1)>1 & 1’
+        ‘(1+0+1)>1 & 1’
         
 This evaluates to 1 (true), so the signature is valid, and the Transaction passes BLS Signature Verification.
 
@@ -319,24 +319,24 @@ When used in a Transfer Rule which determines whether or not an Asset can be upd
 It enables a Group Asset ID to be used in place of a IDDoc Asset ID. This enables mutable Transfer Conditions.
 So, in the case of the previous example
 
-	(T1+T2+T3)>1 & P
+    (T1+T2+T3)>1 & P
 
 if we create the following Trustee Group
 
 ```
 message PBGroup {
-    PBGroupType 		= TrusteeGroup;
-    GroupFields  		= 	{‘expression’:’(t1+t2+t3)>1’}
-    Participants 		=
-		abbrev:’T1’, iddoc:’ASSETID_IDDOC_FOR_USER_T1’
-		abbrev:’T2’,’iddoc:'ASSETID_IDDOC_FOR_USER_T2’
-		abbrev:’T3’,’iddoc:’ASSETID_IDDOC_FOR_USER_T3’
+    PBGroupType         = TrusteeGroup;
+    GroupFields          =     {‘expression’:’(t1+t2+t3)>1’}
+    Participants         =
+        abbrev:’T1’, iddoc:’ASSETID_IDDOC_FOR_USER_T1’
+        abbrev:’T2’,’iddoc:'ASSETID_IDDOC_FOR_USER_T2’
+        abbrev:’T3’,’iddoc:’ASSETID_IDDOC_FOR_USER_T3’
     string Description   = ‘A description of the trustee group’;
 }
 ```
 We can now replace the expression with 
 
-	TG1 & P
+    TG1 & P
 
 The primary benefit of this indirect approach is that the Trustee Group can be updated without effecting any Wallets where it has been used (or **will** be used), say, for example an employee who is a trustee of many wallets leaves their employment. A new user is able to be assigned as a trustee of many wallets by updating a single Trustee Group.
 
@@ -364,9 +364,9 @@ message PBWallet {
     repeated PBWalletTransfer WalletTransfers   = 3;
     string Description                          = 11;
     bytes Principal                             = 12;
-	bytes Creditor                              = 13;
-	bytes Initiator                             = 14;
-	bytes Address                               = 15;
+    bytes Creditor                              = 13;
+    bytes Initiator                             = 14;
+    bytes Address                               = 15;
     bytes Counterparty                          = 16;
     bytes TransactionHash                       = 17;
 }
