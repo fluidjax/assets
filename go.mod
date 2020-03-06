@@ -19,6 +19,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/nsf/termbox-go v0.0.0-20200204031403-4d2b513ad8be // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/qredo/assets/libs/clitools v0.0.0-20200306093607-990f0ddd0e63 // indirect
 	github.com/rivo/tview v0.0.0-20200204110323-ae3d8cac5e4b
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
