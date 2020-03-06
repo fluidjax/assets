@@ -2,6 +2,7 @@ syntax = "proto3";
 package protobuffer;
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
+
 //This option to force determinstic serializations 
 option (gogoproto.stable_marshaler_all) = true;
 
@@ -9,39 +10,51 @@ option (gogoproto.stable_marshaler_all) = true;
 
 message PBSignedAsset{
     bytes Signature            = 1;
-    bytes PublicKey            = 2;
-    map<string, bytes> Signers = 3;
+    bytes PublicKey            = 2;  //This is assist a verify(), and should not be relied upon (as its not signed)
+    map<string, bytes> Signers = 3;  //This is assist a verify(), and should not be relied upon (as its not signed)
     PBAsset Asset              = 4;
 }
 
 message PBAsset {
-	PBAssetType Type                = 1;            //Type of Asset
-	bytes ID                        = 2;            //unique ID of asset
-    bytes Owner                     = 3;            //IDDoc of owner            
-    PBTransferType TransferType     = 4;            //Which transfer used to get to this version
+	PBAssetType Type                      = 1;            //Type of Asset
+	bytes ID                              = 2;            //unique ID of asset
+    bytes Owner                           = 3;            //IDDoc of owner            
+    int64 Index                           = 4;            //Incrementing index (start 0), for Asset + it's updates                        
+    PBTransferType TransferType           = 5;            //Which transfer used to get to this version
+    map<string, PBTransfer> Transferlist  = 6;
+    map<string,bytes> Tags                = 7; 
     oneof Payload {                                 //Definiton of the asset
-        PBWallet Wallet             = 5;
-        PBGroup Group               = 6;
-        PBIDDoc Iddoc               = 7;
+        PBWallet Wallet                   = 15;
+        PBGroup Group                     = 16;
+        PBIDDoc Iddoc                     = 17;
+        PBUnderlying Underlying           = 18;
+        PBKVAsset KVAsset                 = 19;
+        PBMPC MPC                         = 20;
     }
-    map<string, PBTransfer> Transferlist = 8;
 }
 
 
 enum PBAssetType {
-	wallet      = 0;
-	Group       = 1;
-	iddoc       = 2;
+	UndefinedAssetType   = 0;
+	Group                = 1;
+    Iddoc                = 2;
+    Underlying           = 3;
+    KVAsset              = 4;
+    Wallet               = 5;
+    MPC                  = 6;
 }                              
+
+
 enum PBTransferType {
-    unspecified         = 0;
-    settlePush          = 1;
-    settlePull          = 2;
-    transferPush        = 3;
-    transferPull        = 4;
-    swap                = 5;
-    load                = 6;
-    GroupDefinition     = 7;
+    UndefinedTransferType = 0;
+    None                  = 1;
+    SettlePush            = 2;
+    SettlePull            = 3;
+    TransferPush          = 4;
+    TransferPull          = 5;
+    Swap                  = 6;
+    Load                  = 7;
+    GroupDefinition       = 8;
 }
 
 message PBTransfer {                  //Defined for each Transfer type an expression that must return true to allow transfer to be performed
@@ -53,27 +66,37 @@ message PBTransfer {                  //Defined for each Transfer type an expres
 
 //Asset Definitons
 message PBWallet {
-    string Description      = 1;
-    bytes principal         = 2;
-	bytes creditor          = 3;
-	bytes initiator         = 4;
-	bytes address           = 5;
-    bytes counterparty      = 6;
-    bytes transactionHash   = 7;
+    PBCryptoCurrency Currency                   = 1;
+    int64 SpentBalance                          = 2; //total of all outgoing spends = previous + sum of Asset Transfer
+    repeated PBWalletTransfer WalletTransfers   = 3;
+    string Description                          = 11;
+    bytes Principal                             = 12;
+	bytes Creditor                              = 13;
+	bytes Initiator                             = 14;
+	bytes Address                               = 15;
+    bytes Counterparty                          = 16;
+    bytes TransactionHash                       = 17;
 }
+
+message PBWalletTransfer {
+    bytes To            = 1; //send the transfer to IDDoc - maybe this is required, as it
+                             //can be determine by the AssetID fields
+    int64 Amount        = 2; //the amount of the transfer
+    bytes AssetID       = 3; //Asset ID of the incoming Wallet
+} 
 
 
 message PBGroup {
     PBGroupType Type                = 1;
-    map<string, bytes> GroupFields  = 2; 
-    map<string, bytes> Participants = 3;
-    string Description              = 4; 
+    map<string, bytes> GroupFields  = 2;  //expresssion
+    map<string, bytes> Participants = 3;  //list of IDDocs
+    string Description              = 4;  //description of the group
 }
 
 
 enum PBGroupType {
-    Default         = 0;
-    TrusteeGroup    = 1;
+    UnspecifiedGroupType    = 0;
+    TrusteeGroup            = 1;
 }
 
 
@@ -90,12 +113,68 @@ message PBIDDoc {
 //Contains a public key, used to generate a crypto currency address
 message PBAssetCommitment {
     bytes ID                    = 1;    // Asset ID
-    bytes pubKey                = 2;    //signature of the transactionHash
+    bytes PubKey                = 2;    //signature of the transactionHash
 }
 
 
 //MPC Signs the transactionHash and returns signature for later tx composition and broadcast
 message PBAssetTransferSignature {
     bytes ID                    = 1;    // Asset ID
-    bytes signature             = 2;    //signature of the transactionHash
+    bytes Signature             = 2;    //signature of the transactionHash
+}
+
+
+
+//Message to capture the underlying chain transaction
+enum PBCryptoCurrency {
+    UndefinedCryptoCurrency   = 0;
+    BTC                       = 1;
+    BTCTESTNET                = 2;
+}
+
+enum PBUnderlyingType {
+    UndefinedUnderlyingType       = 0;
+    Deposit                       = 1;
+    Spend                         = 2;
+
+}
+
+
+message PBUnderlying {
+    PBUnderlyingType Type               = 1; // Type
+    PBCryptoCurrency CryptoCurrencyCode = 2; // Which cryptocurrency chain this relates to.
+    bytes Proof                         = 3; // Merkle proof of the transaction - allows nodes to easily determine validity
+    int64 Amount                        = 4; // Value of the transaction  
+    bytes Address                       = 5; // Address money was sent to.
+    bytes TxID                          = 6; // Credits this Asset ID
+}
+
+
+//Simple KV Asset
+message  PBKVAsset {
+    PBKVAssetType Type              = 1;
+    map<string, bytes> AssetFields  = 2; 
+    repeated string Immutable       = 3;
+    string Description              = 4; 
+}
+
+enum PBKVAssetType {
+    UnspecifiedKVAsset  = 0;
+    Fee                 = 1;
+    MPCList             = 2;
+
+}
+
+enum PBMPCType {
+    UnspecifiedMPCType  = 0;
+    Address             = 1;
+    Signature           = 2;
+}
+
+
+message PBMPC {
+    PBMPCType   Type        = 1;
+    bytes       Address     = 2;
+    bytes       Signature   = 3;
+    bytes       AssetID     = 4;
 }

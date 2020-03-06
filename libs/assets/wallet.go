@@ -20,52 +20,67 @@ under the License.
 package assets
 
 import (
+	"bytes"
+
+	"math"
+
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//Payload - return the wallet Payload object
-func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
-	if w == nil {
-		return nil, errors.New("Wallet is nil")
-	}
-	if w.CurrentAsset.Asset == nil {
-		return nil, errors.New("Wallet has no asset")
-	}
-	signatureAsset := w.CurrentAsset.Asset
-	wallet := signatureAsset.GetWallet()
-	return wallet, nil
-}
-
-//NewWallet - Setup a new IDDoc
-func NewWallet(iddoc *IDDoc) (w *Wallet, err error) {
+//NewWallet - Setup a new Wallet
+func NewWallet(iddoc *IDDoc, currency protobuffer.PBCryptoCurrency) (w *Wallet, err error) {
 	if iddoc == nil {
 		return nil, errors.New("Sign - supplied IDDoc is nil")
 	}
 	w = emptyWallet()
-	w.Store = iddoc.Store
+	w.DataStore = iddoc.DataStore
 
 	walletKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
 	}
 	w.CurrentAsset.Asset.ID = walletKey
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
-	w.assetKeyFromPayloadHash()
+	w.CurrentAsset.Asset.Index = 1
+	w.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_None
+	w.AssetKeyFromPayloadHash()
+
+	currentPayload, err := w.Payload()
+	if err != nil {
+		return nil, err
+	}
+
+	currentPayload.Currency = currency
+
 	return w, nil
 }
 
 //NewUpdateWallet - Create a NewWallet for updates/transfers based on a previous one
 func NewUpdateWallet(previousWallet *Wallet, iddoc *IDDoc) (w *Wallet, err error) {
 	w = emptyWallet()
-	if previousWallet.Store != nil {
-		w.Store = previousWallet.Store
+	if previousWallet.DataStore != nil {
+		w.DataStore = previousWallet.DataStore
 	}
 	w.CurrentAsset.Asset.ID = previousWallet.CurrentAsset.Asset.ID
-	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_wallet
+	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Wallet
 	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.CurrentAsset.Asset.Index = previousWallet.CurrentAsset.Asset.Index + 1
+	w.DataStore = previousWallet.DataStore
 	w.PreviousAsset = previousWallet.CurrentAsset
+	previousPayload, err := w.PreviousPayload()
+	if err != nil {
+		return nil, err
+	}
+	currentPayload, err := w.Payload()
+	if err != nil {
+		return nil, err
+	}
+	currentPayload.SpentBalance = previousPayload.SpentBalance
+	w.DeepCopyUpdatePayload()
+	currentPayload.WalletTransfers = nil
 	return w, nil
 }
 
@@ -83,12 +98,102 @@ func ReBuildWallet(sig *protobuffer.PBSignedAsset, key []byte) (w *Wallet, err e
 	return w, nil
 }
 
+//Payload - return the wallet Payload object
+func (w *Wallet) Payload() (*protobuffer.PBWallet, error) {
+	if w == nil {
+		return nil, errors.New("Wallet is nil")
+	}
+	if w.CurrentAsset.Asset == nil {
+		return nil, errors.New("Wallet has no asset")
+	}
+	signatureAsset := w.CurrentAsset.Asset
+	wallet := signatureAsset.GetWallet()
+	return wallet, nil
+}
+
+//Payload - return the wallet Previous Payload object
+func (w *Wallet) PreviousPayload() (*protobuffer.PBWallet, error) {
+	if w == nil {
+		return nil, errors.New("Wallet is nil")
+	}
+	if w.CurrentAsset.Asset == nil {
+		return nil, errors.New("Wallet has no asset")
+	}
+	signatureAsset := w.PreviousAsset.Asset
+	wallet := signatureAsset.GetWallet()
+	return wallet, nil
+}
+
+func (w *Wallet) AddWalletTransfer(to []byte, amount int64, assetid []byte) (err error) {
+	if to == nil {
+		return errors.New("Transfer to is nil")
+	}
+
+	if assetid == nil {
+		return errors.New("Transfer assetid is nil")
+	}
+	if amount == 0 {
+		return errors.New("Can't transfer zero amount")
+	}
+
+	if amount < 0 {
+		return errors.New("Can't transfer negative amount")
+	}
+	if amount >= math.MaxInt64 {
+		return errors.New("Invalid Amount")
+	}
+	currentPayload, err := w.Payload()
+
+	if err != nil {
+		return errors.Wrap(err, "Fail to retrieve Payload in AddWalletTransfer")
+	}
+
+	currentPayload.SpentBalance += amount
+
+	currentPayload.WalletTransfers = append(currentPayload.WalletTransfers,
+		&protobuffer.PBWalletTransfer{To: to, Amount: amount, AssetID: assetid})
+	return nil
+}
+
+func (w *Wallet) FullVerify() (bool, error) {
+	payload, err := w.Payload()
+	if err != nil {
+		return false, errors.Wrap(err, "Fail to retrieve Payload in FullVerify")
+	}
+	previousPayload, err := w.PreviousPayload()
+
+	incomingSpend := previousPayload.SpentBalance
+	if incomingSpend < 0 {
+		return false, errors.New("Spend less than Zero")
+	}
+	finalSpend := payload.SpentBalance
+	if finalSpend < 0 {
+		return false, errors.New("Spend less than Zero")
+	}
+	spent := finalSpend - incomingSpend
+
+	var calculatedSpent int64
+	for _, wt := range payload.WalletTransfers {
+		if wt.Amount < 0 {
+			return false, errors.New("Spend less than Zero")
+		}
+		calculatedSpent += wt.Amount
+
+	}
+
+	if calculatedSpent != spent {
+		return false, errors.New("Spend Invalid : Previous != Current + Transfers")
+	}
+
+	return w.SignedAsset.FullVerify()
+}
+
 func emptyWallet() (w *Wallet) {
 	w = &Wallet{}
 	w.CurrentAsset = &protobuffer.PBSignedAsset{}
 	//Asset
 	asset := &protobuffer.PBAsset{}
-	asset.Type = protobuffer.PBAssetType_wallet
+	asset.Type = protobuffer.PBAssetType_Wallet
 	//Wallet
 	wallet := &protobuffer.PBWallet{}
 	//Compose
@@ -97,4 +202,202 @@ func emptyWallet() (w *Wallet) {
 	payload.Wallet = wallet
 	w.CurrentAsset.Asset.Payload = payload
 	return w
+}
+
+//LoadWallet -
+func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
+	data, err := store.RawGet(walletID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	wallet, err := ReBuildWallet(sa, walletID)
+	if err != nil {
+		return nil, err
+	}
+
+	return wallet, nil
+
+}
+
+func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
+	assetID := w.Key()
+
+	//Check 4 - Mutability
+	exists, err := w.Exists(datasource, assetID)
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
+	}
+
+	if exists == false {
+		if deliver == true {
+			//New Wallet Deliver
+			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+			}
+			w.setBalanceKey(datasource, w.Key(), 0)
+		} else {
+			//New Wallet - Check
+			assetError := w.VerifyWallet(datasource)
+			if assetError != nil {
+				return assetError
+			}
+		}
+	} else {
+		//This is a wallet update
+		//events = processTags(wallet.CurrentAsset.Asset.Tags)
+		//Loop through all the transfers out and update their destinations
+		payload, err := w.Payload()
+		if err != nil {
+			return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
+		}
+
+		currentBalance, assetsError := w.getBalanceKey(datasource, assetID)
+		if assetsError != nil {
+			return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to fetch Current Balance")
+		}
+
+		//Check we have enough - Pass 1
+		var totalOutgoing int64
+		for _, wt := range payload.WalletTransfers {
+			res := bytes.Compare(wt.AssetID, assetID)
+			if res == 0 {
+				//this is money coming back to self, just ignore it
+				continue
+			}
+			totalOutgoing = totalOutgoing + wt.Amount
+		}
+
+		if totalOutgoing > currentBalance {
+			//println("Eject")
+			return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Outgoing > CurrentBalance")
+		}
+
+		//We have enough funds, do the database updates for transfer Pass 2
+		if deliver == true {
+			//println("Deliver")
+			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+			}
+			var totalToSubtract int64
+
+			for _, wt := range payload.WalletTransfers {
+				res := bytes.Compare(wt.AssetID, assetID)
+				if res == 0 {
+					//this is money coming back to self, just ignore it
+					continue
+				}
+				amount := wt.Amount
+				destinationAssetID := wt.AssetID
+				w.addToBalanceKey(datasource, destinationAssetID, amount)
+				totalToSubtract += amount
+			}
+			w.subtractFromBalanceKey(datasource, assetID, totalToSubtract)
+		}
+	}
+	return nil
+}
+
+func (w *Wallet) VerifyAllSignatures(datasource DataSource) *AssetsError {
+
+	//Check the signature for ALL the participants
+	//For each supplied signer re-build a PublicKey
+	// var aggregatedPublicKey []byte
+	// var transferSignatures []SignatureID
+
+	// for abbreviation, participantID := range w.CurrentAsset.Signers {
+	// 	signedAsset, err := Load(w.DataStore, participantID)
+	// 	if err != nil {
+	// 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
+	// 	}
+	// 	iddoc, err := ReBuildIDDoc(signedAsset, participantID)
+	// 	if err != nil {
+	// 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
+	// 	}
+	// 	pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
+	// 	if aggregatedPublicKey == nil {
+	// 		aggregatedPublicKey = pubKey
+	// 	} else {
+	// 		_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+	// 	}
+	// 	sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
+	// 	transferSignatures = append(transferSignatures, sigID)
+	// }
+	// return nil
+	return nil
+}
+
+func (w *Wallet) VerifyWallet(datasource DataSource) *AssetsError {
+
+	//Check 6
+	assetID := w.Key()
+	if assetID == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
+	}
+
+	//Signed Asset Check
+	assetError := w.VerifyAllSignatures(datasource)
+	if assetError != nil {
+		return assetError
+	}
+
+	//check 9.1
+	payload, err := w.Payload()
+	if err != nil {
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+	}
+	//check 9
+	if payload == nil {
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	}
+	//check 11
+	if payload.Currency == 0 {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Currency")
+	}
+	//check 11
+	if payload.SpentBalance != 0 {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Balance Starts at 0")
+	}
+
+	//Check 7
+	if w.CurrentAsset.Asset.Index != 1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	if w.CurrentAsset.Asset.Transferlist == nil {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+	if len(w.CurrentAsset.Asset.Transferlist) == 0 {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+
+	return nil
+}
+
+
+
+func SetupIDDocs(store DataSource) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
+	idP, _ := NewIDDoc("Primary")
+	idP.DataStore = store
+	idP.Save()
+
+	idT1, _ := NewIDDoc("1")
+	idT1.DataStore = store
+	idT1.Save()
+
+	idT2, _ := NewIDDoc("2")
+	idT2.DataStore = store
+	idT2.Save()
+
+	idT3, _ := NewIDDoc("3")
+	idT3.DataStore = store
+	idT3.Save()
+
+	return idP, idT1, idT2, idT3
 }

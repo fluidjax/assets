@@ -19,9 +19,15 @@ under the License.
 
 package assets
 
+/*
+	A group Asset is simple KV store (GroupFields) together with a list of
+	particpants. Primarily create for the TrusteeGroup Transaction type.
+*/
+
 import (
 	"bytes"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
 )
@@ -36,13 +42,13 @@ func (w *Group) Payload() *protobuffer.PBGroup {
 	return Group
 }
 
-//NewGroup - Setup a new IDDoc
+//NewGroup - Setup a new Group
 func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err error) {
 	if iddoc == nil {
 		return nil, errors.New("NewGroup - supplied IDDoc is nil")
 	}
-	w = emptyGroup(groupType)
-	w.Store = iddoc.Store
+	w = EmptyGroup(groupType)
+	w.DataStore = iddoc.DataStore
 	GroupKey, err := RandomBytes(32)
 	if err != nil {
 		return nil, errors.New("Fail to generate random key")
@@ -50,7 +56,8 @@ func NewGroup(iddoc *IDDoc, groupType protobuffer.PBGroupType) (w *Group, err er
 	w.CurrentAsset.Asset.ID = GroupKey
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.CurrentAsset.Asset.Owner = iddoc.Key()
-	w.assetKeyFromPayloadHash()
+	w.CurrentAsset.Asset.Index = 1
+	w.AssetKeyFromPayloadHash()
 	return w, nil
 }
 
@@ -65,14 +72,18 @@ func NewUpdateGroup(previousGroup *Group, iddoc *IDDoc) (w *Group, err error) {
 	p := previousGroup.CurrentAsset.Asset.GetGroup()
 	previousType := p.GetType()
 
-	w = emptyGroup(previousType)
-	if previousGroup.Store != nil {
-		w.Store = previousGroup.Store
+	w = EmptyGroup(previousType)
+	if previousGroup.DataStore != nil {
+		w.DataStore = previousGroup.DataStore
 	}
 	w.CurrentAsset.Asset.ID = previousGroup.CurrentAsset.Asset.ID
 	w.CurrentAsset.Asset.Type = protobuffer.PBAssetType_Group
 	w.CurrentAsset.Asset.Owner = iddoc.Key() //new owner
+	w.CurrentAsset.Asset.Index = previousGroup.CurrentAsset.Asset.Index + 1
+
 	w.PreviousAsset = previousGroup.CurrentAsset
+	w.DataStore = previousGroup.DataStore
+	w.DeepCopyUpdatePayload()
 	return w, nil
 }
 
@@ -118,7 +129,7 @@ func (w *Group) ConfigureGroup(expression string, participants *map[string][]byt
 	}
 
 	added := {DDDD, EEEE}
-	deleyed := {AAAA}
+	deleted := {AAAA}
 	unchanged := {BBBB,CCCC}
 
 	Allows a GUI to easily display to the end user what changes they need to agree too.
@@ -188,7 +199,7 @@ func ReBuildGroup(sig *protobuffer.PBSignedAsset, key []byte) (w *Group, err err
 	return w, nil
 }
 
-func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
+func EmptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	w = &Group{}
 	w.CurrentAsset = &protobuffer.PBSignedAsset{}
 	//Asset
@@ -203,4 +214,65 @@ func emptyGroup(groupType protobuffer.PBGroupType) (w *Group) {
 	payload.Group = group
 	w.CurrentAsset.Asset.Payload = payload
 	return w
+}
+
+//LoadGroup -
+func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
+	data, err := store.RawGet(groupAssetID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	g, err = ReBuildGroup(sa, groupAssetID)
+	if err != nil {
+		return nil, err
+	}
+
+	return g, nil
+
+}
+
+func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
+	assetID := g.Key()
+	exists, err := g.Exists(datasource, assetID)
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+	}
+	//Wallet is mutable, if exists allow update
+
+	if exists == false {
+		//This is a new Wallet
+		if deliver == true {
+			//Commit
+			err := g.AddCoreMappings(datasource, rawTX, txHash)
+			if err != nil {
+				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+			}
+		} else {
+			//Check
+			assetsError := g.VerifyGroup()
+			if assetsError != nil {
+				return assetsError
+			}
+		}
+
+	} else {
+		if deliver == true {
+			//Commit
+			assetsError := g.AddCoreMappings(datasource, rawTX, txHash)
+			if assetsError != nil {
+				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+			}
+		}
+	}
+	return nil
+}
+
+func (g *Group) VerifyGroup() *AssetsError {
+	//fy, err := g.Verify()
+	return nil
 }

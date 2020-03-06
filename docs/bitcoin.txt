@@ -1,0 +1,158 @@
+
+Process
+
+
+>Issue New Addres 
+myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh
+>Add to account
+b importaddress myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh "" false false
+b setaccount myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh aaa
+
+//b listtransactions aaa #returns 0 transactions as its new
+//Add money to address
+//tx = 26d5ed3f0566ddfa99837d994564b93d6598ed17f198a848227600d7266ae413
+//b gettxout 26d5ed3f0566ddfa99837d994564b93d6598ed17f198a848227600d7266ae413 0 true
+
+b listaccounts 3 true
+
+
+bc=`b getblockcount`
+conf=`expr $bc - 6`
+bh=`b getblockhash $conf`
+b listsinceblock $conf
+b listsinceblock $bh 6 true
+
+
+
+
+
+Spin up a new Watcher
+  1) Add all addresses to the wallet and rescan from string
+
+Wallet 
+  1) Add addresses to the 'Qredo' wallet
+
+Periodically 
+  1) Get latest block height
+  2) If the height has changed, get the 
+
+
+Wnen we create an asset we issue a Public Key
+Monitor the address derived from the public key for UTXOs
+  Add Address to a wallet. or
+  Every Minute - poll the chain & process new blocks
+When a new UTXO comes in, for a monitored address we add this to the Qredochain (PBUnderlyingTransaction)
+This contains a proof
+
+
+
+
+
+Test: mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF
+>b importaddress "mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF" "abc" false false
+>b getaccount "mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF"
+abc
+
+b getblockhash 1000
+00000000373403049c5fff2cd653590e8cbe6f7ac639db270e7d1a7503d698df
+
+//Get all the UTXOs
+b getaddressutxos '{"addresses": ["mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF"]}'
+b getblockcount
+b getblockhash 1000
+b getblock "000000000000002ac37b80c3b4d8cb1dcf3aa67a7885747b1809601ec80b8c2e" true
+
+b importaddress "mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF" "qredo" false
+
+//Get balance with at least 6 blocks for address
+b getreceivedbyaddress "mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF" 6
+
+Proof using Bitgo node
+
+18b4af6cf17b056ffbbc7e95f200de74ad4ccc051b6647719f9ace50d4a40eb9 1.1 to  mnpH3C8A64AZqFiR3MWtift8MhBw77ntxF
+
+//List transactions we are watching since block 000000000000002ac37b80c3b4d8cb1dcf3aa67a7885747b1809601ec80b8c2e
+//With at least 1 confirmations
+//Include watch only
+
+b listsinceblock 000000000000002ac37b80c3b4d8cb1dcf3aa67a7885747b1809601ec80b8c2e 1 true
+
+
+
+
+From Blockcypher
+TXID 5456f4636886bd8459c61b883265e0383a8b5c22e6d80253f7d75ce6fbac9625
+Block Hash	0000000000007addb212fc4dec44f214cff04345a01f3016a0e98e9b8d42b2a0
+Block Height	1,664,795
+Transaction Index	5 
+Size	138 bytes
+Lock Time	1664794
+Relayed By:	35.195.234.115:18333
+
+
+>b gettxoutproof "[\"5456f4636886bd8459c61b883265e0383a8b5c22e6d80253f7d75ce6fbac9625\"]" 0000000000007addb212fc4dec44f214cff04345a01f3016a0e98e9b8d42b2a0
+0000c020fb2a29e12e16bb74e0b6d2b127a8d36f40e54d354452ea3f3101000000000000ae32eb149496fb22a703cbfa798fa9705bc09754a9b12990cc9fe4fb485b5842cc09385effff001d4d4bada8140200000b0076d68fc5840dc3ec08abfd721965b085fad8660c00f7cc61c275943da7f9f42464ba94fe89fcf05273bcf48c61f82adee8446aa41fba5897ff5c22d9921ea12596acfbe65cd7f75302d8e6225c8b3a38e06532881bc65984bd866863f4565480b1510e3fa84c223edb55729eb2e54e9b42e1a96b3e0962909dd66e0dc44221b32552d94a9db75227b200db805bf944ca648f678dca713f0a351ca1e32fea04a6b968e97bbb37c65ef50a1e74ef16181715b4d407eb2c1a37fc3f8da943df4fe945d03f4802425d3bd24b32d292fe3771274d22715151a896622451902537155341a8a318dbdfc27b48b2ff6fe322ca138844d8e7619d2cd33508187002874ac1a66732ccee5c89e271ba7eeadaca1ba42ee964f3234ba41e625da8e73105e8c06a2ba211337fe47f4e203177d0c68e18faccb6454f468a7499f22f10ffbeb5d129620b4b4c1de0b8e67158a05de3745c9555d5f506c231359aea59422ac76003ff1600
+
+>b verifytxoutproof 0000c020fb2a29e12e16bb74e0b6d2b127a8d36f40e54d354452ea3f3101000000000000ae32eb149496fb22a703cbfa798fa9705bc09754a9b12990cc9fe4fb485b5842cc09385effff001d4d4bada8140200000b0076d68fc5840dc3ec08abfd721965b085fad8660c00f7cc61c275943da7f9f42464ba94fe89fcf05273bcf48c61f82adee8446aa41fba5897ff5c22d9921ea12596acfbe65cd7f75302d8e6225c8b3a38e06532881bc65984bd866863f4565480b1510e3fa84c223edb55729eb2e54e9b42e1a96b3e0962909dd66e0dc44221b32552d94a9db75227b200db805bf944ca648f678dca713f0a351ca1e32fea04a6b968e97bbb37c65ef50a1e74ef16181715b4d407eb2c1a37fc3f8da943df4fe945d03f4802425d3bd24b32d292fe3771274d22715151a896622451902537155341a8a318dbdfc27b48b2ff6fe322ca138844d8e7619d2cd33508187002874ac1a66732ccee5c89e271ba7eeadaca1ba42ee964f3234ba41e625da8e73105e8c06a2ba211337fe47f4e203177d0c68e18faccb6454f468a7499f22f10ffbeb5d129620b4b4c1de0b8e67158a05de3745c9555d5f506c231359aea59422ac76003ff1600
+[
+  "5456f4636886bd8459c61b883265e0383a8b5c22e6d80253f7d75ce6fbac9625"
+]
+
+Using https://github.com/summa-tx/bitcoin-spv/blob/master/golang/btcspv/bitcoin_spv_test.go
+// ParseHeader takes in a header and returns information about that header: digest, version, previous header hash, merkle root, timestamp, target and nonce
+
+Header #0:
+  Digest: 0000000000007addb212fc4dec44f214cff04345a01f3016a0e98e9b8d42b2a0,
+  Version: 549453824,
+  Prev Hash: fb2a29e12e16bb74e0b6d2b127a8d36f40e54d354452ea3f3101000000000000,
+  Merkle Root: ae32eb149496fb22a703cbfa798fa9705bc09754a9b12990cc9fe4fb485b5842,
+  Time Stamp: 2020-02-03 11:53:48 +0000 GMT,
+  Target: {824638705248},
+  Nonce: 2829929293
+
+
+
+  # Address Monitor
+  z
+
+
+
+
+b getaddressbalance '{"addresses": ["myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh"]}'
+b getaddressdeltas '{"addresses": ["myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh"]}'
+b getaddressutxos '{"addresses": ["myDV7bpcvjQmrh4izsX7bv9uJrNcYhLfFh"]}'
+
+
+
+getaccount "bitcoinaddress"           - which account is it in
+getaccountaddress "account"
+getaddressesbyaccount "account"       - list addresses for acount
+getbalance ( "account" minconf includeWatchonly )   - balance for account with confirmations & watch only
+getnewaddress ( "account" )
+getrawchangeaddress
+getreceivedbyaccount "account" ( minconf )
+getreceivedbyaddress "bitcoinaddress" ( minconf )
+gettransaction "txid" ( includeWatchonly )
+getunconfirmedbalance
+getwalletinfo
+importaddress "address" ( "label" rescan p2sh )
+importprivkey "bitcoinprivkey" ( "label" rescan )
+importpubkey "pubkey" ( "label" rescan )
+importwallet "filename"
+keypoolrefill ( newsize )
+listaccounts ( minconf includeWatchonly)       show accounts, with 
+listaddressgroupings
+listlockunspent
+listreceivedbyaccount ( minconf includeempty includeWatchonly)
+listreceivedbyaddress ( minconf includeempty includeWatchonly)
+listsinceblock ( "blockhash" target-confirmations includeWatchonly)
+listtransactions ( "account" count from includeWatchonly)
+listunspent ( minconf maxconf  ["address",...] )
+lockunspent unlock [{"txid":"txid","vout":n},...]
+move "fromaccount" "toaccount" amount ( minconf "comment" )
+sendfrom "fromaccount" "tobitcoinaddress" amount ( minconf "comment" "comment-to" )
+sendmany "fromaccount" {"address":amount,...} ( minconf "comment" ["address",...] )
+sendtoaddress "bitcoinaddress" amount ( "comment" "comment-to" subtractfeefromamount )
+setaccount "bitcoinaddress" "account"
+settxfee amount
+signmessage "bitcoinaddress" "message"

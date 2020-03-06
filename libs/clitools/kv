@@ -1,0 +1,163 @@
+#!/bin/bash
+
+
+set -e
+d_flag=false
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+DATADIR=$DIR/data
+hasNode=$(qc status -silent)
+if [ $? -ne 0 ]; then
+    echo "Error Connecting to QredoChain Node"
+	exit 1
+fi
+
+while getopts 'd' flag; do
+  case "${flag}" in
+    d) d_flag='true' ;;
+   esac
+done
+
+if [ -x "$(command -v tabset)" ]; then
+    tabset happy
+fi
+
+#shift $(($OPTIND - 1))
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+dump() {
+	if [ $d_flag = 'true' ]; then
+		echo "debug $debug"
+		echo $2
+		echo -e "\033[40;31;5;82m $1  \033[0m"	
+		res=$(echo $1 | sed 's/"/\\"/g')
+		echo -e "\033[40;38;5;82m $res  \033[0m"
+	fi
+}
+
+
+
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+MakeKV() {
+	echo Make KV and optionally broadcast
+
+	assetID=$(openssl rand -hex 16)
+
+
+	createJSON='
+	{
+	"kvAssetType":1,
+	"transferType": 0,
+	"assetID":"'$assetID'",
+	"ownerseed":"'$p1_seed'",
+	"kv":[
+		{"key":"key1","value":"value1"},
+		{"key":"key2","value":"value2"},
+		{"key":"key3","value":"value3"}
+	],
+	"Transfer": [{
+		"TransferType": 1,
+		"Expression": "t1 + t2 + t3 > 1 & p1",
+		"description": "Here is the transfer Type 1",
+		"participants": [
+			{"name": "p1", "ID": "'$p1_assetid'"},
+			{"name": "t1","ID": "'$t1_assetid'"},
+			{"name": "t2","ID": "'$t2_assetid'"},
+			{"name": "t3","ID": "'$t3_assetid'"}
+		]
+	}]
+	}'
+
+	createJSON=$(echo $createJSON | tr -d '\n')
+	createJSON=$(echo $createJSON | tr -d '\r')
+
+	dump "$createJSON" CreateKV 
+	newKV=$(qc ckv -b=true -j="$createJSON")
+	newKVID=$(echo $newKV | jq -r .assetid)
+}
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+PrepKVUpdate() {
+	echo Prepare Updated Wallet serialized TX for Signing 
+
+	updateJson='{
+		"existingWalletAssetID":"'$newKVID'",
+		"newowner":"'$p1_assetid'",
+		"transferType":1,
+		"kv":[
+			{"key":"key1","value":"newvalue3"},
+			{"key":"key2","value":"newvalue2"},
+			{"key":"key3","value":"newvalue1"}
+		],
+		"transfer":[{
+			"transferType":1,
+			"expression":"t5 + t6 + t7 > 1 & p2",
+			"description":"some description goes here",
+			"participants":[
+				{"name":"p2","ID":"'$p2_assetid'"},
+				{"name":"t5","ID":"'$t5_assetid'"},
+				{"name":"t6","ID":"'$t6_assetid'"},
+				{"name":"t7","ID":"'$t7_assetid'"}
+				] }]
+		}'
+
+	dump "$updateJson" "PrepKVUpdate"
+
+	updateJson=$(echo $updateJson | sed 's/\n//g')
+	updateKV=$(qc pkvu -j="$updateJson")
+	serializedUnsignedAsset=$(echo $updateKV | jq -r .serializedUpdate)
+}
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+SignForEachIDoc() {
+	echo "Sign for each IDDoc"
+
+	#sign for each IDDoc
+	json='{"seed":"'$p1_seed'","msg":"'$serializedUnsignedAsset'"}'
+	sigP1=$(qc sign -j="$json" | jq -r .signature)
+
+	json='{"seed":"'$t1_seed'",	"msg":"'$serializedUnsignedAsset'"}'
+	sigT1=$(qc sign -j="$json" | jq -r .signature)
+
+	json='{	"seed":"'$t2_seed'",	"msg":"'$serializedUnsignedAsset'"}'
+	sigT2=$(qc sign -j="$json" | jq -r .signature)
+
+	json='{	"seed":"'$t3_seed'",	"msg":"'$serializedUnsignedAsset'"}'
+	sigT3=$(qc sign -j="$json" | jq -r .signature)
+}
+
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+SendKV() {
+	echo SendKVUpdate - Aggreate Sign, Verify and optionally broadcast
+	json='{"sigs":[
+				{"id":"'$p1_assetid'","abbreviation":"p1","signature":"'$sigP1'"},
+				{"id":"'$t1_assetid'","abbreviation":"t1","signature":"'$sigT1'"},
+				{"id":"'$t2_assetid'","abbreviation":"t2","signature":"'$sigT2'"},
+				{"id":"'$t3_assetid'","abbreviation":"t3","signature":"'$sigT3'"}
+				],
+			"kvUpdatePayload":'$updateJson'
+		}'
+	dump "$json" "Aggregate Sign"
+	updateComplete=$(qc skv -b=true -j="$json")
+}
+
+#----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+ source $DATADIR/assets
+ MakeKV
+PrepKVUpdate
+SignForEachIDoc
+SendKV
+
+echo $newKVID

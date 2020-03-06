@@ -1,0 +1,68 @@
+#!/bin/bash
+#Setup/generate some ID documents and assets for other scripts
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+DATADIR=$DIR/data
+
+
+hasNode=$(qc status -silent)
+if [ $? -ne 0 ]; then
+    echo "Error Connecting to QredoChain Node"
+	exit 1
+fi
+
+
+set -e
+
+dump (){
+	if [ $d_flag = 'true' ]; then
+		echo "debug $debug"
+		echo $2
+		echo -e "\033[40;31;5;82m $1  \033[0m"	
+		res=$(echo $1 | sed 's/"/\\"/g')
+		echo -e "\033[40;38;5;82m $res  \033[0m"
+	fi
+}
+
+
+MakeIDDoc() {
+    NAME=$1
+    echo "Make IDDoc $NAME"
+    retjson=$(qc cid -b=true "$name")
+    assetid=$(echo $retjson | jq -r .assetid)
+    seed=$(echo $retjson | jq -r .seed)
+    echo "${NAME}_assetid=${assetid}" >> $DATADIR/assets
+    echo "${NAME}_seed=${seed}" >> $DATADIR/assets
+}
+
+rm -f $DATADIR/assets
+
+#Principals
+MakeIDDoc "p1"
+MakeIDDoc "p2"
+
+#Beneficiaries
+MakeIDDoc "b1"
+MakeIDDoc "b2"
+
+
+
+#Users
+MakeIDDoc "u1"
+MakeIDDoc "u2"
+MakeIDDoc "u3"
+MakeIDDoc "u4"
+MakeIDDoc "u5"
+
+
+#Trustees
+MakeIDDoc "t1"
+MakeIDDoc "t2"
+MakeIDDoc "t3"
+MakeIDDoc "t4"
+MakeIDDoc "t5"
+MakeIDDoc "t6"
+MakeIDDoc "t7"
+MakeIDDoc "t8"
+MakeIDDoc "t9"
+MakeIDDoc "t10"

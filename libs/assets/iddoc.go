@@ -20,30 +20,19 @@ under the License.
 package assets
 
 import (
+	"crypto/sha256"
+
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//Payload - return the IDDoc payload
-func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
-	if i == nil {
-		return nil, errors.New("IDDoc is nil")
-	}
-	if i.CurrentAsset.Asset == nil {
-		return nil, errors.New("IDDoc has no asset")
-	}
-	return i.CurrentAsset.Asset.GetIddoc(), nil
-}
-
-//NewIDDoc create a new IDDoc
-func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
-	//generate crypto random seed
-	seed, err := cryptowallet.RandomBytes(48)
-	if err != nil {
-		err = errors.Wrap(err, "Failed to generate random seed")
-		return nil, err
+//NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
+func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, err error) {
+	if seed == nil {
+		return nil, errors.Wrap(err, "No seed provided")
 	}
 	sikePublicKey, _, err := keystore.GenerateSIKEKeys(seed)
 	if err != nil {
@@ -69,6 +58,7 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 	i.CurrentAsset = &x
 	//Asset
 	asset := &protobuffer.PBAsset{}
+	asset.Type = protobuffer.PBAssetType_Iddoc
 
 	//IDDoc
 	iddoc := &protobuffer.PBIDDoc{}
@@ -79,11 +69,35 @@ func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
 
 	//Compose
 	i.CurrentAsset.Asset = asset
+	asset.Tags = make(map[string][]byte)
 	Payload := &protobuffer.PBAsset_Iddoc{}
 	Payload.Iddoc = iddoc
+
 	i.CurrentAsset.Asset.Payload = Payload
-	i.assetKeyFromPayloadHash()
+	i.CurrentAsset.Asset.Index = 1
+	i.setKey(KeyFromSeed(seed))
 	return i, nil
+}
+
+//KeyFromSeed double the hash the seed to make a unique key
+func KeyFromSeed(seed []byte) []byte {
+	onehash := sha256.Sum256(seed)
+	key := sha256.Sum256(onehash[:])
+	return key[:]
+
+}
+
+//NewIDDoc create a new IDDoc with a random seed
+func NewIDDoc(authenticationReference string) (i *IDDoc, err error) {
+	//generate crypto random seed
+	seed, err := cryptowallet.RandomBytes(48)
+	if err != nil {
+		err = errors.Wrap(err, "Failed to generate random seed")
+		return nil, err
+	}
+
+	return NewIDDocWithSeed(seed, authenticationReference)
+
 }
 
 //ReBuildIDDoc rebuild an existing Signed IDDoc into IDDocDeclaration object
@@ -99,4 +113,111 @@ func ReBuildIDDoc(sig *protobuffer.PBSignedAsset, key []byte) (i *IDDoc, err err
 	i.CurrentAsset = sig
 	i.setKey(key)
 	return i, nil
+}
+
+//Payload - return the IDDoc payload
+func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
+	if i == nil {
+		return nil, errors.New("IDDoc is nil")
+	}
+	if i.CurrentAsset.Asset == nil {
+		return nil, errors.New("IDDoc has no asset")
+	}
+	return i.CurrentAsset.Asset.GetIddoc(), nil
+}
+
+//LoadIDDoc -
+func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
+	data, err := store.RawGet(iddocID)
+	if err != nil {
+		return nil, err
+	}
+	sa := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(data, sa)
+	if err != nil {
+		return nil, err
+	}
+	iddoc, err := ReBuildIDDoc(sa, iddocID)
+	if err != nil {
+		return nil, err
+	}
+
+	return iddoc, nil
+
+}
+
+func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
+
+	//Check the IDDoc is valid
+	assetsError := i.VerifyIDDoc(datasource)
+	if assetsError != nil {
+		return assetsError
+	}
+
+	//Add pointer from AssetID to the txHash of the Object
+	if deliver == true {
+		//Check  103 & 104
+		assetsError := i.AddCoreMappings(datasource, rawTX, txHash)
+		if assetsError != nil {
+			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+		}
+		//events = processTags(iddoc.CurrentAsset.Asset.Tags)
+	}
+	return nil
+}
+
+func (i *IDDoc) VerifyIDDoc(datasource DataSource) *AssetsError {
+	//Check 6
+	assetID := i.Key()
+	if assetID == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
+	}
+
+	exists, err := i.Exists(datasource, assetID)
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+	}
+
+	//Check 4
+	if exists == true {
+		//IDDoc is immutable so if this AssetID already has a value we can't update it.
+		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
+	}
+	//check 9.1
+	payload, err := i.Payload()
+	if err != nil {
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+	}
+	//check 9
+	if payload == nil {
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	}
+	//check 11
+	if payload.AuthenticationReference == "" {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:AuthenticationReference")
+	}
+	//check 11
+	if payload.BeneficiaryECPublicKey == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:BeneficiaryECPublicKey")
+	}
+	//check 11
+	if payload.SikePublicKey == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:SikePublicKey")
+	}
+	//check 11
+	if payload.BLSPublicKey == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:BLSPublicKey")
+	}
+	//Check 7
+	if i.CurrentAsset.Asset.Index != 1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	//Signed Asset Check
+	assetError := i.Verify(i)
+	if assetError != nil {
+		return assetError
+	}
+
+	return nil
 }

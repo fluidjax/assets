@@ -19,9 +19,19 @@ under the License.
 
 package assets
 
-import "github.com/qredo/assets/libs/protobuffer"
+import (
+	"github.com/qredo/assets/libs/protobuffer"
+)
 
 //Core Heirachcy
+
+type MPC struct {
+	SignedAsset
+}
+
+type Underlying struct {
+	SignedAsset
+}
 
 //Group - Group Asset Type
 type Group struct {
@@ -38,10 +48,16 @@ type IDDoc struct {
 	SignedAsset
 }
 
+//KVAsset - A Generic KV asset for storing key value paramaters.
+type KVAsset struct {
+	SignedAsset
+}
+
 //SignedAsset - Asset/Previous Asset Wrapper, holding temporary objects (seed) & previousVersions
 type SignedAsset struct {
-	CurrentAsset  *protobuffer.PBSignedAsset
-	Store         *Mapstore                  //Reference to object store (map or blockchain)
+	CurrentAsset *protobuffer.PBSignedAsset
+	//Store         *DataSource //Reference to object store (map or blockchain)
+	DataStore     DataSource
 	Seed          []byte                     //If available a seed to generate keys for object
 	PreviousAsset *protobuffer.PBSignedAsset //Reference to (if any) previous object with the same key
 }
