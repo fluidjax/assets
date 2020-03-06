@@ -39,6 +39,8 @@ h4:before {
 
 
 <!-- table made https://ecotrust-canada.github.io/markdown-toc/ -->
+
+
 - [Qredochain](#qredochain)
 - [Introduction](#introduction)
 - [Assets](#assets)
@@ -65,11 +67,15 @@ h4:before {
       - [Settlement Fees](#settlement-fees)
       - [Pre-Defined Members of the Qredo Network](#pre-defined-members-of-the-qredo-network)
     + [Consensus Rules](#consensus-rules)
-- [Crystalisation](#crystalisation)
+- [Crystalization](#crystalization)
 - [Example Usage](#example-usage)
-  * [Funding - Addings fund to your account](#funding---addings-fund-to-your-account)
+  * [Funding - Adding fund to your account](#funding---adding-fund-to-your-account)
   * [Spending - Sending funds to other parties](#spending---sending-funds-to-other-parties)
   * [Settlement - Getting funds out of Qredo](#settlement---getting-funds-out-of-qredo)
+- [Watcher](#watcher)
+  * [Wallet Creation](#wallet-creation)
+  * [Underlying Funding Transaction](#underlying-funding-transaction)
+  * [Settlement](#settlement)
 
 
 ---
