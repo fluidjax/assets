@@ -1,4 +1,5 @@
-<style type='text/css'>
+
+<div><style type='text/css'>
 body {
     counter-reset: h1
 }
@@ -33,8 +34,7 @@ h3:before {
 h4:before {
     counter-increment: h4;
     content: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) ". "
-}</style>
-
+}</style></div>
 
 # Qredochain
 
@@ -574,6 +574,58 @@ Here we walk though a typical workflow purely from the Qredochain Transaction po
 1. The MPC creates a new Address to accept the unspent funds/change from the transaction, this is added to the BTC_Node for monitoring, and a MPC transaction is add to the Qredochain, where the Wallet mapping is empty.
 1. The MPC signs the transactions and broadcasts them to the underlying blockchain 
 1. The MPC creates a PEG-OUT Qredochain transaction finalizing the settlement, which updates the wallet balance and unlocks the wallet, allowing further updates.
+
+
+
+
+# Watcher
+
+The watcher is an untrusted mediator, compromise will result in a denial of service but not any ability to steal funds. The only trust in the system should lie with the Qredochain, and the MPC Cluster.
+
+The watcher service is responsible for ferrying data to and from the Qredochain, external blockchains and the MPC Cluster.
+Functions can be broken down into the following 3 processes.
+
+## Wallet Creation
+When a user creates a new wallet, the Watcher which is constant monitoring the Qredochain for new transactions picks up the transaction, and send instructs the MPC Node to generate a new Address.
+The MPC node needs to verify the validity of the request against either a proof supplied along with the transaction, or by querying a Qredochain node.
+Any resultant MPC transaction can be ferried back to the Qredochain via the Watcher, its validity can be check by verifying the signatures against the public keys of the MPC Cluster
+The Watcher takes this newly created address and adds it to a watch wallet on the BTC Node.
+
+
+## Underlying Funding Transaction
+When a user funds a BTC Address previous provided by the MPC cluster, the transaction is noted by the BTC Node and when the node is queried periodically by the watcher, it can provide the full UTXO details, together with a Proof.
+The watcher can generate a Peg-In (Underlying) transaction to reflect this funding transaction in the Qredochain.
+Each Qredochain Node can check the existence of this BTC Transaction by queuing a BTC Node, (with SPV proof supplied?)
+Compromise of the Watcher would prevent the funding transaction from being made available in the Qredochain, but would not put funds at risk.
+
+
+## Settlement
+When a user requests a settlement, it is necessary to ensure that the process is stepped so they are unable perform the withdrawal more than once.
+A user must commit a valid Wallet update to the chain, which requests the sending of the underlying funds to specfied Bitcoin Address.
+The watcher forwards the request to the MPC node.
+
+
+This is a work in progress....
+
+1. User retrieves the UTXO(s) for their specific wallet's undelying funds using crystalization.
+1. The Transaction is commited into the Qredochain, where:
+    1. Check if the UTXOs are still unspent.
+    1. The UTXOs involved are locked, and can't be re-used.
+    1. The Wallet has its balance reduced (it can remain unlocked)
+1. The Watcher sends the request to the MPC Cluster
+1. The MPC Cluster checks the validty of the request.
+1. If valid it signs the transaction, broadcasts it.
+1. MPC, via the watcher posts a Peg-Out (Settlement Completion) TX, containing details of this underlying transaction back to the Qredochain.
+1. MPC Peg-Out is committed to the Qredochain
+1. An Peg-In Underlying Transaction is sent to the Qredochain based on the Change address, we don't need to wait for confirmation as its us that made it.
+
+
+
+    
+
+
+
+
 
 
 
