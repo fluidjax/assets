@@ -40,7 +40,7 @@ func BuildTestIDDoc(t *testing.T) *assets.IDDoc {
 		panic("Fail to create random string")
 	}
 	i, err := assets.NewIDDoc(hex.EncodeToString(randBytes))
-	i.DataStore = app
+	i.DataStore = nc
 	assert.Nil(t, err, "Error should be nil")
 	err = i.Sign(i)
 	return i

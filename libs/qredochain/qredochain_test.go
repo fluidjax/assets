@@ -62,7 +62,7 @@ func Test_ChainPutGet(t *testing.T) {
 	//Make a test transaction
 	app.CurrentBatch = app.DB.NewTransaction(true)
 
-	err = app.BatchSet(testKey, testData)
+	_, err = app.Set(testKey, testData)
 
 	//testKey, _ = hex.DecodeString("B8F4D3CBFFFFD9D4D12A69AD8236F2A1295B4DCEBE018C7D6307FF7FAABD0CF9")
 

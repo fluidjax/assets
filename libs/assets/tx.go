@@ -13,9 +13,9 @@ type TXAsset interface {
 }
 
 type DataSource interface {
-	BatchGet(key []byte) ([]byte, error)    //Get data from the current Batch
-	BatchSet(key []byte, data []byte) error //Set data in the current Batch
-	RawGet(key []byte) ([]byte, error)      //Get data from underlying commited  database
+	BatchGet(key []byte) ([]byte, error)         //Get data from the current Batch
+	Set(key []byte, data []byte) (string, error) //Set data in the current Batch
+	RawGet(key []byte) ([]byte, error)           //Get data from underlying commited  database
 }
 
 //BuildAssetFromTX -

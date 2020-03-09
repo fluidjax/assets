@@ -29,7 +29,7 @@ func (m *Mapstore) RawGet(key []byte) ([]byte, error) {
 	return val, nil
 }
 
-func (m *Mapstore) BatchSet(key []byte, data []byte) error {
+func (m *Mapstore) Set(key []byte, data []byte) (string, error) {
 	m.Store[hex.EncodeToString(key)] = data
-	return nil
+	return "", nil
 }

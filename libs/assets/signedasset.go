@@ -123,7 +123,7 @@ func (a *SignedAsset) Save() error {
 	if err != nil {
 		return err
 	}
-	store.BatchSet(a.Key(), data)
+	store.Set(a.Key(), data)
 
 	return nil
 }
@@ -660,7 +660,8 @@ func (a *SignedAsset) SetWithSuffix(datasource DataSource, key []byte, suffix st
 	// println("SET1 ", hex.EncodeToString(key))
 	// println("SET2 ", hex.EncodeToString(data))
 	// println("SET3 ", hex.EncodeToString(fullkey))
-	return datasource.BatchSet(fullkey, data)
+	_, err := datasource.Set(fullkey, data)
+	return err
 }
 
 func (a *SignedAsset) Exists(datasource DataSource, key []byte) (bool, error) {
@@ -674,11 +675,11 @@ func (a *SignedAsset) BatchExists(datasource DataSource, key []byte) (bool, erro
 }
 
 func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) (err error) {
-	err = datasource.BatchSet(txHash, rawTX)
+	_, err = datasource.Set(txHash, rawTX)
 	if err != nil {
 		return err
 	}
-	err = datasource.BatchSet(a.Key(), txHash)
+	_, err = datasource.Set(a.Key(), txHash)
 	if err != nil {
 		return err
 	}

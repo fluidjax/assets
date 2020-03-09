@@ -76,26 +76,6 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 	}, nil
 }
 
-func (nc *NodeConnector) BatchGet(assetID []byte) ([]byte, error) {
-	return nil, nil
-}
-
-//Load by AssetID
-func (nc *NodeConnector) RawGet(assetID []byte) ([]byte, error) {
-	txid, err := nc.SingleRawConsensusSearch(assetID)
-	if err != nil {
-		return nil, err
-	}
-	query := "tx.hash='" + hex.EncodeToString(txid) + "'"
-	result, err := nc.SingleRawChainSearch(query)
-	return result, nil
-}
-
-//Save (key)
-func (nc *NodeConnector) BatchSet(key []byte, serializedData []byte) error {
-	return nil
-}
-
 func (nc *NodeConnector) Stop() {
 	nc.TmClient.Stop()
 }
