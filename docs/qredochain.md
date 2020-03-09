@@ -95,13 +95,17 @@ An overview of the Qredo System, this document covers the "Tendermint Node - Qre
 
 note: I use the BTC chain as an external CryptoCurrency throughout this document, BTC is the first implemented external cryptocurrency, however the addition of other coins is planned during later phases of development.
 
-Qredochain is a blockchain based on Tendermint. There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library' a Golang library which incorporates the Protobuffer definitions and functionality for creating, parsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances are stored in a Badger Key/Value database, the internal Tendermint KV database is only used minimally.
+## What is Qredochain:
 
-Qredochain  is effectively a side chain which temporarily and safely captures Cryptocurrency from other blockchains and facilitates rapid and cheap transfers between its other Qredochain users. Additionally, it enables the attachment of a range of conditions which requires pre-specified parties to authorise a transfer. Authorisation is given using Aggregated BLS Signatures.
+The name 'Qredochain' is the name of the Application built on top of Tendermint. It encompasses both the Transactions on the Tendermint Blockchain,  together with the Consensus rules for including new blocks into the chain. Qredochain also acts as a sidechain to the Cryptocurrencies it interfaces with,  It temporarily and safely captures Cryptocurrency from other blockchains and facilitates rapid and cheap transfers between other Qredochain users. Additionally, it enables the attachment of a range of conditions which requires pre-specified parties to authorise a transfer before it is accepted into the Qredochain. Authorisation to perform transfer is given by indivdual users signing the transaction with a BLS Signature, these signatures are then aggregated into a single signature and attached to each transfer transaction.
+
+There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library', a Golang library which incorporates the Protobuffer definitions and functionality for creating, parsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances are stored in a Badger Key/Value database, the internal Tendermint KV database is only used minimally.
+
 
 The Peg-in and Peg-out functionality is handled by a Multi Party Computation Cluster. These MPC nodes together with the Watcher use the Qredochain as their trigger and source of truth to create Addresses in external blockchains. When Cryptocurrency is to be transferred back out of the system to an external address, a Settlement Update Transactions is added to a wallet, and the MPC nodes again sign a Peg-out transaction to release the locked up funds.
 
 
+## The Watcher
 The Watcher is a standalone service which mediates communication between the Qredochain, External Blockchains and the MPC Cluster. The watcher service, if compromised must not allow the theft of funds, however a denial of service is permissible. 
 
 
