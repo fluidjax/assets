@@ -106,7 +106,7 @@ func (nc *NodeConnector) TxSearch(query string, prove bool, currentPage int, num
 }
 
 //StandalonePostTx posts a transaction to the chain and returns the transaction ID
-func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, assetsError *assets.AssetsError) {
+func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, err error) {
 	// //serialize the whole transaction
 	serializedTX, err := asset.SerializeSignedAsset()
 	if err != nil {
@@ -165,10 +165,7 @@ func (nc *NodeConnector) PostTx(asset ChainPostable) (txID string, assetsError *
 	if rbtxc.CheckTx.Code != 0 {
 		//There was some actionable error
 		err := errors.New(string(rbtxc.CheckTx.Data))
-		return "", &assets.AssetsError{
-			Code: assets.TransactionCode(rbtxc.CheckTx.Code),
-			Err:  err,
-		}
+		return "", assets.NewAssetsError(assets.TransactionCode(rbtxc.CheckTx.Code), err.Error())
 	}
 
 	//No error code

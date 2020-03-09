@@ -7,7 +7,7 @@ import (
 	"github.com/tendermint/tendermint/libs/kv"
 )
 
-func (app *QredoChain) processTX(tx []byte, deliver bool) ([]abcitypes.Event, *assets.AssetsError) {
+func (app *QredoChain) processTX(tx []byte, deliver bool) ([]abcitypes.Event, error) {
 	//Decode the Asset
 
 	txAsset, _, txHash, err := assets.BuildAssetFromTX(tx)

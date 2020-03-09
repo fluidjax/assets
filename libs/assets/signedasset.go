@@ -72,7 +72,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 }
 
 // Verify the Signature of the Asset (including the Payload)
-func (a *SignedAsset) Verify(iddoc *IDDoc) *AssetsError {
+func (a *SignedAsset) Verify(iddoc *IDDoc) error {
 
 	//Check 2
 	if a == nil {
@@ -685,7 +685,7 @@ func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHas
 	return nil
 }
 
-func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) *AssetsError {
+func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) error {
 	currentBalance, assetsError := a.getBalanceKey(datasource, assetID)
 	if assetsError != nil {
 		return assetsError
@@ -698,7 +698,7 @@ func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []by
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
 
-func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) *AssetsError {
+func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) error {
 	currentBalance, assetsError := a.getBalanceKey(datasource, assetID)
 	if assetsError != nil {
 		return assetsError
@@ -706,7 +706,7 @@ func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amo
 	newBalance := currentBalance + amount
 	return a.setBalanceKey(datasource, assetID, newBalance)
 }
-func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) *AssetsError {
+func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) error {
 	//Convert new balance to bytes and save for AssetID
 	newBalanceBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
@@ -717,7 +717,7 @@ func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBa
 	return nil
 }
 
-func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, assetError *AssetsError) {
+func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, assetError error) {
 	currentBalanceBytes, err := a.GetWithSuffix(datasource, assetID, ".balance")
 	if currentBalanceBytes == nil || err != nil {
 		return 0, NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Balance:Fail to Get Balance Key")

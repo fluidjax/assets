@@ -146,19 +146,19 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 
 }
 
-func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
+func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 
 	//Check the IDDoc is valid
-	assetsError := i.VerifyIDDoc(datasource)
-	if assetsError != nil {
-		return assetsError
+	err := i.VerifyIDDoc(datasource)
+	if err != nil {
+		return err
 	}
 
 	//Add pointer from AssetID to the txHash of the Object
 	if deliver == true {
 		//Check  103 & 104
-		assetsError := i.AddCoreMappings(datasource, rawTX, txHash)
-		if assetsError != nil {
+		err := i.AddCoreMappings(datasource, rawTX, txHash)
+		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 		}
 		//events = processTags(iddoc.CurrentAsset.Asset.Tags)
@@ -166,7 +166,7 @@ func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 	return nil
 }
 
-func (i *IDDoc) VerifyIDDoc(datasource DataSource) *AssetsError {
+func (i *IDDoc) VerifyIDDoc(datasource DataSource) error {
 	//Check 6
 	assetID := i.Key()
 	if assetID == nil {

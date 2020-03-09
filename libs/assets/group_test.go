@@ -75,8 +75,8 @@ func Test_Group(t *testing.T) {
 	w.Sign(i)
 
 	assert.NotNil(t, w.CurrentAsset.Signature, "Signature is empty")
-	assetsError := w.Verify(i)
-	assert.Nil(t, assetsError, "Error should be nil")
+	err = w.Verify(i)
+	assert.Nil(t, err, "Error should be nil")
 
 	c := proto.NewBuffer(nil)
 	c.SetDeterministic(true)

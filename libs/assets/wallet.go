@@ -224,7 +224,7 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 
 }
 
-func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
+func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	assetID := w.Key()
 
 	//Check 4 - Mutability
@@ -304,7 +304,7 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	return nil
 }
 
-func (w *Wallet) VerifyAllSignatures(datasource DataSource) *AssetsError {
+func (w *Wallet) VerifyAllSignatures(datasource DataSource) error {
 
 	//Check the signature for ALL the participants
 	//For each supplied signer re-build a PublicKey
@@ -333,7 +333,7 @@ func (w *Wallet) VerifyAllSignatures(datasource DataSource) *AssetsError {
 	return nil
 }
 
-func (w *Wallet) VerifyWallet(datasource DataSource) *AssetsError {
+func (w *Wallet) VerifyWallet(datasource DataSource) error {
 
 	//Check 6
 	assetID := w.Key()
@@ -379,8 +379,6 @@ func (w *Wallet) VerifyWallet(datasource DataSource) *AssetsError {
 
 	return nil
 }
-
-
 
 func SetupIDDocs(store DataSource) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
 	idP, _ := NewIDDoc("Primary")

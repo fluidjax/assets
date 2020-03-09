@@ -54,10 +54,11 @@ func buildTestCreateWallet(t *testing.T, idP *assets.IDDoc, idT1 *assets.IDDoc, 
 	assert.NotNil(t, wallet, "Wallet should not be nil")
 
 	//Error no Transfer Participants
-	txid, chainErr := nc.PostTx(wallet)
-	assert.NotNil(t, chainErr, "Error should not be nil")
+	txid, err := nc.PostTx(wallet)
+	assetError, _ := err.(*assets.AssetsError)
+	assert.NotNil(t, assetError, "Error should not be nil")
 	assert.True(t, txid == "", "TXID should be empty")
-	assert.True(t, chainErr.Code == assets.CodeConsensusWalletNoTransferRules, "Incorrect Error code")
+	assert.True(t, assetError.Code() == assets.CodeConsensusWalletNoTransferRules, "Incorrect Error code")
 
 	//Add Transfers  - it would now work, but we will break it for testing
 	expression := "t1 + t2 + t3 > 1 & p"
@@ -70,8 +71,8 @@ func buildTestCreateWallet(t *testing.T, idP *assets.IDDoc, idT1 *assets.IDDoc, 
 	wallet.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 
 	//No Error
-	txid, chainErr = nc.PostTx(wallet)
-	assert.Nil(t, chainErr, "Error should not nil")
+	txid, err = nc.PostTx(wallet)
+	assert.Nil(t, err, "Error should not nil")
 	assert.True(t, txid != "", "TXID should not be empty")
 
 	return wallet

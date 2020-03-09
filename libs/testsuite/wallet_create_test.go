@@ -41,10 +41,11 @@ func Test_Wallet_Create(t *testing.T) {
 	assert.NotNil(t, wallet, "Wallet should not be nil")
 
 	//Error no Transfer Participants
-	txid, chainErr := nc.PostTx(wallet)
-	assert.NotNil(t, chainErr, "Error should not be nil")
+	txid, err := nc.PostTx(wallet)
+	assetError, _ := err.(*assets.AssetsError)
+	assert.NotNil(t, assetError, "Error should not be nil")
 	assert.True(t, txid == "", "TXID should be empty")
-	assert.True(t, chainErr.Code == assets.CodeConsensusWalletNoTransferRules, "Incorrect Error code")
+	assert.True(t, assetError.Code() == assets.CodeConsensusWalletNoTransferRules, "Incorrect Error code")
 
 	//Sign with all Participants
 	//TODO
@@ -63,27 +64,30 @@ func Test_Wallet_Create(t *testing.T) {
 	//Error: No Payload
 	tempPayload := wallet.CurrentAsset.Asset.Payload
 	wallet.CurrentAsset.Asset.Payload = nil
-	txid, chainErr = nc.PostTx(wallet)
-	assert.NotNil(t, chainErr, "Error should not be nil")
-	assert.True(t, chainErr.Code == assets.CodeConsensusErrorEmptyPayload, "Incorrect Error code")
+	txid, err = nc.PostTx(wallet)
+	assetError, _ = err.(*assets.AssetsError)
+	assert.NotNil(t, err, "Error should not be nil")
+	assert.True(t, assetError.Code() == assets.CodeConsensusErrorEmptyPayload, "Incorrect Error code")
 	assert.True(t, txid == "", "TXID should be empty")
 	wallet.CurrentAsset.Asset.Payload = tempPayload
 
 	//Error: Ngeative Starting zero balance
 	payload, _ := wallet.Payload()
 	payload.SpentBalance = -100
-	txid, chainErr = nc.PostTx(wallet)
-	assert.NotNil(t, chainErr, "Error should not be nil")
-	assert.True(t, chainErr.Code == assets.CodeConsensusMissingFields, "Incorrect Error code")
+	txid, err = nc.PostTx(wallet)
+	assetError, _ = err.(*assets.AssetsError)
+	assert.NotNil(t, err, "Error should not be nil")
+	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code")
 	assert.True(t, txid == "", "TXID should be empty")
 	wallet.CurrentAsset.Asset.Payload = tempPayload
 
 	//Error: Positive Starting zero balance
 	payload, _ = wallet.Payload()
 	payload.SpentBalance = 1
-	txid, chainErr = nc.PostTx(wallet)
-	assert.NotNil(t, chainErr, "Error should not be nil")
-	assert.True(t, chainErr.Code == assets.CodeConsensusMissingFields, "Incorrect Error code")
+	txid, err = nc.PostTx(wallet)
+	assetError, _ = err.(*assets.AssetsError)
+	assert.NotNil(t, err, "Error should not be nil")
+	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code")
 	assert.True(t, txid == "", "TXID should be empty")
 	wallet.CurrentAsset.Asset.Payload = tempPayload
 	payload.SpentBalance = 0
@@ -91,16 +95,18 @@ func Test_Wallet_Create(t *testing.T) {
 	//Error: No currency
 	payload, _ = wallet.Payload()
 	payload.Currency = 0
-	txid, chainErr = nc.PostTx(wallet)
-	assert.NotNil(t, chainErr, "Error should not be nil")
-	assert.True(t, chainErr.Code == assets.CodeConsensusMissingFields, "Incorrect Error code")
+	txid, err = nc.PostTx(wallet)
+	assetError, _ = err.(*assets.AssetsError)
+	assert.NotNil(t, err, "Error should not be nil")
+	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code")
 	assert.True(t, txid == "", "TXID should be empty")
 	wallet.CurrentAsset.Asset.Payload = tempPayload
 	payload.Currency = 1
 
 	//No Error
-	txid, chainErr = nc.PostTx(wallet)
-	assert.Nil(t, chainErr, "Error should not nil")
+	txid, err = nc.PostTx(wallet)
+	assetError, _ = err.(*assets.AssetsError)
+	assert.Nil(t, assetError, "Error should not nil")
 	assert.True(t, txid != "", "TXID should not be empty")
 
 }

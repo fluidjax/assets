@@ -1,7 +1,7 @@
 package assets
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 type TransactionCode uint32
@@ -51,34 +51,45 @@ const (
 
 //AssetsError -
 type AssetsError struct {
-	Err  error
-	Code TransactionCode
+	err  string
+	code TransactionCode
 }
 
-//Wrap - wrap existing AssetsError
-func (ae *AssetsError) Wrap(assetsError *AssetsError, errorString string) {
-	if ae.Err == nil {
-		err := errors.New(errorString)
-		ae.Err = err
-	}
-	err := errors.Wrap(assetsError.Err, errorString)
-	ae.Err = err
+func (a *AssetsError) Error() string {
+	return fmt.Sprintf("%s : %d", a.err, a.code)
 }
 
-func (ae *AssetsError) Error() error {
-	return ae.Err
-}
-
-func NewAssetsErrorWithError(code TransactionCode, newDescription string, existingError error) *AssetsError {
+func NewAssetsError(code TransactionCode, message string) *AssetsError {
 	return &AssetsError{
-		Code: code,
-		Err:  errors.Wrap(existingError, newDescription),
+		err:  message,
+		code: code,
 	}
 }
 
-func NewAssetsError(code TransactionCode, description string) *AssetsError {
-	return &AssetsError{
-		Code: code,
-		Err:  errors.New(description),
-	}
+func (a *AssetsError) Code() TransactionCode {
+	return a.code
 }
+
+// //Wrap - wrap existing AssetsError
+// func (ae *AssetsError) Wrap(assetsError *AssetsError, errorString string) {
+// 	if ae.Err == nil {
+// 		err := errors.New(errorString)
+// 		ae.Err = err
+// 	}
+// 	err := errors.Wrap(assetsError.Err, errorString)
+// 	ae.Err = err
+// }
+
+// func NewAssetsErrorWithError(code TransactionCode, newDescription string, existingError error) *AssetsError {
+// 	return &AssetsError{
+// 		Code: code,
+// 		Err:  errors.Wrap(existingError, newDescription),
+// 	}
+// }
+
+// func NewAssetsError(code TransactionCode, description string) Error {
+// 	return &AssetsError{
+// 		Code: code,
+// 		Err:  errors.New(description),
+// 	}
+// }

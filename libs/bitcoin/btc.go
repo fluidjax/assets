@@ -108,6 +108,6 @@ func (conn *UnderlyingConnector) BroadcastUnderlyingChainDeposit(TxID []byte, ad
 	payload.Address = address
 	payload.TxID = TxID
 	underlying.AddTag("address", []byte(address))
-	txid, assetError := conn.NodeConnector.PostTx(underlying)
-	return txid, assetError.Err
+	txid, err = conn.NodeConnector.PostTx(underlying)
+	return txid, err
 }

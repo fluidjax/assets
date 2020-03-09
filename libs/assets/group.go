@@ -236,7 +236,7 @@ func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
 
 }
 
-func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) *AssetsError {
+func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	assetID := g.Key()
 	exists, err := g.Exists(datasource, assetID)
 	if err != nil {
@@ -254,17 +254,17 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 			}
 		} else {
 			//Check
-			assetsError := g.VerifyGroup()
-			if assetsError != nil {
-				return assetsError
+			err := g.VerifyGroup()
+			if err != nil {
+				return err
 			}
 		}
 
 	} else {
 		if deliver == true {
 			//Commit
-			assetsError := g.AddCoreMappings(datasource, rawTX, txHash)
-			if assetsError != nil {
+			err := g.AddCoreMappings(datasource, rawTX, txHash)
+			if err != nil {
 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
 		}
@@ -272,7 +272,7 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 	return nil
 }
 
-func (g *Group) VerifyGroup() *AssetsError {
+func (g *Group) VerifyGroup() error {
 	//fy, err := g.Verify()
 	return nil
 }
