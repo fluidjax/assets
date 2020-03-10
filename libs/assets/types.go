@@ -75,3 +75,14 @@ type TransferParticipant struct {
 	IDDoc        *IDDoc
 	Abbreviation string
 }
+
+//TXAsset - generic wrapper for All Transactions
+type TXAsset interface {
+	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error
+}
+
+type DataSource interface {
+	BatchGet(key []byte) ([]byte, error)         //Get data from the current Batch
+	Set(key []byte, data []byte) (string, error) //Set data in the current Batch
+	RawGet(key []byte) ([]byte, error)           //Get data from underlying commited  database
+}

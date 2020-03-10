@@ -64,6 +64,9 @@ func NewNodeConnector(tmNodeAddr string, nodeID string, store *datastore.Store, 
 	if err := tmClient.Start(); err != nil {
 		return nil, errors.Wrap(err, "Start tendermint client")
 	}
+
+
+	
 	return &NodeConnector{
 		TmNodeAddr: tmNodeAddr,
 		NodeID:     nodeID,
@@ -279,7 +282,10 @@ func (nc *NodeConnector) SingleRawChainSearch(query string) (result []byte, err 
 	tmClient := nc.TmClient
 	r, err := tmClient.TxSearch(query, false, 0, 0, "")
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to SingleRawChainSearch - query %s ", query)
+		return nil, errors.Wrapf(err, "Failed to retrieve SingleRawChainSearch - query %s ", query)
+	}
+	if len(r.Txs) == 0 {
+		return nil, errors.Wrapf(err, "Query not found - query %s ", query)
 	}
 	chainTx := r.Txs[0]
 	tx := chainTx.Tx

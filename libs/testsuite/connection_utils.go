@@ -3,12 +3,14 @@ package testsuite
 //Utilities to help connect to an instance of the Qredochain - tendermint server and run testss
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/badger"
@@ -16,6 +18,8 @@ import (
 	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/qredochain"
+	tmclient "github.com/tendermint/tendermint/rpc/client"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 var done chan bool
@@ -23,11 +27,53 @@ var ready chan bool
 var app *qredochain.QredoChain
 var tnode *node.Node
 var nc *qredochain.NodeConnector
+var out <-chan ctypes.ResultEvent
+var wg sync.WaitGroup
+var subClient *tmclient.HTTP
 
 func ShutDown() {
+	print("Shutdown")
+
 	if tnode != nil {
 		tnode.Stop()
 		tnode.Wait()
+	}
+	if subClient != nil {
+		subClient.Unsubscribe(context.Background(), "test", "tx.height>0")
+
+	}
+}
+
+func StartWait(count int) {
+	incomingCount := 0
+	for {
+		select {
+		case _ = <-out:
+			incomingCount++
+			if incomingCount == count {
+				time.Sleep(100 * time.Millisecond)
+				wg.Done()
+				return
+			}
+
+		}
+	}
+}
+func SubscriptionClient() {
+	wg.Add(1)
+	var err error
+	subClient, err = tmclient.NewHTTP("tcp://localhost:26657", "/websocket")
+	if err != nil {
+		os.Exit(1)
+	}
+	err = subClient.Start()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	out, err = subClient.Subscribe(context.Background(), "test", "tx.height>0", 1000)
+	if err != nil {
+		print("error")
 	}
 }
 
@@ -36,8 +82,9 @@ func StartTestChain() {
 	var err error
 	nc, err = qredochain.NewNodeConnector("127.0.0.1:26657", "NODEID", nil, nil)
 	if err == nil {
+		SubscriptionClient()
+
 		defer func() {
-			nc.Stop()
 		}()
 		return
 	}

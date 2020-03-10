@@ -11,6 +11,7 @@ import (
 )
 
 func SetupIDDocs(t *testing.T) (*assets.IDDoc, *assets.IDDoc, *assets.IDDoc, *assets.IDDoc) {
+	go StartWait(4)
 	idP := BuildTestIDDoc(t)
 	txid, chainErr := nc.PostTx(idP)
 	assert.Nil(t, chainErr, "Error should be nil")
@@ -31,13 +32,15 @@ func SetupIDDocs(t *testing.T) (*assets.IDDoc, *assets.IDDoc, *assets.IDDoc, *as
 	assert.Nil(t, chainErr, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
 
+	wg.Wait()
+
 	return idP, idT1, idT2, idT3
 }
 
 func BuildTestIDDoc(t *testing.T) *assets.IDDoc {
 	randBytes, err := cryptowallet.RandomBytes(32)
 	if err != nil {
-		panic("Fail to create random string")
+		panic("Fail to create random auth string")
 	}
 	i, err := assets.NewIDDoc(hex.EncodeToString(randBytes))
 	i.DataStore = nc

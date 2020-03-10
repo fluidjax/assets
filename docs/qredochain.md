@@ -131,7 +131,7 @@ Every asset on the Qredochain is contained within an outer wrapper (PBSignedAsse
 message PBSignedAsset{
     bytes Signature            = 1; # BLS (aggregate) Signature
     map<string, bytes> Signers = 3; # "abbreviation":IDDoc ID
-    PBAsset Asset              = 4; # Asset (see #2)
+    PBAsset Asset              = 4; # Asset (see #3.2)
 }
 ```
 
@@ -143,7 +143,7 @@ Each of the Signers(Field #3) creates a BLS Signature of the serialized PBAsset(
 
 The Signers are represented by the AssetID of their Identity Document (IDDoc), which is also type of Asset on the Qredochain. Each signers can be associated (int the map<string, bytes> Signers ) with an Abbreviation String, this aids readability when the Identity is used in an expression. For example, instead of a long hex string, trustees could be labelled as T1, T2 and Principals as P,.
 
-Consensus Rule: Abbreviations must be unique and alphanumeric:  ^[a-zA-Z0-9]+$
+Abbreviations must be unique and alphanumeric (of the form  ^[a-zA-Z0-9]+$) this is enforced by a consensus rule.
 
 A signature can be verified by obtaining the IDDoc for each Signer(Field 3.bytes), which contains their BLS Public Key, each of their keys BLS added together to create a single aggregate Public Key 
     
@@ -153,7 +153,8 @@ A signature can be verified by obtaining the IDDoc for each Signer(Field 3.bytes
 
 ## Asset - Wrapper to contain all Types of Qredochain transactions
 
-A PBAsset is a container within a PBSignedAsset. It contains generic information common to each Asset, including its Asset ID, type, index and Transfer information which allows the Asset to be updated to new versions.
+A PBAsset is a container within a PBSignedAsset. It contains generic information common to each Asset, including its Asset ID, type, index and Transfer information which allows the Asset to be updated to new versions. 
+A PBAsset is a wrapper for each Assets which are stored in it's Payload field. A list of all the available Assets is detailed below in [Payloads](#payloads)
 
 ```
 message PBAsset {
@@ -175,8 +176,9 @@ message PBAsset {
 }
 ```
 
+All types asssets (Wallets, Groups, IDDocs etc), use the data structure detailed above, they have a different Payload in the last field, this is the way Protobuffers faciliates inheritence.
 
-There are two types of Assets
+There is also two other classes of Assets which can be represented within the above data structure:
 
 1. An immutable Asset, such as an IDDoc, which can’t be updated and only has a single version, Index(#4) is always equal to 1
     
@@ -212,7 +214,7 @@ The aggregated Signature verifies against an aggregated Public key of  Signer(s)
 1. Assets are correctly formatted - contain all mandatory fields
 1. Based on the self declared signers, the signature verifies - The composition of declare signers is not a consensus rule, it could be simply the Principal (Owner of the Wallet) or an aggregated signature of every participant in the Expressions. This is left to the User facing application to enforce. Additional signers at this stage do not offer any additional security, but may be required as part of an audit trail.
 
-"New Assets" have additional checks specific to their types (eg. A wallet has checks relating to their balances) these are detailed in their own sections below.
+"New Assets" have additional checks specific to their types (eg. A  [Wallet](#wallet) has checks relating to their balances) these are detailed in their own sections below.
 
 
 
@@ -246,7 +248,8 @@ message PBTransfer {
 }
 ```
 
-Any number of transfer rules can be attached to 
+An Asset can have any number of transfer rules, 0 means the asset can't by updated (immutable), 1 or more define the update signing requirements for mutable assets.
+
 
 
 ### Transfer example

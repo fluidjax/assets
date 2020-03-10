@@ -68,6 +68,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 		return errors.New("Failed to Sign Asset")
 	}
 	a.CurrentAsset.Signature = signature
+
 	return nil
 }
 
@@ -114,18 +115,17 @@ func (a *SignedAsset) Key() []byte {
 }
 
 // Save - write the entire Signed Asset to the store
-func (a *SignedAsset) Save() error {
+func (a *SignedAsset) Save() (string, error) {
 	if a == nil {
-		return errors.New("SignedAsset is nil")
+		return "", errors.New("SignedAsset is nil")
 	}
 	store := a.DataStore
 	data, err := a.SerializeSignedAsset()
 	if err != nil {
-		return err
+		return "", err
 	}
-	store.Set(a.Key(), data)
+	return store.Set(a.Key(), data)
 
-	return nil
 }
 
 // Load - read a SignedAsset from the store
@@ -144,6 +144,12 @@ func Load(store DataSource, key []byte) (*protobuffer.PBSignedAsset, error) {
 	}
 	return msg, nil
 }
+
+
+
+
+
+
 
 // Dump - Pretty print the Asset for debugging
 func (a *SignedAsset) Dump() {
@@ -311,7 +317,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	for key, idkey := range transfer.Participants {
 		idsig, err := Load(a.DataStore, idkey)
 		if err != nil {
-			return nil, errors.New("Failed to load iddoc")
+			return nil, errors.New("Failed to load iddoc " + hex.EncodeToString(idkey))
 		}
 		iddoc, err := ReBuildIDDoc(idsig, idkey)
 		if err != nil {

@@ -7,16 +7,7 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
-//TXAsset - generic wrapper for All Transactions
-type TXAsset interface {
-	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error
-}
 
-type DataSource interface {
-	BatchGet(key []byte) ([]byte, error)         //Get data from the current Batch
-	Set(key []byte, data []byte) (string, error) //Set data in the current Batch
-	RawGet(key []byte) ([]byte, error)           //Get data from underlying commited  database
-}
 
 //BuildAssetFromTX -
 func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte, assetsError error) {
@@ -29,10 +20,6 @@ func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte
 		return nil, nil, nil, assetsError
 	}
 	assetID = signedAsset.Asset.GetID()
-	if assetID == nil {
-		print("here")
-	}
-
 	txHash = TxHash(tx)
 
 	switch signedAsset.Asset.GetType() {

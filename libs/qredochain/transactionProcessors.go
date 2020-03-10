@@ -11,7 +11,7 @@ func (app *QredoChain) processTX(tx []byte, deliver bool) ([]abcitypes.Event, er
 	//Decode the Asset
 
 	txAsset, _, txHash, err := assets.BuildAssetFromTX(tx)
-	print("TX :", len(tx), "\n")
+	//print("TX :", len(tx), "\n")
 	if err != nil {
 		return nil, err
 	}
