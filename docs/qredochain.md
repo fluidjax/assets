@@ -270,7 +270,6 @@ message PBTransfer {
 ```
 
 The Participants field is represented by an Abbreviation and a IDDoc Asset ID.
-A concrete example of a PBTransfer: 
 
 A User who wants to create an Update to the existing asset using the PBTransfer specified above, the Update Transaction must obey all the consensus rule but importantly must fulfil the TransferRule :-
 
@@ -284,9 +283,11 @@ The signers of the Transfer must be sufficient to make the expression  '(T1+T2+T
       }
     
 
-As the expression is parsed When the expression is parser - If a signature is available for a supplied Abbreviation the abbreviation is replaced by the Number 1, if it is not available it is replaced with 0.
+As the expression is parsed, if a signature is available for it's abbreviation in the expression,  the abbreviation is replaced by the number 1, if it is not available it is replaced with 0.
+
 If we have Signatures for T1, T3 & P, but not for T2. This is substituted as
-        ‘(1+0+1)>1 & 1’
+
+        (1+0+1)>1 & 1
         
 This evaluates to 1 (true), so the signature is valid, and the Transaction passes BLS Signature Verification.
 
@@ -330,18 +331,17 @@ message PBGroup {
 There is currently only 1 type of PBGroupType, which is a Trustee Group.
 A Trustee Group represents a number of Participants together with an expression.
 
-When used in a Transfer Rule which determines whether or not an Asset can be updated, a trustee group can be used interchangeably with a IDDoc.
-It enables a Group Asset ID to be used in place of a IDDoc Asset ID. This enables mutable Transfer Conditions.
-So, in the case of the previous example
+When used in a Transfer Rule (which determines whether or not an Asset can be updated) a Trustee Group can be used interchangeably with a IDDoc.
+So, in the case of the previous example:-
 
     (T1+T2+T3)>1 & P
 
-if we create the following Trustee Group
+if we create the following Trustee Group to represent just the Trustees 
 
 ```
 message PBGroup {
     PBGroupType         = TrusteeGroup;
-    GroupFields          =     {‘expression’:’(t1+t2+t3)>1’}
+    GroupFields          =     {‘expression’:’(T1+T2+T3)>1’}
     Participants         =
         abbrev:’T1’, iddoc:’ASSETID_IDDOC_FOR_USER_T1’
         abbrev:’T2’,’iddoc:'ASSETID_IDDOC_FOR_USER_T2’
@@ -349,7 +349,7 @@ message PBGroup {
     string Description   = ‘A description of the trustee group’;
 }
 ```
-We can now replace the expression with 
+We can now replace the expression in the Wallet Transfer with 
 
     TG1 & P
 
