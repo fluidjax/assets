@@ -99,7 +99,7 @@ note: I use the BTC chain as an external CryptoCurrency throughout this document
 
 The name 'Qredochain' is the name of the Application built on top of Tendermint. It encompasses both the Transactions on the Tendermint Blockchain,  together with the Consensus rules for including new blocks into the chain. Qredochain also acts as a side-chain to the Cryptocurrencies it interfaces with,  It temporarily and safely captures Cryptocurrency from other blockchains and facilitates rapid and cheap transfers between other Qredochain users. Additionally, it enables the attachment of a range of conditions which requires pre-specified parties to authorise a transfer before it is accepted into the Qredochain. Authorisation to perform transfer is given by individual users signing the transaction with a BLS Signature, these signatures are then aggregated into a single signature and attached to each transfer transaction.
 
-There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library', a Golang library which incorporates the Protobuffer definitions and functionality for creating, parsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances are stored in a Badger Key/Value database, the internal Tendermint KV database is only used minimally.
+There is very little linkage between Qredochain and Tendermint. All consensus rule logic and processes for the Transactions stored in the Tendermint chain are handled by the 'Assets Library', a Golang library which incorporates the Protobuffer definitions and functionality for creating, parsing, transferring and validating all transactions.  Persistent Consensus Rule data such as current Wallet balances are stored in a Badger Key/Value database, (hereafter referred to as the "Consensus Database"). The internal Tendermint KV database is only used minimally.
 
 
 ## Adding & Removing Funds (Peg-In/Out)
@@ -392,7 +392,8 @@ Wallets have additional Rules to enable them to retain balances.
 In addition to either the Asset Update or Asset Creation rules above, a wallet must also ensure that the balance it stores doesn't lose or create money either by error or malice.
 
 ### Setup
-1. Upon creation a wallet is assigned a Zero balance, this is stored in the consensus KV store using the key
+Upon creation a wallet is assigned a Zero balance. The balance is stored in the Qredochain Node's "Consensus Database". Using the key:
+
     [AssetID].balance
 
 ### Adding Funds
@@ -418,14 +419,13 @@ There is one way to reduce the balance of a Wallet, this mechanism can be used t
 
 
 ### Fees
-Fees can be added to any Wallet Update by simply adding additional WalletTransfer entries. At present this is automatically implemented by the external programs generating transactions,  However, if mandatory fees are required a KVAsset could be created with 
-    1. The AssetID of the Qredo Fee Wallet,
-    1. The fee amount.
-A new consensus rule added, to ensure that all Wallet Update transactions include a WalletTransfer to Qredo as specified in the KVAsset
+Fees can be added to any Wallet Update by simply adding additional WalletTransfer entries. At present this is automatically implemented by the external programs generating transactions,  However, if mandatory fees are required a KVAsset could be created with: 
+
+1. The AssetID of the Qredo Fee Wallet to recieve the fee payments
+1. The fee amount.
 
 
-
-
+A new consensus rule is added, to ensure that all Wallet Update transactions include a WalletTransfer to Qredo as specified in the KVAsset, with the correct Fee.
 
 
 ---
@@ -451,7 +451,7 @@ message PBUnderlying {
 Peg-In are immutable Assets which adhere to the standard "New Asset" ruleset above,
 
 1. In addition as the asset is committed to the chain it obtains the MPC transaction (detailed below) which maps the BTC Address (Field #5) in the PBUnderlying message to the AssetID (of the related wallet), and updates the balance of the AssetID (wallet) incrementing it by the amount transferred.
-1. A check is made to ensure that the TxID doesn't already exist in the Qredochain. An a new KV field is created where the Key is the TxID, to ensure no further copies of the same external UTXO can be added subsequently.
+1. A check is made to ensure that the TxID (Field #6) doesn't already exist in the Qredochain. An a new KV field is created in the Consensus Database where the Key is the TxID, to ensure no further copies of the same external UTXO can be added subsequently.
 1. Because the PBUnderlying Transaction can't be trusted, the Qredochain node checks a BTC node to confirm that the details in the Underlying Transaction actually exist at sufficient depth in the BTC Chain. (Mechanism not finalized, but possibly by SPV)
 
 
@@ -500,7 +500,8 @@ These MPC members public keys are held in a pre-defined KVAsset.
 
 ## Peg-Out
 
-Peg-Out is a MPC generated transaction upon the broadcast of the settlement transaction. It confirms that a Bitcoin Node has accepted the underlying BTC Transaction, it reduces the balance of the Qredochain Wallet, and unlocks it to enable further transfers
+Peg-Out is the final part of the process of withdrawing underlying funds out of the Qredo system.
+Peg-Out is represented by an MPC generated transaction, send to the Qredochain upon successful broadcast of the settlement transaction via the underlying chain's Node. This MPC Generated "Peg-Out" Transaction confirms that a Bitcoin Node has accepted the underlying BTC Transaction, and then Qredochain  reduces the balance of the Qredochain Wallet appropriately, and unlocks it to enable further transfers.
 
 ---
 
