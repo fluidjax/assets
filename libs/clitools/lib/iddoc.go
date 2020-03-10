@@ -25,10 +25,10 @@ func (cliTool *CLITool) CreateIDDoc(authref string, broadcast bool) (err error) 
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(iddoc)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(iddoc)
+		if err != nil {
+			return err
 		}
 	}
 

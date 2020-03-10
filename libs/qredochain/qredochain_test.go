@@ -109,7 +109,7 @@ func Test_IDOC(t *testing.T) {
 	nc := StartTestConnectionNode(t)
 
 	//Post TX - Remote (note the 2 second wait for chain to create block)
-	i, txid, serializedIDDoc, err := buildTestIDDoc(t, nc)
+	i, txid, serializedIDDoc, err := BuildTestIDDoc(t, nc)
 
 	assert.Nil(t, err, "Error should be nil", err)
 
@@ -152,7 +152,7 @@ func Test_IDOC(t *testing.T) {
 	assert.True(t, len(tlresq2.Txs) == 0, "Should have 1 matching tag")
 
 	//Local Post
-	i3, txid3, serializedIDDoc3, _ := buildTestIDDocLocal(t)
+	i3, txid3, serializedIDDoc3, _ := BuildTestIDDocLocal(t)
 	txidBytes3, _ := hex.DecodeString(txid3)
 	retID3, err6 := app.RawGet(txidBytes3)
 	assert.Nil(t, err6, "Error should be nil", err6)

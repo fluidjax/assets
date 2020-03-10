@@ -45,11 +45,12 @@ func (cliTool *CLITool) CreateMPCWithJSON(jsonParams string, broadcast bool) (er
 	mpc.AssetKeyFromPayloadHash()
 
 	txid := ""
+
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(mpc)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(mpc)
+		if err != nil {
+			return err
 		}
 	}
 

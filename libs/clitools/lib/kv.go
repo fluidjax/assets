@@ -66,13 +66,12 @@ func (cliTool *CLITool) CreateKVJSON(jsonParams string, broadcast bool) (err err
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(kv)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err =  cliTool.NodeConn.PostTx(kv)
+		if err != nil {
+			return err
 		}
 	}
-
 	serializedSignedAsset, err := kv.SerializeSignedAsset()
 	if err != nil {
 		return err
@@ -154,10 +153,10 @@ func (cliTool *CLITool) AggregateKVSign(jsonParams string, broadcast bool) (err 
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(updatedKV)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(updatedKV)
+		if err != nil {
+			return err
 		}
 	}
 

@@ -84,7 +84,7 @@ func StartTestConnectionNode(t *testing.T) *NodeConnector {
 	return nc
 }
 
-func buildTestIDDocLocal(t *testing.T) (*assets.IDDoc, string, []byte, error) {
+func BuildTestIDDocLocal(t *testing.T) (*assets.IDDoc, string, []byte, error) {
 	i, err := assets.NewIDDoc("testdoc2")
 	i.AddTag("qredo_test_tag2", []byte("abc2"))
 	i.Sign(i)
@@ -97,7 +97,7 @@ func buildTestIDDocLocal(t *testing.T) (*assets.IDDoc, string, []byte, error) {
 	return i, result.Hash.String(), serializedIDDoc, nil
 }
 
-func buildTestIDDoc(t *testing.T, nc *NodeConnector) (*assets.IDDoc, string, []byte, error) {
+func BuildTestIDDoc(t *testing.T, nc *NodeConnector) (*assets.IDDoc, string, []byte, error) {
 	i, err := assets.NewIDDoc("testdoc")
 	i.AddTag("qredo_test_tag", []byte("abc"))
 	i.Sign(i)

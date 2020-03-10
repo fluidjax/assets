@@ -59,10 +59,10 @@ func (cliTool *CLITool) CreateWalletWithJSON(jsonParams string, broadcast bool) 
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(wallet)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(wallet)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -141,10 +141,10 @@ func (cliTool *CLITool) AggregateWalletSign(jsonParams string, broadcast bool) (
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(updatedWallet)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(updatedWallet)
+		if err != nil {
+			return err
 		}
 	}
 

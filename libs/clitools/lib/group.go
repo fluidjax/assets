@@ -66,10 +66,10 @@ func (cliTool *CLITool) CreateGroupJSON(jsonParams string, broadcast bool) (err 
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(group)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(group)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -149,11 +149,12 @@ func (cliTool *CLITool) AggregateGroupSign(jsonParams string, broadcast bool) (e
 	}
 
 	txid := ""
+
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(updatedGroup)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(updatedGroup)
+		if err != nil {
+			return err
 		}
 	}
 

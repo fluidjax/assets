@@ -46,10 +46,10 @@ func (cliTool *CLITool) CreateUnderlyingWithJSON(jsonParams string, broadcast bo
 
 	txid := ""
 	if broadcast == true {
-		var assetsError *assets.AssetsError
-		txid, assetsError = cliTool.NodeConn.PostTx(under)
-		if assetsError != nil {
-			return assetsError.Err
+		var err error
+		txid, err = cliTool.NodeConn.PostTx(under)
+		if err != nil {
+			return err
 		}
 	}
 

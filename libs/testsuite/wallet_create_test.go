@@ -20,6 +20,8 @@ under the License.
 package testsuite
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/qredo/assets/libs/assets"
@@ -111,24 +113,25 @@ func Test_Wallet_Create(t *testing.T) {
 
 }
 
-// func Test_TruthTable(t *testing.T) {
-// 	store := assets.NewMapstore()
-// 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
-// 	expression := "t1 + t2 + t3 > 1 & p"
-// 	participants := &map[string][]byte{
-// 		"p":  idP.Key(),
-// 		"t1": idT1.Key(),
-// 		"t2": idT2.Key(),
-// 		"t3": idT3.Key(),
-// 	}
-// 	w1, _ := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
-// 	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
-// 	//Create another based on previous, ie. AnUpdateWallet
-// 	res, err := w1.TruthTable(protobuffer.PBTransferType_SettlePush)
-// 	assert.Nil(t, err, "Truth table return should be nil")
-// 	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
-// 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
-// }
+func Test_TruthTable(t *testing.T) {
+	StartTestChain()
+	idP, idT1, idT2, idT3 := SetupIDDocs(t)
+
+	expression := "t1 + t2 + t3 > 1 & p"
+	participants := &map[string][]byte{
+		"p":  idP.Key(),
+		"t1": idT1.Key(),
+		"t2": idT2.Key(),
+		"t3": idT3.Key(),
+	}
+	w1, _ := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
+	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
+	//Create another based on previous, ie. AnUpdateWallet
+	res, err := w1.TruthTable(protobuffer.PBTransferType_SettlePush)
+	assert.Nil(t, err, "Truth table return should be nil")
+	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
+	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
+}
 
 // func Test_RuleAdd(t *testing.T) {
 // 	store := assets.NewMapstore()
