@@ -288,6 +288,7 @@ func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
 }
 
 func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+	k.DataStore = datasource
 	assetID := k.Key()
 	exists, err := k.Exists(datasource, assetID)
 	if err != nil {

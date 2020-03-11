@@ -75,6 +75,7 @@ func (u *Underlying) Payload() (*protobuffer.PBUnderlying, error) {
 	return u.CurrentAsset.Asset.GetUnderlying(), nil
 }
 func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+	u.DataStore = datasource
 	assetID := u.Key()
 	exists, err := u.Exists(datasource, assetID)
 	if err != nil {

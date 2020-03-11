@@ -22,6 +22,8 @@ package testsuite
 import (
 	"testing"
 
+	"github.com/qredo/assets/libs/assets"
+	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,95 +34,118 @@ func Test_Wallet_Update(t *testing.T) {
 	assert.NotNil(t, wallet, "Wallet should not be nil")
 }
 
-// func Test_TruthTable(t *testing.T) {
-// 	store := assets.NewMapstore()
-// 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
-// 	expression := "t1 + t2 + t3 > 1 & p"
-// 	participants := &map[string][]byte{
-// 		"p":  idP.Key(),
-// 		"t1": idT1.Key(),
-// 		"t2": idT2.Key(),
-// 		"t3": idT3.Key(),
-// 	}
-// 	w1, _ := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
-// 	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
-// 	//Create another based on previous, ie. AnUpdateWallet
-// 	res, err := w1.TruthTable(protobuffer.PBTransferType_SettlePush)
-// 	assert.Nil(t, err, "Truth table return should be nil")
-// 	displayRes := fmt.Sprintln("[", strings.Join(res, "], ["), "]")
-// 	assert.Equal(t, displayRes, "[ 0 + t2 + t3 > 1 & p], [t1 + 0 + t3 > 1 & p], [t1 + t2 + 0 > 1 & p], [t1 + t2 + t3 > 1 & p ]\n", "Truth table invalid")
-// }
+func SingleSignerWallet(wallet *assets.Wallet, iddoc *assets.IDDoc) {
+	sigP, _ := wallet.SignAsset(iddoc)
+	signatures := []assets.SignatureID{
+		assets.SignatureID{IDDoc: iddoc, Abbreviation: "p", Signature: sigP},
+	}
+	wallet.AggregatedSign(signatures)
+}
 
-// func Test_RuleAdd(t *testing.T) {
-// 	store := assets.NewMapstore()
-// 	idP, idT1, idT2, idT3 := SetupIDDocs(store)
-// 	idNewOwner, _ := assets.NewIDDoc("NewOwner")
+func Test_Update(t *testing.T) {
+	idP, idT1, idT2, idT3 := SetupIDDocs(t)
 
-// 	expression := "t1 + t2 + t3 > 1 & p"
-// 	participants := &map[string][]byte{
-// 		"p":  idP.Key(),
-// 		"t1": idT1.Key(),
-// 		"t2": idT2.Key(),
-// 		"t3": idT3.Key(),
-// 	}
+	expression := "t1 + t2 + t3 > 1 & p"
+	participants := &map[string][]byte{
+		"p":  idP.Key(),
+		"t1": idT1.Key(),
+		"t2": idT2.Key(),
+		"t3": idT3.Key(),
+	}
 
-// 	w1, _ := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
-// 	w1.DataStore = idP.DataStore
-// 	w1.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
+	w1, _ := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
+	w1.DataStore = idP.DataStore
+	w1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants, "description")
+	SingleSignerWallet(w1, idP)
+	_, err := w1.Save()
+	assert.Nil(t, err, "Error should be nil")
 
-// 	//Create another Wallet based on previous, ie. AnUpdateWallet
-// 	w2, _ := assets.NewUpdateWallet(w1, idNewOwner)
+	//Create another Wallet based on previous, ie. AnUpdateWallet
+	w2, _ := assets.NewUpdateWallet(w1, idT1)
+	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_TransferPush
+	w2.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants, "description")
 
-// 	//Change Payload to a SettlePush Type Transfer
-// 	w2.CurrentAsset.Asset.TransferType = protobuffer.PBTransferType_SettlePush
+	// //Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
+	sigP, _ := w2.SignAsset(idP)
+	sigT1, _ := w2.SignAsset(idT1)
+	sigT2, _ := w2.SignAsset(idT2)
+	sigT3, _ := w2.SignAsset(idT3)
 
-// 	//Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
-// 	sigP, _ := w2.SignAsset(idP)
-// 	sigT1, _ := w2.SignAsset(idT1)
-// 	sigT2, _ := w2.SignAsset(idT2)
-// 	sigT3, _ := w2.SignAsset(idT3)
+	//Check not enough signatures
+	transferSignatures1 := []assets.SignatureID{
+		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+	}
+	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_TransferPush, transferSignatures1)
+	assert.False(t, validTransfer1, "Transfer should be invalid - not enough Signatures")
+	err = w2.AggregatedSign(transferSignatures1)
+	assert.Nil(t, err, "Error should be nil")
 
-// 	// //Pass correct
-// 	transferSignatures1 := []assets.SignatureID{
-// 		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
-// 		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
-// 		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
-// 		assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: nil},
-// 	}
-// 	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
-// 	assert.True(t, validTransfer1, "Transfer should be valid")
+	txid, err := w2.Save()
+	assert.NotNil(t, err, "Error should not be nil")
+	assert.True(t, txid == "", "TXID should be blank")
+	assetError, _ := err.(*assets.AssetsError)
+	assert.True(t, assetError.Code() == assets.CodeConsensusTransferRulesFailed, "Incorrect Error code")
 
-// 	//Fail not enough threshold
-// 	transferSignatures1 = []assets.SignatureID{
-// 		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
-// 		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: nil},
-// 		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: nil},
-// 		assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
-// 	}
-// 	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
-// 	assert.False(t, validTransfer1, "Transfer should be invalid")
+	//Check correct more than enough number of sigs
+	transferSignatures1 = []assets.SignatureID{
+		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
+		assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
+	}
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_TransferPush, transferSignatures1)
+	assert.True(t, validTransfer1, "Transfer should be valid")
 
-// 	//Fail no principal
-// 	transferSignatures1 = []assets.SignatureID{
-// 		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: nil},
-// 		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
-// 		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
-// 		assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
-// 	}
-// 	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
-// 	assert.False(t, validTransfer1, "Transfer should be invalid")
+	//Check correct number of sigs
+	transferSignatures1 = []assets.SignatureID{
+		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
+	}
+	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_TransferPush, transferSignatures1)
+	assert.True(t, validTransfer1, "Transfer should be valid")
 
-// 	//Pass too many correct
-// 	transferSignatures1 = []assets.SignatureID{
-// 		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
-// 		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
-// 		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
-// 		assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
-// 	}
-// 	validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
-// 	assert.Nil(t, err, "Error should be nil")
-// 	assert.True(t, validTransfer1, "Transfer should be valid")
-// }
+	//Sign
+	err = w2.AggregatedSign(transferSignatures1)
+	assert.Nil(t, err, "Error should be nil")
+
+	//Send Valid Update
+	txid, err = w2.Save()
+	assert.Nil(t, err, "Error should  be nil")
+	assert.False(t, txid == "", "TXID should have a value")
+
+	// //Fail not enough threshold
+	// transferSignatures1 = []assets.SignatureID{
+	// 	assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+	// 	assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: nil},
+	// 	assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: nil},
+	// 	assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
+	// }
+	// validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
+	// assert.False(t, validTransfer1, "Transfer should be invalid")
+
+	// //Fail no principal
+	// transferSignatures1 = []assets.SignatureID{
+	// 	assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: nil},
+	// 	assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+	// 	assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
+	// 	assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
+	// }
+	// validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
+	// assert.False(t, validTransfer1, "Transfer should be invalid")
+
+	// //Pass too many correct
+	// transferSignatures1 = []assets.SignatureID{
+	// 	assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+	// 	assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+	// 	assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
+	// 	assets.SignatureID{IDDoc: idT3, Abbreviation: "t3", Signature: sigT3},
+	// }
+	// validTransfer1, err := w2.IsValidTransfer(protobuffer.PBTransferType_SettlePush, transferSignatures1)
+	// assert.Nil(t, err, "Error should be nil")
+	// assert.True(t, validTransfer1, "Transfer should be valid")
+}
 
 // func Test_AggregationAndVerify(t *testing.T) {
 // 	store := assets.NewMapstore()

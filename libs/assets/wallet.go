@@ -225,8 +225,8 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 }
 
 func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	assetID := w.Key()
 	w.DataStore = datasource
+	assetID := w.Key()
 
 	//Check 4 - Mutability
 	exists, err := w.Exists(datasource, assetID)
@@ -234,7 +234,7 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 
-	if exists == false {
+	if exists == false { //This is a new Wallet - create
 		if deliver == true {
 			//New Wallet Deliver
 			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
@@ -249,13 +249,33 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 				return assetError
 			}
 		}
-	} else {
-		//This is a wallet update
+	} else { //This is a wallet update
 		//events = processTags(wallet.CurrentAsset.Asset.Tags)
 		//Loop through all the transfers out and update their destinations
+
+		msg, err := w.DataStore.GetAssetbyID(assetID)
+		if err != nil || msg == nil {
+			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+		}
+		signedAsset := &protobuffer.PBSignedAsset{}
+		err = proto.Unmarshal(msg, signedAsset)
+		if err != nil {
+			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+		}
+		previousWallet, err := ReBuildWallet(signedAsset, assetID)
+		if err != nil {
+			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
+		}
+		w.PreviousAsset = previousWallet.CurrentAsset
+
 		payload, err := w.Payload()
 		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
+		}
+
+		assetError := w.VerifyUpdateWallet(datasource)
+		if assetError != nil {
+			return assetError
 		}
 
 		currentBalance, assetsError := w.getBalanceKey(datasource, assetID)
@@ -278,8 +298,8 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 			//println("Eject")
 			return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Outgoing > CurrentBalance")
 		}
-
 		//We have enough funds, do the database updates for transfer Pass 2
+
 		if deliver == true {
 			//println("Deliver")
 			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
@@ -305,18 +325,57 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	return nil
 }
 
-func (w *Wallet) VerifyWallet(datasource DataSource) error {
-
+func (w *Wallet) VerifyUpdateWallet(datasource DataSource) error {
 	//Check 6
 	assetID := w.Key()
 	if assetID == nil {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
 	}
 
+	//check 9.1
+	payload, err := w.Payload()
+	if err != nil {
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+	}
+	//check 9
+	if payload == nil {
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	}
+
+	//Check Index = previous Index + 1
+	if w.CurrentAsset.Asset.Index != w.PreviousAsset.Asset.Index+1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	if w.CurrentAsset.Asset.Transferlist == nil {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+	if len(w.CurrentAsset.Asset.Transferlist) == 0 {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+
 	//Signed Asset Check
-	assetError := w.Verify()
+	transferSigs, assetError := w.VerifyAndGenerateTransferSignatures()
 	if assetError != nil {
 		return assetError
+	}
+
+	//check expression & signatures
+	transferType := w.CurrentAsset.GetAsset().TransferType
+	_, assetError = w.IsValidTransfer(transferType, transferSigs)
+	if assetError != nil {
+		return assetError
+	}
+
+	return nil
+}
+
+func (w *Wallet) VerifyWallet(datasource DataSource) error {
+
+	//Check 6
+	assetID := w.Key()
+	if assetID == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
 	}
 
 	//check 9.1
@@ -347,6 +406,12 @@ func (w *Wallet) VerifyWallet(datasource DataSource) error {
 	}
 	if len(w.CurrentAsset.Asset.Transferlist) == 0 {
 		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+
+	//Signed Asset Check
+	assetError := w.Verify()
+	if assetError != nil {
+		return assetError
 	}
 
 	return nil

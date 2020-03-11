@@ -79,6 +79,7 @@ func (m *MPC) Payload() (*protobuffer.PBMPC, error) {
 }
 
 func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+	m.DataStore = datasource
 	assetID := m.Key()
 	exists, err := m.Exists(datasource, assetID)
 	if err != nil {

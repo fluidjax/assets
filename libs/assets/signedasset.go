@@ -203,22 +203,22 @@ func (a *SignedAsset) AddTransfer(transferType protobuffer.PBTransferType, expre
 // transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, transferSignatures []SignatureID) (bool, error) {
 	if a == nil {
-		return false, errors.New("IsValidTransfer - SignedAsset is nil")
+		return false, NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:SignedAsset is nil")
 	}
 	if transferSignatures == nil {
-		return false, errors.New("IsValidTransfer - transferSignatures is empty")
+		return false, NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:transferSignatures is empty")
 	}
 	if len(transferSignatures) == 0 {
-		return false, errors.New("IsValidTransfer - transferSignatures is 0 length")
+		return false, NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:transferSignatures is 0 length")
 	}
 	transferListMapString := transferType.String()
 	PreviousAsset := a.PreviousAsset
 	if PreviousAsset == nil {
-		return false, errors.New("No Previous Asset to change")
+		return false, NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:No Previous Asset to change")
 	}
 	transfer := PreviousAsset.Asset.Transferlist[transferListMapString]
 	if transfer == nil {
-		return false, errors.New("No Transfer Found")
+		return false, NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:No Transfer Found")
 	}
 	expression := transfer.Expression
 	expression, _, err := resolveExpression(a.DataStore, expression, transfer.Participants, transferSignatures, "")
@@ -226,7 +226,10 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, err
 	}
 	result := boolparser.BoolSolve(expression)
-	return result, nil
+	if result == false {
+		err = NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:Boolean Expression is False")
+	}
+	return result, err
 }
 
 // resolveExpression - Resolve the asset's expression by substituting 0's & 1's depending on whether signatures are available for each abbreviation/participant
@@ -236,29 +239,36 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 // recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
 func resolveExpression(store DataSource, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	if expression == "" {
-		return "", "", errors.New("resolveExpression - expression is empty")
+
+		return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:expression is empty")
 	}
 	if participants == nil {
-		return "", "", errors.New("resolveExpression - participants is empty")
+		return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:participants is empty")
 	}
 	if len(participants) == 0 {
-		return "", "", errors.New("resolveExpression - participants is 0 length")
+		return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:participants is 0 length")
 	}
 	if transferSignatures == nil {
-		return "", "", errors.New("resolveExpression - transferSignatures is empty")
+		return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:transferSignatures is empty")
 	}
 	if len(transferSignatures) == 0 {
-		return "", "", errors.New("resolveExpression - transferSignatures is 0 length")
+		return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:transferSignatures is 0 length")
 	}
 	expressionOut = expression
 	display = expression
 	//Loop all the participants from previous Asset
 	for abbreviation, id := range participants {
 		found := false
-		participant, err := Load(store, id)
+		participantBytes, err := store.GetAssetbyID(id)
 		if err != nil {
-			return "", "", errors.New("Fail to retrieve participant")
+			return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:Fail to retrieve participant")
 		}
+		participant := &protobuffer.PBSignedAsset{}
+		err = proto.Unmarshal(participantBytes, participant)
+		if err != nil {
+			return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:Fail to retrieve participant")
+		}
+
 		switch participant.GetAsset().GetPayload().(type) {
 		case *protobuffer.PBAsset_Group:
 			if participant.Asset.Type != protobuffer.PBAssetType_Group {
@@ -266,14 +276,14 @@ func resolveExpression(store DataSource, expression string, participants map[str
 			}
 			Group, err := ReBuildGroup(participant, id)
 			if err != nil {
-				return "", "", errors.Wrap(err, "Failed to Rebuild  Group in resolve Expression")
+				return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:Failed to Rebuild  Group in resolve Expression")
 			}
 			recursionExpression := string(Group.Payload().GetGroupFields()["expression"])
 			recursionParticipants := Group.Payload().Participants
 			recursionPrefix := prefix + abbreviation + "."
 			subExpression, subDisplay, err := resolveExpression(store, recursionExpression, recursionParticipants, transferSignatures, recursionPrefix)
 			if err != nil {
-				return "", "", errors.Wrap(err, "Failed to Resolve Recursive Expression")
+				return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:Failed to Resolve Recursive Expression")
 			}
 			expressionOut = strings.ReplaceAll(expressionOut, abbreviation, " ( "+subExpression+" ) ")
 			display = strings.ReplaceAll(display, abbreviation, " ( "+subDisplay+" ) ")
@@ -736,33 +746,48 @@ func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amou
 	return currentBalance, nil
 }
 
+//Verify when we can throw away the TransferSignatures
+func (a *SignedAsset) Verify() error {
+	_, err := a.VerifyAndGenerateTransferSignatures()
+	return err
+}
+
 //Verify - For all the listed IDDocs, in signers add together their actual Public Keys
 //Check the Signature in the Asset
-func (a *SignedAsset) Verify() error {
+func (a *SignedAsset) VerifyAndGenerateTransferSignatures() (transferSignatures []SignatureID, err error) {
 	//Check the signature for ALL the participants
 	//For each supplied signer re-build a PublicKey
+
 	var aggregatedPublicKey []byte
+	if a == nil {
+		return nil, NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Asset is Nil")
+	}
+
 	if a.CurrentAsset.Signers == nil {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:No Signers")
+		return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:No Signers")
 	}
 	if len(a.CurrentAsset.Signers) == 0 {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:No Signers (0 length)")
+		return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:No Signers (0 length)")
 	}
-	for _, participantID := range a.CurrentAsset.Signers {
+	for abbreviation, participantID := range a.CurrentAsset.Signers {
 		//Lookup txid of asset
+
 		msg, err := a.DataStore.GetAssetbyID(participantID)
 		if err != nil || msg == nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+			return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
 		}
 		signedAsset := &protobuffer.PBSignedAsset{}
 		err = proto.Unmarshal(msg, signedAsset)
 		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+			return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
 		}
 		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
 		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
+			return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
 		}
+
+		sid := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("1")}
+		transferSignatures = append(transferSignatures, sid)
 
 		pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
 		if aggregatedPublicKey == nil {
@@ -773,11 +798,11 @@ func (a *SignedAsset) Verify() error {
 	}
 	msg, err := a.SerializeAsset()
 	if err != nil {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Serialize Asset")
+		return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Serialize Asset")
 	}
 	rc := crypto.BLSVerify(msg, aggregatedPublicKey, a.CurrentAsset.GetSignature())
 	if rc != 0 {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature:Verify Fails")
+		return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature:Verify Fails")
 	}
-	return nil
+	return transferSignatures, nil
 }

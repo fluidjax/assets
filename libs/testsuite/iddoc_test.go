@@ -23,29 +23,11 @@ func Test_IDDoc(t *testing.T) {
 	err = i.Verify()
 	assert.Nil(t, err, "Error should not be nil")
 
-	//No Signers
-	i = BuildTestIDDoc(t)
-	i.CurrentAsset.Signers = nil
-	err = i.Verify()
-	assert.NotNil(t, err, "Error should not be nil")
-	txid, err = i.Save()
-	assetError, _ := err.(*assets.AssetsError)
-	assert.NotNil(t, assetError, "Error should not be nil")
-	assert.True(t, assetError.Code() == assets.CodeConsensusSignedAssetFailtoVerify, "Incorrect Error code")
-
-	//Wrong Signer
-	ijunk := BuildTestIDDoc(t)
-	signers := make(map[string][]byte)
-	signers["P"] = ijunk.Key()
-	i.CurrentAsset.Signers = signers
-	err = i.Verify()
-	assert.NotNil(t, err, "Error should not be nil")
-
 	//Error: Signature to Nil
 	i = BuildTestIDDoc(t)
 	i.CurrentAsset.Signature = nil
 	txid, err = i.Save()
-	assetError, _ = err.(*assets.AssetsError)
+	assetError, _ := err.(*assets.AssetsError)
 	assert.NotNil(t, assetError, "Error should not be nil")
 	assert.True(t, assetError.Code() == assets.CodeConsensusSignedAssetFailtoVerify, "Incorrect Error code")
 

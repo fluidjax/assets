@@ -41,6 +41,9 @@ const (
 	CodeConsensusSignedAssetFailtoVerify    TransactionCode = 206
 	CodeConsensusWalletNoTransferRules      TransactionCode = 207
 
+	CodeConsensusTransferRulesFailed       TransactionCode = 400
+	CodeConsensusFailedToResolveExpression TransactionCode = 401
+
 	CodeConsensusBalanceFailToAddUnderlying TransactionCode = 205
 	CodeTypeTendermintInternalError         TransactionCode = 999
 

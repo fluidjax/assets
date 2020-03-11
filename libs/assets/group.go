@@ -238,6 +238,7 @@ func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
 
 func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	assetID := g.Key()
+	g.DataStore = datasource
 	exists, err := g.Exists(datasource, assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")

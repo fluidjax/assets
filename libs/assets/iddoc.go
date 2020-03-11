@@ -24,6 +24,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
@@ -147,7 +148,7 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 }
 
 func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-
+	i.DataStore = datasource
 	//Check the IDDoc is valid
 	err := i.VerifyIDDoc(datasource)
 	if err != nil {
@@ -220,4 +221,32 @@ func (i *IDDoc) VerifyIDDoc(datasource DataSource) error {
 	}
 
 	return nil
+}
+
+//Verify - SelfVerify - IDDocs can self verify against their own BLS Public Key
+func (i *IDDoc) Verify() error {
+
+	if i == nil {
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Invalid IDDocs")
+	}
+
+	if i.CurrentAsset.Signature == nil {
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Signature is Nil")
+	}
+	//Message
+	msg, err := i.SerializeAsset()
+	if err != nil {
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Fail to Serialize Asset")
+	}
+
+	idDocPayload, err := i.Payload()
+	if err != nil {
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Fail to Parse Payload")
+	}
+	blsPK := idDocPayload.GetBLSPublicKey()
+	rc := crypto.BLSVerify(msg, blsPK, i.CurrentAsset.Signature)
+	if rc == 0 {
+		return nil
+	}
+	return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:BLSVerify fails")
 }
