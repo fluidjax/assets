@@ -35,6 +35,16 @@ func (nc *NodeConnector) GetSignedAsset(key []byte) (*protobuffer.PBSignedAsset,
 	return msg, nil
 }
 
+func (nc *NodeConnector) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asset using Asset ID
+	txid, err := nc.SingleRawConsensusSearch(assetID)
+	if err != nil {
+		return nil, err
+	}
+	query := "tx.hash='" + hex.EncodeToString(txid) + "'"
+	result, err := nc.SingleRawChainSearch(query)
+	return result, nil
+}
+
 //Load by AssetID
 func (nc *NodeConnector) RawGet(assetID []byte) ([]byte, error) {
 	txid, err := nc.SingleRawConsensusSearch(assetID)

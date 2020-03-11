@@ -69,3 +69,12 @@ func (app *QredoChain) RawGet(key []byte) ([]byte, error) {
 	}
 	return res, err
 }
+
+func (app *QredoChain) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asset using Asset ID
+	txid, err := app.RawGet(assetID)
+	if err != nil {
+		return nil, err
+	}
+	result, err := app.RawGet(txid)
+	return result, nil
+}

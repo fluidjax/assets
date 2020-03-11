@@ -67,44 +67,53 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if rc != 0 {
 		return errors.New("Failed to Sign Asset")
 	}
-	a.CurrentAsset.Signature = signature
 
-	return nil
-}
-
-// Verify the Signature of the Asset (including the Payload)
-func (a *SignedAsset) Verify(iddoc *IDDoc) error {
-
-	//Check 2
-	if a == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Signed Asset is nil")
-	}
-	if a.CurrentAsset == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Current Asset is nil")
-	}
 	if a.CurrentAsset.Signature == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
-	}
-	if iddoc == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:IDDoc is nil")
-	}
-	msg, err := a.SerializeAsset()
-	if err != nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Serialize Asset")
-	}
-	payload, err := iddoc.Payload()
-	if err != nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Retrieve Payload")
+		a.CurrentAsset.Signature = signature
+		signers := make(map[string][]byte)
+		signers["P"] = iddoc.Key()
+		a.CurrentAsset.Signers = signers
+	} else {
+		//Add to make a BLS aggregated signature
+		panic("Not Done")
 	}
 
-	//Check 3
-	blsPK := payload.GetBLSPublicKey()
-	rc := crypto.BLSVerify(msg, blsPK, a.CurrentAsset.Signature)
-	if rc != 0 {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
-	}
 	return nil
 }
+
+// // Verify the Signature of the Asset (including the Payload)
+// func (a *SignedAsset) Verify(iddoc *IDDoc) error {
+
+// 	//Check 2
+// 	if a == nil {
+// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Signed Asset is nil")
+// 	}
+// 	if a.CurrentAsset == nil {
+// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Current Asset is nil")
+// 	}
+// 	if a.CurrentAsset.Signature == nil {
+// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
+// 	}
+// 	if iddoc == nil {
+// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:IDDoc is nil")
+// 	}
+// 	msg, err := a.SerializeAsset()
+// 	if err != nil {
+// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Serialize Asset")
+// 	}
+// 	payload, err := iddoc.Payload()
+// 	if err != nil {
+// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Retrieve Payload")
+// 	}
+
+// 	//Check 3
+// 	blsPK := payload.GetBLSPublicKey()
+// 	rc := crypto.BLSVerify(msg, blsPK, a.CurrentAsset.Signature)
+// 	if rc != 0 {
+// 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
+// 	}
+// 	return nil
+// }
 
 // Key Return the AssetKey
 func (a *SignedAsset) Key() []byte {
@@ -144,12 +153,6 @@ func Load(store DataSource, key []byte) (*protobuffer.PBSignedAsset, error) {
 	}
 	return msg, nil
 }
-
-
-
-
-
-
 
 // Dump - Pretty print the Asset for debugging
 func (a *SignedAsset) Dump() {
@@ -731,4 +734,50 @@ func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amou
 	}
 	currentBalance := int64(binary.LittleEndian.Uint64(currentBalanceBytes))
 	return currentBalance, nil
+}
+
+//Verify - For all the listed IDDocs, in signers add together their actual Public Keys
+//Check the Signature in the Asset
+func (a *SignedAsset) Verify() error {
+	//Check the signature for ALL the participants
+	//For each supplied signer re-build a PublicKey
+	var aggregatedPublicKey []byte
+	if a.CurrentAsset.Signers == nil {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:No Signers")
+	}
+	if len(a.CurrentAsset.Signers) == 0 {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:No Signers (0 length)")
+	}
+	for _, participantID := range a.CurrentAsset.Signers {
+		//Lookup txid of asset
+		msg, err := a.DataStore.GetAssetbyID(participantID)
+		if err != nil || msg == nil {
+			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+		}
+		signedAsset := &protobuffer.PBSignedAsset{}
+		err = proto.Unmarshal(msg, signedAsset)
+		if err != nil {
+			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+		}
+		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
+		if err != nil {
+			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
+		}
+
+		pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
+		if aggregatedPublicKey == nil {
+			aggregatedPublicKey = pubKey
+		} else {
+			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
+		}
+	}
+	msg, err := a.SerializeAsset()
+	if err != nil {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Serialize Asset")
+	}
+	rc := crypto.BLSVerify(msg, aggregatedPublicKey, a.CurrentAsset.GetSignature())
+	if rc != 0 {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature:Verify Fails")
+	}
+	return nil
 }

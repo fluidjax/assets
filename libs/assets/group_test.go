@@ -73,9 +73,10 @@ func Test_Group(t *testing.T) {
 	fmt.Println(hex.EncodeToString(res1[:]))
 
 	w.Sign(i)
+	w.Save()
 
 	assert.NotNil(t, w.CurrentAsset.Signature, "Signature is empty")
-	err = w.Verify(i)
+	err = w.Verify()
 	assert.Nil(t, err, "Error should be nil")
 
 	c := proto.NewBuffer(nil)

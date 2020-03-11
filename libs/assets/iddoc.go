@@ -214,7 +214,7 @@ func (i *IDDoc) VerifyIDDoc(datasource DataSource) error {
 	}
 
 	//Signed Asset Check
-	assetError := i.Verify(i)
+	assetError := i.Verify()
 	if assetError != nil {
 		return assetError
 	}

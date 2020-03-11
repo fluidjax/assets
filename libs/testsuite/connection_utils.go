@@ -46,12 +46,14 @@ func ShutDown() {
 
 func StartWait(count int) {
 	incomingCount := 0
+	wg.Add(1)
 	for {
 		select {
 		case _ = <-out:
+			print("Incoming")
 			incomingCount++
 			if incomingCount == count {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(1000 * time.Millisecond)
 				wg.Done()
 				return
 			}
@@ -60,7 +62,6 @@ func StartWait(count int) {
 	}
 }
 func SubscriptionClient() {
-	wg.Add(1)
 	var err error
 	subClient, err = tmclient.NewHTTP("tcp://localhost:26657", "/websocket")
 	if err != nil {

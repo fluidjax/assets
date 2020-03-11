@@ -33,3 +33,12 @@ func (m *Mapstore) Set(key []byte, data []byte) (string, error) {
 	m.Store[hex.EncodeToString(key)] = data
 	return "", nil
 }
+
+func (m *Mapstore) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asset using Asset ID
+	txid, err := m.RawGet(assetID)
+	if err != nil {
+		return nil, err
+	}
+	result, err := m.RawGet(txid)
+	return result, nil
+}

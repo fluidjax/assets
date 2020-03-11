@@ -12,28 +12,40 @@ func Test_IDDoc(t *testing.T) {
 
 	//Standard build
 	i := BuildTestIDDoc(t)
+	go StartWait(1)
 	txid, err := i.Save()
+	wg.Wait()
+
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
 
 	//Verify Good
-	err = i.Verify(i)
+	err = i.Verify()
 	assert.Nil(t, err, "Error should not be nil")
 
-	//Error Verify using Nil as verifier
-	err = i.Verify(nil)
+	//No Signers
+	i = BuildTestIDDoc(t)
+	i.CurrentAsset.Signers = nil
+	err = i.Verify()
 	assert.NotNil(t, err, "Error should not be nil")
+	txid, err = i.Save()
+	assetError, _ := err.(*assets.AssetsError)
+	assert.NotNil(t, assetError, "Error should not be nil")
+	assert.True(t, assetError.Code() == assets.CodeConsensusSignedAssetFailtoVerify, "Incorrect Error code")
 
-	//Error Verify using not-signer as verifier
+	//Wrong Signer
 	ijunk := BuildTestIDDoc(t)
-	err = i.Verify(ijunk)
+	signers := make(map[string][]byte)
+	signers["P"] = ijunk.Key()
+	i.CurrentAsset.Signers = signers
+	err = i.Verify()
 	assert.NotNil(t, err, "Error should not be nil")
 
 	//Error: Signature to Nil
 	i = BuildTestIDDoc(t)
 	i.CurrentAsset.Signature = nil
 	txid, err = i.Save()
-	assetError, _ := err.(*assets.AssetsError)
+	assetError, _ = err.(*assets.AssetsError)
 	assert.NotNil(t, assetError, "Error should not be nil")
 	assert.True(t, assetError.Code() == assets.CodeConsensusSignedAssetFailtoVerify, "Incorrect Error code")
 

@@ -26,7 +26,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
@@ -306,61 +305,6 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	return nil
 }
 
-// VerifyAllSignatures - For all the listed IDDocs, in signers add together their actual Public Keys and
-//Check the Signature in the Asset
-func (w *Wallet) VerifyAllSignatures(datasource DataSource) error {
-
-	//Check the signature for ALL the participants
-	//For each supplied signer re-build a PublicKey
-	var aggregatedPublicKey []byte
-	var transferSignatures []SignatureID
-
-	if w.CurrentAsset.Signers == nil {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
-	}
-
-	if len(w.CurrentAsset.Signers) == 0 {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
-	}
-
-	for abbreviation, participantID := range w.CurrentAsset.Signers {
-		//Lookup txid of asset
-		txid, err := w.DataStore.RawGet(participantID)
-		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
-		}
-		//get asset TX and build
-		signedAsset, err := Load(w.DataStore, txid)
-		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
-		}
-		iddoc, err := ReBuildIDDoc(signedAsset, participantID)
-		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
-		}
-
-		pubKey := iddoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
-		if aggregatedPublicKey == nil {
-			aggregatedPublicKey = pubKey
-		} else {
-			_, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
-		}
-		sigID := SignatureID{IDDoc: iddoc, Abbreviation: abbreviation, Signature: []byte("UNKNOWN")}
-		transferSignatures = append(transferSignatures, sigID)
-	}
-	msg, err := w.SerializeAsset()
-	if err != nil {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature")
-	}
-
-	rc := crypto.BLSVerify(msg, aggregatedPublicKey, w.CurrentAsset.GetSignature())
-	if rc != 0 {
-		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
-	}
-
-	return nil
-}
-
 func (w *Wallet) VerifyWallet(datasource DataSource) error {
 
 	//Check 6
@@ -370,7 +314,7 @@ func (w *Wallet) VerifyWallet(datasource DataSource) error {
 	}
 
 	//Signed Asset Check
-	assetError := w.VerifyAllSignatures(datasource)
+	assetError := w.Verify()
 	if assetError != nil {
 		return assetError
 	}
