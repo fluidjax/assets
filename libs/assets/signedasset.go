@@ -825,42 +825,36 @@ func (a *SignedAsset) VerifyAndGenerateTransferSignatures() (transferSignatures 
 }
 
 //ConsensusVerify - consensus rules for all assets (create & update)
-func (a *SignedAsset) ConsensusVerifyAll() error {
-	//Check 6
+func (a *SignedAsset) VerifyAll() error {
+	//Check we have an AssetID & a Payload
+
 	assetID := a.Key()
 	if assetID == nil {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
 	}
 
-	//check 9.1
 	payload := a.CurrentAsset.Asset.Payload
 	if payload == nil {
 		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
 	}
-	//check 9
 	if payload == nil {
 		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
 	}
+
+	if a.CurrentAsset.Signature == nil {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:No Signature")
+
+	}
+
 	return nil
 }
 
 //ConsensusVerifyCreate - consensus rules for a Asset create
 func (a *SignedAsset) VerifyImmutableCreate() error {
-	assetID := a.Key()
 
-	assetError := a.ConsensusVerifyAll()
+	assetError := a.VerifyAll()
 	if assetError != nil {
 		return assetError
-	}
-
-	exists, err := a.Exists(assetID)
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
-	}
-	//Check 4
-	if exists == true {
-		//IDDoc is immutable so if this AssetID already has a value we can't update it.
-		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
 	}
 
 	//Check 7
@@ -876,8 +870,14 @@ func (a *SignedAsset) VerifyImmutableCreate() error {
 }
 
 //ConsensusVerifyCreate - consensus rules for a Asset create
-func (a *SignedAsset) ConsensusVerifyMutableCreate() error {
-	//Check 7
+func (a *SignedAsset) VerifyMutableCreate() error {
+	//Check Generic Mutable Create
+	//Verifyall, Index=1, TransferList is not nil
+	assetError := a.VerifyAll()
+	if assetError != nil {
+		return assetError
+	}
+
 	if a.CurrentAsset.Asset.Index != 1 {
 		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
 	}
@@ -889,12 +889,21 @@ func (a *SignedAsset) ConsensusVerifyMutableCreate() error {
 		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
 	}
 
+	//Signed Asset Check
+	_, assetError = a.VerifyAndGenerateTransferSignatures()
+	if assetError != nil {
+		return assetError
+	}
+
 	return nil
 }
 
-//ConsensusVerifyUpdate - consensus rules for a Asset update
-func (a *SignedAsset) ConsensusVerifyUpdate() error {
-	//Check Index = previous Index + 1
+//VerifyMutableUpdate - consensus rules for a Asset update
+func (a *SignedAsset) VerifyMutableUpdate() error {
+	assetError := a.VerifyAll()
+	if assetError != nil {
+		return assetError
+	}
 
 	if a.CurrentAsset.Asset.Index != a.PreviousAsset.Asset.Index+1 {
 		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")

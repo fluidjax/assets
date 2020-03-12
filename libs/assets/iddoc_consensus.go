@@ -25,7 +25,15 @@ import "github.com/qredo/assets/libs/crypto"
 func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	i.DataStore = datasource
 
-	err := i.Verify()
+	exists, err := i.Exists(i.Key())
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+	}
+	if exists == true {
+		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
+	}
+
+	err = i.Verify()
 	if err != nil {
 		return err
 	}
@@ -61,6 +69,11 @@ func (i *IDDoc) Verify() error {
 	//Check 7
 	if i.CurrentAsset.Asset.Index != 1 {
 		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	//Check 7
+	if i.CurrentAsset.Signature == nil {
+		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:No Signature")
 	}
 
 	//Self signed so simply Check the Signature Message

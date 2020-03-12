@@ -20,16 +20,12 @@ under the License.
 package assets
 
 import (
-	"bytes"
-
 	"math"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/protobuffer"
 )
-
-
 
 //NewWallet - Setup a new Wallet
 func NewWallet(iddoc *IDDoc, currency protobuffer.PBCryptoCurrency) (w *Wallet, err error) {
@@ -242,83 +238,5 @@ func (w *Wallet) LoadPreviousWallet() (err error) {
 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
 	}
 	w.PreviousAsset = previousWallet.CurrentAsset
-	return nil
-}
-
-func (w *Wallet) VerifyWalletUpdate() (err error) {
-
-	assetID := w.Key()
-
-	err = w.ConsensusVerifyAll()
-	if err != nil {
-		return err
-	}
-
-	err = w.LoadPreviousWallet()
-	if err != nil {
-		return err
-	}
-
-	//Check generic Update & Siganture verifications
-	err = w.ConsensusVerifyUpdate()
-	if err != nil {
-		return err
-	}
-
-	payload, err := w.Payload()
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:WalletUpdate:Fail to determine Wallet Payload")
-	}
-
-	currentBalance, assetsError := w.getBalanceKey(assetID)
-	if assetsError != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:WalletUpdate:Fail to fetch Current Balance")
-	}
-
-	//Check we have enough - Pass 1
-	var totalOutgoing int64
-	for _, wt := range payload.WalletTransfers {
-		res := bytes.Compare(wt.AssetID, assetID)
-		if res == 0 {
-			//this is money coming back to self, just ignore it
-			continue
-		}
-		totalOutgoing = totalOutgoing + wt.Amount
-	}
-
-	if totalOutgoing > currentBalance {
-		//println("Eject")
-		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus:Error:Check:WalletUpdate:Outgoing > CurrentBalance")
-	}
-
-	return nil
-}
-
-func (w *Wallet) VerifyWalletCreate() (err error) {
-
-	err = w.ConsensusVerifyAll()
-	if err != nil {
-		return err
-	}
-	//check 11
-	payload, err := w.Payload()
-	if payload.Currency == 0 {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:WalletCreate:Invalid Madatory Field:Currency")
-	}
-	//check 11
-	if payload.SpentBalance != 0 {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Balance Starts at 0")
-	}
-	err = w.ConsensusVerifyMutableCreate()
-	if err != nil {
-		return err
-	}
-
-	//Signed Asset Check
-	assetError := w.Verify()
-	if assetError != nil {
-		return assetError
-	}
-
 	return nil
 }

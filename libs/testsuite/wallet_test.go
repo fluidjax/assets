@@ -30,6 +30,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func SignWallet(wallet *assets.Wallet, idP, idT1, idT2 *assets.IDDoc) {
+	//Sign
+	sigP, _ := wallet.SignAsset(idP)
+	sigT1, _ := wallet.SignAsset(idT1)
+	sigT2, _ := wallet.SignAsset(idT2)
+
+	signatures := []assets.SignatureID{
+		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
+	}
+
+	wallet.AggregatedSign(signatures)
+}
+
 func Test_Wallet_Create(t *testing.T) {
 	idP, idT1, idT2, idT3 := SetupIDDocs(t)
 
@@ -37,11 +52,6 @@ func Test_Wallet_Create(t *testing.T) {
 	wallet, err := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
 	assert.Nil(t, err, "Truth table return should be nil")
 	assert.NotNil(t, wallet, "Wallet should not be nil")
-
-	//Error no transfers
-	txid, err := wallet.Save()
-	assetError, _ := err.(*assets.AssetsError)
-	assert.True(t, assetError.Code() == assets.CodeConsensusWalletNoTransferRules, "Incorrect Error code")
 
 	//Add transfers
 	expression := "t1 + t2 + t3 > 1 & p"
@@ -52,44 +62,60 @@ func Test_Wallet_Create(t *testing.T) {
 		"t3": idT3.Key(),
 	}
 	wallet.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
-	txid, err = wallet.Save()
-	assetError, _ = err.(*assets.AssetsError)
-	assert.True(t, assetError.Code() == assets.CodeConsensusErrorFailtoVerifySignature, "Incorrect Error code")
+	payload, _ := wallet.Payload()
+	SignWallet(wallet, idP, idT1, idT2)
+
+	//This is now a valid wallet
+	//Systematically break it to check the errors
+	//txid, err := wallet.Save()
 
 	//Non Zero balance - Negative
-	payload, _ := wallet.Payload()
 	payload.SpentBalance = -100
-	txid, err = wallet.Save()
-	assetError, _ = err.(*assets.AssetsError)
-	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code")
+	SignWallet(wallet, idP, idT1, idT2)
+	txid, err := wallet.Save()
+	assetError, _ := err.(*assets.AssetsError)
+	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code - "+assetError.Code().String())
+	assert.True(t, txid == "", "TXID should be empty")
 	payload.SpentBalance = 0
 
 	//Non Zero balance - Positive
 	payload.SpentBalance = 100
+	SignWallet(wallet, idP, idT1, idT2)
 	txid, err = wallet.Save()
 	assetError, _ = err.(*assets.AssetsError)
-	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code")
+	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code - "+assetError.Code().String())
+	assert.True(t, txid == "", "TXID should be empty")
 	payload.SpentBalance = 0
 
-	//No Currency
+	///No Currency
 	payload.Currency = 0
+	SignWallet(wallet, idP, idT1, idT2)
 	txid, err = wallet.Save()
 	assetError, _ = err.(*assets.AssetsError)
-	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code")
+	assert.True(t, assetError.Code() == assets.CodeConsensusMissingFields, "Incorrect Error code - "+assetError.Code().String())
+	assert.True(t, txid == "", "TXID should be empty")
 	payload.Currency = 1
 
-	//** No Error** (Not using all Particpiants - but in reality would)
-	sigP, _ := wallet.SignAsset(idP)
-	sigT1, _ := wallet.SignAsset(idT1)
-	sigT2, _ := wallet.SignAsset(idT2)
+	///No Signature
+	tempSig := wallet.CurrentAsset.Signature
+	wallet.CurrentAsset.Signature = nil
+	txid, err = wallet.Save()
+	assetError, _ = err.(*assets.AssetsError)
+	assert.True(t, assetError.Code() == assets.CodeConsensusErrorFailtoVerifySignature, "Incorrect Error code - "+assetError.Code().String())
+	assert.True(t, txid == "", "TXID should be empty")
+	wallet.CurrentAsset.Signature = tempSig
 
-	signatures := []assets.SignatureID{
-		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
-		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
-		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
-	}
-	wallet.AggregatedSign(signatures)
+	///No Transfers
+	tempTrans := wallet.CurrentAsset.Asset.Transferlist
+	wallet.CurrentAsset.Asset.Transferlist = nil
+	txid, err = wallet.Save()
+	assetError, _ = err.(*assets.AssetsError)
+	assert.True(t, assetError.Code() == assets.CodeConsensusWalletNoTransferRules, "Incorrect Error code - "+assetError.Code().String())
+	assert.True(t, txid == "", "TXID should be empty")
+	wallet.CurrentAsset.Asset.Transferlist = tempTrans
 
+	//VALID!
+	SignWallet(wallet, idP, idT1, idT2)
 	txid, err = wallet.Save()
 	assetError, _ = err.(*assets.AssetsError)
 	assert.Nil(t, assetError, "Error should  be nil")

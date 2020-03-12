@@ -7,40 +7,38 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/prettyjson"
-	"github.com/qredo/assets/libs/protobuffer"
 )
 
 // VerifyTX -
 func (cliTool *CLITool) VerifyTX(iddocID string, tx string) error {
 
-	key, err := hex.DecodeString(iddocID)
-	if err != nil {
-		return err
-	}
+	// key, err := hex.DecodeString(iddocID)
+	// if err != nil {
+	// 	return err
+	// }
 
-	res, err := cliTool.NodeConn.GetAsset(iddocID)
-	iddoc, err := assets.ReBuildIDDoc(res, key)
+	// res, err := cliTool.NodeConn.GetAsset(iddocID)
+	// iddoc, err := assets.ReBuildIDDoc(res, key)
 
-	msg := &protobuffer.PBSignedAsset{}
-	txbin, err := hex.DecodeString(tx)
-	if err != nil {
-		return err
-	}
-	err = proto.Unmarshal(txbin, msg)
+	// msg := &protobuffer.PBSignedAsset{}
+	// txbin, err := hex.DecodeString(tx)
+	// if err != nil {
+	// 	return err
+	// }
+	// err = proto.Unmarshal(txbin, msg)
 
-	signedAsset := &assets.SignedAsset{}
-	signedAsset.CurrentAsset = msg
-	signedAsset.DataStore = cliTool.NodeConn
+	// signedAsset := &assets.SignedAsset{}
+	// signedAsset.CurrentAsset = msg
+	// signedAsset.DataStore = cliTool.NodeConn
 
-	err = signedAsset.Verify(iddoc)
-	if err != nil {
-		return err
-	}
+	// err = signedAsset.Verify(iddoc)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
