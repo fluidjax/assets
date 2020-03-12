@@ -221,7 +221,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 		return false, NewAssetsError(CodeConsensusTransferRulesFailed, "Consensus:Error:IsValidTransfer:No Transfer Found")
 	}
 	expression := transfer.Expression
-	expression, _, err := resolveExpression(a.DataStore, expression, transfer.Participants, transferSignatures, "")
+	expression, _, err := a.resolveExpression(expression, transfer.Participants, transferSignatures, "")
 	if err != nil {
 		return false, err
 	}
@@ -237,7 +237,7 @@ func (a *SignedAsset) IsValidTransfer(transferType protobuffer.PBTransferType, t
 // participantis	map of abbreviation:IDDocKey		eg. t1 : b51de57554c7a49004946ec56243a70e90a26fbb9457cb2e6845f5e5b3c69f6a
 // transferSignatures = array of SignatureID  - SignatureID{IDDoc: [&IDDoc{}], Abbreviation: "p", Signature: [BLSSig]}
 // recursionPrefix    = initally called empty, recursion appends sub objects eg. "tg1.x1" for participant x1 in tg1 Group
-func resolveExpression(store DataSource, expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
+func (a *SignedAsset) resolveExpression(expression string, participants map[string][]byte, transferSignatures []SignatureID, prefix string) (expressionOut string, display string, err error) {
 	if expression == "" {
 
 		return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:expression is empty")
@@ -259,7 +259,7 @@ func resolveExpression(store DataSource, expression string, participants map[str
 	//Loop all the participants from previous Asset
 	for abbreviation, id := range participants {
 		found := false
-		participantBytes, err := store.GetAssetbyID(id)
+		participantBytes, err := a.DataStore.GetAssetbyID(id)
 		if err != nil {
 			return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:Fail to retrieve participant")
 		}
@@ -281,7 +281,7 @@ func resolveExpression(store DataSource, expression string, participants map[str
 			recursionExpression := string(Group.Payload().GetGroupFields()["expression"])
 			recursionParticipants := Group.Payload().Participants
 			recursionPrefix := prefix + abbreviation + "."
-			subExpression, subDisplay, err := resolveExpression(store, recursionExpression, recursionParticipants, transferSignatures, recursionPrefix)
+			subExpression, subDisplay, err := a.resolveExpression(recursionExpression, recursionParticipants, transferSignatures, recursionPrefix)
 			if err != nil {
 				return "", "", NewAssetsError(CodeConsensusFailedToResolveExpression, "Consensus:Error:ResolveExpression:Failed to Resolve Recursive Expression")
 			}
@@ -356,7 +356,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 				transferSignatures = append(transferSignatures, SignatureID{IDDoc: iddoc, Signature: []byte("hello")})
 			}
 		}
-		resolvedExpression, display, err := resolveExpression(a.DataStore, expression, transfer.Participants, transferSignatures, "")
+		resolvedExpression, display, err := a.resolveExpression(expression, transfer.Participants, transferSignatures, "")
 		if err != nil {
 			return nil, err
 		}
@@ -683,46 +683,47 @@ func (a *SignedAsset) AddTag(key string, value []byte) {
 
 }
 
-func (a *SignedAsset) GetWithSuffix(datasource DataSource, key []byte, suffix string) ([]byte, error) {
+func (a *SignedAsset) GetWithSuffix(key []byte, suffix string) ([]byte, error) {
 	fullSuffix := []byte(suffix)
 	key = append(key[:], fullSuffix[:]...)
-	return datasource.RawGet(key)
+	return a.DataStore.RawGet(key)
 }
 
-func (a *SignedAsset) SetWithSuffix(datasource DataSource, key []byte, suffix string, data []byte) error {
+func (a *SignedAsset) SetWithSuffix(key []byte, suffix string, data []byte) error {
 	suffixBytes := []byte(suffix)
 	fullkey := append(key[:], suffixBytes[:]...)
 	// println("SET1 ", hex.EncodeToString(key))
 	// println("SET2 ", hex.EncodeToString(data))
 	// println("SET3 ", hex.EncodeToString(fullkey))
-	_, err := datasource.Set(fullkey, data)
+	_, err := a.DataStore.Set(fullkey, data)
 	return err
 }
 
-func (a *SignedAsset) Exists(datasource DataSource, key []byte) (bool, error) {
-	item, err := datasource.RawGet(key)
+func (a *SignedAsset) Exists(key []byte) (bool, error) {
+	item, err := a.DataStore.RawGet(key)
 	return item != nil, err
 }
 
-func (a *SignedAsset) BatchExists(datasource DataSource, key []byte) (bool, error) {
-	item, err := datasource.BatchGet(key)
+func (a *SignedAsset) BatchExists(key []byte) (bool, error) {
+	item, err := a.DataStore.BatchGet(key)
 	return item != nil, err
 }
 
-func (a *SignedAsset) AddCoreMappings(datasource DataSource, rawTX []byte, txHash []byte) (err error) {
-	_, err = datasource.Set(txHash, rawTX)
+func (a *SignedAsset) AddCoreMappings(rawTX []byte, txHash []byte) (err error) {
+	_, err = a.DataStore.Set(txHash, rawTX)
 	if err != nil {
 		return err
 	}
-	_, err = datasource.Set(a.Key(), txHash)
+	_, err = a.DataStore.Set(a.Key(), txHash)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []byte, amount int64) error {
-	currentBalance, assetsError := a.getBalanceKey(datasource, assetID)
+func (a *SignedAsset) subtractFromBalanceKey(assetID []byte, amount int64) error {
+	currentBalance, assetsError := a.getBalanceKey(assetID)
 	if assetsError != nil {
 		return assetsError
 	}
@@ -731,30 +732,30 @@ func (a *SignedAsset) subtractFromBalanceKey(datasource DataSource, assetID []by
 	if newBalance < 0 {
 		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus:Error:Check:Balance:Newbalance is less than Zero")
 	}
-	return a.setBalanceKey(datasource, assetID, newBalance)
+	return a.setBalanceKey(assetID, newBalance)
 }
 
-func (a *SignedAsset) addToBalanceKey(datasource DataSource, assetID []byte, amount int64) error {
-	currentBalance, assetsError := a.getBalanceKey(datasource, assetID)
+func (a *SignedAsset) addToBalanceKey(assetID []byte, amount int64) error {
+	currentBalance, assetsError := a.getBalanceKey(assetID)
 	if assetsError != nil {
 		return assetsError
 	}
 	newBalance := currentBalance + amount
-	return a.setBalanceKey(datasource, assetID, newBalance)
+	return a.setBalanceKey(assetID, newBalance)
 }
-func (a *SignedAsset) setBalanceKey(datasource DataSource, assetID []byte, newBalance int64) error {
+func (a *SignedAsset) setBalanceKey(assetID []byte, newBalance int64) error {
 	//Convert new balance to bytes and save for AssetID
 	newBalanceBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(newBalanceBytes, uint64(newBalance))
-	err := a.SetWithSuffix(datasource, assetID, ".balance", newBalanceBytes)
+	err := a.SetWithSuffix(assetID, ".balance", newBalanceBytes)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Balance:Fail to Set Balance Key")
 	}
 	return nil
 }
 
-func (a *SignedAsset) getBalanceKey(datasource DataSource, assetID []byte) (amount int64, assetError error) {
-	currentBalanceBytes, err := a.GetWithSuffix(datasource, assetID, ".balance")
+func (a *SignedAsset) getBalanceKey(assetID []byte) (amount int64, assetError error) {
+	currentBalanceBytes, err := a.GetWithSuffix(assetID, ".balance")
 	if currentBalanceBytes == nil || err != nil {
 		return 0, NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Balance:Fail to Get Balance Key")
 	}

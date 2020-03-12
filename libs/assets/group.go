@@ -239,7 +239,7 @@ func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
 func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	assetID := g.Key()
 	g.DataStore = datasource
-	exists, err := g.Exists(datasource, assetID)
+	exists, err := g.Exists(assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}
@@ -249,7 +249,7 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 		//This is a new Wallet
 		if deliver == true {
 			//Commit
-			err := g.AddCoreMappings(datasource, rawTX, txHash)
+			err := g.AddCoreMappings(rawTX, txHash)
 			if err != nil {
 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
@@ -264,7 +264,7 @@ func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 	} else {
 		if deliver == true {
 			//Commit
-			err := g.AddCoreMappings(datasource, rawTX, txHash)
+			err := g.AddCoreMappings(rawTX, txHash)
 			if err != nil {
 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}

@@ -290,7 +290,7 @@ func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
 func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	k.DataStore = datasource
 	assetID := k.Key()
-	exists, err := k.Exists(datasource, assetID)
+	exists, err := k.Exists( assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}
@@ -300,7 +300,7 @@ func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash [
 		//This is a new Wallet
 		if deliver == true {
 			//Commit
-			assetsError := k.AddCoreMappings(datasource, rawTX, txHash)
+			assetsError := k.AddCoreMappings( rawTX, txHash)
 			if assetsError != nil {
 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}
@@ -309,7 +309,7 @@ func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash [
 	} else {
 		if deliver == true {
 			//Commit
-			assetsError := k.AddCoreMappings(datasource, rawTX, txHash)
+			assetsError := k.AddCoreMappings( rawTX, txHash)
 			if assetsError != nil {
 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 			}

@@ -229,7 +229,7 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	assetID := w.Key()
 
 	//Check if Asset Exists - ie, if update or create
-	walletUpdate, err := w.Exists(datasource, assetID)
+	walletUpdate, err := w.Exists(assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
@@ -237,14 +237,14 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	if walletUpdate == false { //This is a new Wallet - create
 		if deliver == true {
 			//New Wallet Deliver
-			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
+			assetsError := w.AddCoreMappings(rawTX, txHash)
 			if assetsError != nil {
 				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
 			}
-			w.setBalanceKey(datasource, w.Key(), 0)
+			w.setBalanceKey(w.Key(), 0)
 		} else {
 			//New Wallet - Check
-			assetError := w.VerifyWalletCreate(datasource)
+			assetError := w.VerifyWalletCreate()
 			if assetError != nil {
 				return assetError
 			}
@@ -273,12 +273,12 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 			return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
 		}
 
-		assetError := w.VerifyWalletUpdate(datasource)
+		assetError := w.VerifyWalletUpdate()
 		if assetError != nil {
 			return assetError
 		}
 
-		currentBalance, assetsError := w.getBalanceKey(datasource, assetID)
+		currentBalance, assetsError := w.getBalanceKey(assetID)
 		if assetsError != nil {
 			return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to fetch Current Balance")
 		}
@@ -302,30 +302,14 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 
 		if deliver == true {
 			//println("Deliver")
-			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
-			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
-			}
-			var totalToSubtract int64
+			w.Deliver(rawTX, txHash)
 
-			for _, wt := range payload.WalletTransfers {
-				res := bytes.Compare(wt.AssetID, assetID)
-				if res == 0 {
-					//this is money coming back to self, just ignore it
-					continue
-				}
-				amount := wt.Amount
-				destinationAssetID := wt.AssetID
-				w.addToBalanceKey(datasource, destinationAssetID, amount)
-				totalToSubtract += amount
-			}
-			w.subtractFromBalanceKey(datasource, assetID, totalToSubtract)
 		}
 	}
 	return nil
 }
 
-func (w *Wallet) VerifyWalletUpdate(datasource DataSource) (err error) {
+func (w *Wallet) VerifyWalletUpdate() (err error) {
 
 	err = w.ConsensusVerifyAll()
 	if err != nil {
@@ -340,7 +324,7 @@ func (w *Wallet) VerifyWalletUpdate(datasource DataSource) (err error) {
 	return nil
 }
 
-func (w *Wallet) VerifyWalletCreate(datasource DataSource) (err error) {
+func (w *Wallet) VerifyWalletCreate() (err error) {
 
 	err = w.ConsensusVerifyAll()
 	if err != nil {
@@ -361,5 +345,34 @@ func (w *Wallet) VerifyWalletCreate(datasource DataSource) (err error) {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Balance Starts at 0")
 	}
 
+	return nil
+}
+
+//Deliver - the transaction is being committed/dewlivered so update the Consensus Database with changes
+func (w *Wallet) Deliver(rawTX []byte, txHash []byte) (err error) {
+	assetID := w.Key()
+	payload, err := w.Payload()
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
+	}
+
+	assetsError := w.AddCoreMappings(rawTX, txHash)
+	if assetsError != nil {
+		return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+	}
+	var totalToSubtract int64
+
+	for _, wt := range payload.WalletTransfers {
+		res := bytes.Compare(wt.AssetID, assetID)
+		if res == 0 {
+			//this is money coming back to self, just ignore it
+			continue
+		}
+		amount := wt.Amount
+		destinationAssetID := wt.AssetID
+		w.addToBalanceKey(destinationAssetID, amount)
+		totalToSubtract += amount
+	}
+	w.subtractFromBalanceKey(assetID, totalToSubtract)
 	return nil
 }

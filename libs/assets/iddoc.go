@@ -150,7 +150,7 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	i.DataStore = datasource
 	//Check the IDDoc is valid
-	err := i.VerifyIDDoc(datasource)
+	err := i.VerifyIDDoc()
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 	//Add pointer from AssetID to the txHash of the Object
 	if deliver == true {
 		//Check  103 & 104
-		err := i.AddCoreMappings(datasource, rawTX, txHash)
+		err := i.AddCoreMappings(rawTX, txHash)
 		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
 		}
@@ -167,14 +167,14 @@ func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []b
 	return nil
 }
 
-func (i *IDDoc) VerifyIDDoc(datasource DataSource) error {
+func (i *IDDoc) VerifyIDDoc() error {
 	//Check 6
 	assetID := i.Key()
 	if assetID == nil {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
 	}
 
-	exists, err := i.Exists(datasource, assetID)
+	exists, err := i.Exists(assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}

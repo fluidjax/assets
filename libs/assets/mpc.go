@@ -81,7 +81,7 @@ func (m *MPC) Payload() (*protobuffer.PBMPC, error) {
 func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	m.DataStore = datasource
 	assetID := m.Key()
-	exists, err := m.Exists(datasource, assetID)
+	exists, err := m.Exists(assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
 	}
@@ -100,12 +100,12 @@ func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byt
 
 	if deliver == true {
 		//Commit
-		err = m.SetWithSuffix(datasource, assetID, ".as2ad", address)
+		err = m.SetWithSuffix(assetID, ".as2ad", address)
 		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
 		}
 
-		err = m.SetWithSuffix(datasource, address, ".ad2as", walletAssetID)
+		err = m.SetWithSuffix(address, ".ad2as", walletAssetID)
 		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
 		}

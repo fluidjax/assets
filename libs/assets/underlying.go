@@ -77,7 +77,7 @@ func (u *Underlying) Payload() (*protobuffer.PBUnderlying, error) {
 func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
 	u.DataStore = datasource
 	assetID := u.Key()
-	exists, err := u.Exists(datasource, assetID)
+	exists, err := u.Exists(assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
@@ -95,7 +95,7 @@ func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHas
 	amount := payload.Amount
 	underlyingTxID := []byte(payload.TxID)
 
-	underlyingUTxIDExists, err := u.GetWithSuffix(datasource, underlyingTxID, ".UTxID")
+	underlyingUTxIDExists, err := u.GetWithSuffix(underlyingTxID, ".UTxID")
 	if err != nil || underlyingUTxIDExists != nil {
 		return NewAssetsError(CodeConsensusUnderlyingTXExists, "Consensus Error - Underlying Transaction already exists")
 
@@ -103,17 +103,17 @@ func (u *Underlying) ConsensusProcess(datasource DataSource, rawTX []byte, txHas
 
 	if deliver == true {
 		//Add in a KV for the underlying UTxID, so we don't eneter it twice
-		err = u.SetWithSuffix(datasource, underlyingTxID, ".UTxID", []byte("1"))
+		err = u.SetWithSuffix(underlyingTxID, ".UTxID", []byte("1"))
 		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Fail to create Underlying Transaction Exists flag")
 		}
 
 		//underlying has Crypto Address - get AssetID from KV Store
-		assetID, err := u.GetWithSuffix(datasource, address, ".ad2as")
+		assetID, err := u.GetWithSuffix(address, ".ad2as")
 		if err != nil {
 			return NewAssetsError(CodeDatabaseFail, "Fail to get address using address to asset lookup")
 		}
-		assetError := u.addToBalanceKey(datasource, assetID, amount)
+		assetError := u.addToBalanceKey(assetID, amount)
 		if assetError != nil {
 			return NewAssetsError(CodeConsensusBalanceFailToAddUnderlying, "Fail to address underlying Transaction to Address Balance")
 		}

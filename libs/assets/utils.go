@@ -51,3 +51,23 @@ func containsString(arr []string, str string) bool {
 	}
 	return false
 }
+
+func SetupIDDocs(store DataSource) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
+	idP, _ := NewIDDoc("Primary")
+	idP.DataStore = store
+	idP.Save()
+
+	idT1, _ := NewIDDoc("1")
+	idT1.DataStore = store
+	idT1.Save()
+
+	idT2, _ := NewIDDoc("2")
+	idT2.DataStore = store
+	idT2.Save()
+
+	idT3, _ := NewIDDoc("3")
+	idT3.DataStore = store
+	idT3.Save()
+
+	return idP, idT1, idT2, idT3
+}
