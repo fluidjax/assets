@@ -53,7 +53,7 @@ func StartWait(count int) {
 			print("Incoming")
 			incomingCount++
 			if incomingCount == count {
-				time.Sleep(1000 * time.Millisecond)
+				time.Sleep(3000 * time.Millisecond)
 				wg.Done()
 				return
 			}

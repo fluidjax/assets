@@ -42,3 +42,11 @@ func (m *Mapstore) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asset us
 	result, err := m.RawGet(txid)
 	return result, nil
 }
+
+func (m *Mapstore) CacheSet(key []byte, data []byte) (string, error) {
+	return "", nil
+}
+
+func (m *Mapstore) CacheGet(key []byte) ([]byte, error) {
+	return nil, nil
+}

@@ -35,6 +35,14 @@ func (nc *NodeConnector) GetSignedAsset(key []byte) (*protobuffer.PBSignedAsset,
 	return msg, nil
 }
 
+func (nc *NodeConnector) CacheSet(key []byte, data []byte) (string, error) {
+	return "", nil
+}
+
+func (nc *NodeConnector) CacheGet(key []byte) ([]byte, error) {
+	return nil, nil
+}
+
 func (nc *NodeConnector) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asset using Asset ID
 	txid, err := nc.SingleRawConsensusSearch(assetID)
 	if err != nil {

@@ -40,6 +40,7 @@ const (
 	CodeConsensusInsufficientFunds          TransactionCode = 205
 	CodeConsensusSignedAssetFailtoVerify    TransactionCode = 206
 	CodeConsensusWalletNoTransferRules      TransactionCode = 207
+	CodeConsensusWalletHasTransferRules     TransactionCode = 208
 
 	CodeConsensusTransferRulesFailed       TransactionCode = 400
 	CodeConsensusFailedToResolveExpression TransactionCode = 401

@@ -78,3 +78,13 @@ func (app *QredoChain) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asse
 	result, err := app.RawGet(txid)
 	return result, nil
 }
+
+
+
+func (app *QredoChain) CacheSet(key []byte, data []byte) (string, error) {
+	return "", nil
+}
+
+func (app *QredoChain) CacheGet(key []byte) ([]byte, error) {
+	return nil, nil
+}

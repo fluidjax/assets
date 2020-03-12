@@ -291,6 +291,7 @@ func (w *Wallet) VerifyWalletUpdate() (err error) {
 		return err
 	}
 
+	//Check generic Update & Siganture verifications
 	err = w.ConsensusVerifyUpdate()
 	if err != nil {
 		return err
@@ -298,12 +299,12 @@ func (w *Wallet) VerifyWalletUpdate() (err error) {
 
 	payload, err := w.Payload()
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:WalletUpdate:Fail to determine Wallet Payload")
 	}
 
 	currentBalance, assetsError := w.getBalanceKey(assetID)
 	if assetsError != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to fetch Current Balance")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:WalletUpdate:Fail to fetch Current Balance")
 	}
 
 	//Check we have enough - Pass 1
@@ -319,7 +320,7 @@ func (w *Wallet) VerifyWalletUpdate() (err error) {
 
 	if totalOutgoing > currentBalance {
 		//println("Eject")
-		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Outgoing > CurrentBalance")
+		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus:Error:Check:WalletUpdate:Outgoing > CurrentBalance")
 	}
 
 	return nil
@@ -331,20 +332,24 @@ func (w *Wallet) VerifyWalletCreate() (err error) {
 	if err != nil {
 		return err
 	}
-
-	err = w.ConsensusVerifyCreate()
-	if err != nil {
-		return err
-	}
-
 	//check 11
 	payload, err := w.Payload()
 	if payload.Currency == 0 {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Currency")
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:WalletCreate:Invalid Madatory Field:Currency")
 	}
 	//check 11
 	if payload.SpentBalance != 0 {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Balance Starts at 0")
+	}
+	err = w.ConsensusVerifyMutableCreate()
+	if err != nil {
+		return err
+	}
+
+	//Signed Asset Check
+	assetError := w.Verify()
+	if assetError != nil {
+		return assetError
 	}
 
 	return nil
@@ -354,7 +359,7 @@ func (w *Wallet) DeliverWalletCreate(rawTX []byte, txHash []byte) (err error) {
 	//New Wallet Deliver
 	assetsError := w.AddCoreMappings(rawTX, txHash)
 	if assetsError != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:WalletCreate:Fail to Add Core Mappings")
 	}
 	w.setBalanceKey(w.Key(), 0)
 	return nil
@@ -365,12 +370,12 @@ func (w *Wallet) DeliverWalletUpdate(rawTX []byte, txHash []byte) (err error) {
 	assetID := w.Key()
 	payload, err := w.Payload()
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:WalletUpdate:Fail to determine Wallet Payload")
 	}
 
 	assetsError := w.AddCoreMappings(rawTX, txHash)
 	if assetsError != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:WalletUpdate:Fail to Add Core Mappings")
 	}
 	var totalToSubtract int64
 

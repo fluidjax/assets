@@ -30,6 +30,22 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//ConsensusProcess - this is the  Verification for the Consensus Rules.
+func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+	i.DataStore = datasource
+	//Check the IDDoc is valid
+	err := i.VerifyIDDocCreate()
+	if err != nil {
+		return err
+	}
+
+	//Add pointer from AssetID to the txHash of the Object
+	if deliver == true {
+		return i.DeliverIDDocCreate(rawTX, txHash)
+	}
+	return nil
+}
+
 //NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
 func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, err error) {
 	if seed == nil {
@@ -127,6 +143,11 @@ func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 	return i.CurrentAsset.Asset.GetIddoc(), nil
 }
 
+// func (i *IDDoc) Save() (string, error) {
+// 	print("**** COULD USE CACHE")
+// 	return i.SignedAsset.Save()
+// }
+
 //LoadIDDoc -
 func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 	data, err := store.RawGet(iddocID)
@@ -147,53 +168,15 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 
 }
 
-func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	i.DataStore = datasource
-	//Check the IDDoc is valid
-	err := i.VerifyIDDoc()
-	if err != nil {
-		return err
+func (i *IDDoc) VerifyIDDocCreate() error {
+
+	assetError := i.ConsensusVerifyImmutableCreate()
+	if assetError != nil {
+		return assetError
 	}
 
-	//Add pointer from AssetID to the txHash of the Object
-	if deliver == true {
-		//Check  103 & 104
-		err := i.AddCoreMappings(rawTX, txHash)
-		if err != nil {
-			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
-		}
-		//events = processTags(iddoc.CurrentAsset.Asset.Tags)
-	}
-	return nil
-}
-
-func (i *IDDoc) VerifyIDDoc() error {
-	//Check 6
-	assetID := i.Key()
-	if assetID == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
-	}
-
-	exists, err := i.Exists(assetID)
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
-	}
-
-	//Check 4
-	if exists == true {
-		//IDDoc is immutable so if this AssetID already has a value we can't update it.
-		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
-	}
-	//check 9.1
-	payload, err := i.Payload()
-	if err != nil {
-		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
-	}
-	//check 9
-	if payload == nil {
-		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
-	}
-	//check 11
+	//Check IDDoc specific Fields
+	payload, _ := i.Payload()
 	if payload.AuthenticationReference == "" {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:AuthenticationReference")
 	}
@@ -215,7 +198,7 @@ func (i *IDDoc) VerifyIDDoc() error {
 	}
 
 	//Signed Asset Check
-	assetError := i.Verify()
+	assetError = i.Verify()
 	if assetError != nil {
 		return assetError
 	}
@@ -223,13 +206,19 @@ func (i *IDDoc) VerifyIDDoc() error {
 	return nil
 }
 
+func (i *IDDoc) DeliverIDDocCreate(rawTX []byte, txHash []byte) error {
+	assetsError := i.AddCoreMappings(rawTX, txHash)
+	if assetsError != nil {
+		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+	}
+	return nil
+}
+
 //Verify - SelfVerify - IDDocs can self verify against their own BLS Public Key
 func (i *IDDoc) Verify() error {
-
 	if i == nil {
 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Invalid IDDocs")
 	}
-
 	if i.CurrentAsset.Signature == nil {
 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Signature is Nil")
 	}
@@ -238,7 +227,6 @@ func (i *IDDoc) Verify() error {
 	if err != nil {
 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Fail to Serialize Asset")
 	}
-
 	idDocPayload, err := i.Payload()
 	if err != nil {
 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Fail to Parse Payload")

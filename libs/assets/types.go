@@ -86,4 +86,8 @@ type DataSource interface {
 	Set(key []byte, data []byte) (string, error) //Set data in the current Batch
 	RawGet(key []byte) ([]byte, error)           //Get data from underlying commited  database
 	GetAssetbyID(assetID []byte) ([]byte, error) //Get Asset using Asset ID
+
+	CacheSet(key []byte, data []byte) (string, error) //Put the Item in the cache
+	CacheGet(key []byte) ([]byte, error)              //Get the item from the cache
+
 }
