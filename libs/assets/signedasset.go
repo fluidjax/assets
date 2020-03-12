@@ -868,6 +868,7 @@ func (a *SignedAsset) ConsensusVerifyCreate() error {
 //ConsensusVerifyUpdate - consensus rules for a Asset update
 func (a *SignedAsset) ConsensusVerifyUpdate() error {
 	//Check Index = previous Index + 1
+	
 	if a.CurrentAsset.Asset.Index != a.PreviousAsset.Asset.Index+1 {
 		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
 	}

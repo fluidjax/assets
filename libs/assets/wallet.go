@@ -29,6 +29,40 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//ConsensusProcess - this is the  Verification for the Consensus Rules.
+//Different rules/processes depending on whether its an Update or Create and tendermint Check_TX or Deliver_TX
+func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+	w.DataStore = datasource
+
+	//Check if Asset Exists - ie, if update or create
+	walletUpdate, err := w.Exists(w.Key())
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
+	}
+
+	if walletUpdate == false {
+		//This is a new Wallet - CREATE
+		assetError := w.VerifyWalletCreate()
+		if assetError != nil {
+			return assetError
+		}
+		if deliver == true {
+			return w.DeliverWalletCreate(rawTX, txHash)
+		}
+	} else {
+		//This is a wallet UPDATE
+
+		assetError := w.VerifyWalletUpdate()
+		if assetError != nil {
+			return assetError
+		}
+		if deliver == true {
+			w.DeliverWalletUpdate(rawTX, txHash)
+		}
+	}
+	return nil
+}
+
 //NewWallet - Setup a new Wallet
 func NewWallet(iddoc *IDDoc, currency protobuffer.PBCryptoCurrency) (w *Wallet, err error) {
 	if iddoc == nil {
@@ -224,94 +258,35 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 
 }
 
-func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	w.DataStore = datasource
+func (w *Wallet) LoadPreviousWallet() (err error) {
 	assetID := w.Key()
-
-	//Check if Asset Exists - ie, if update or create
-	walletUpdate, err := w.Exists(assetID)
+	msg, err := w.DataStore.GetAssetbyID(assetID)
+	if err != nil || msg == nil {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
+	}
+	signedAsset := &protobuffer.PBSignedAsset{}
+	err = proto.Unmarshal(msg, signedAsset)
 	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
 	}
-
-	if walletUpdate == false { //This is a new Wallet - create
-		if deliver == true {
-			//New Wallet Deliver
-			assetsError := w.AddCoreMappings(rawTX, txHash)
-			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
-			}
-			w.setBalanceKey(w.Key(), 0)
-		} else {
-			//New Wallet - Check
-			assetError := w.VerifyWalletCreate()
-			if assetError != nil {
-				return assetError
-			}
-		}
-	} else { //This is a wallet update
-		//events = processTags(wallet.CurrentAsset.Asset.Tags)
-		//Loop through all the transfers out and update their destinations
-
-		msg, err := w.DataStore.GetAssetbyID(assetID)
-		if err != nil || msg == nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
-		}
-		signedAsset := &protobuffer.PBSignedAsset{}
-		err = proto.Unmarshal(msg, signedAsset)
-		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Retrieve Particpiant AssetID")
-		}
-		previousWallet, err := ReBuildWallet(signedAsset, assetID)
-		if err != nil {
-			return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
-		}
-		w.PreviousAsset = previousWallet.CurrentAsset
-
-		payload, err := w.Payload()
-		if err != nil {
-			return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
-		}
-
-		assetError := w.VerifyWalletUpdate()
-		if assetError != nil {
-			return assetError
-		}
-
-		currentBalance, assetsError := w.getBalanceKey(assetID)
-		if assetsError != nil {
-			return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to fetch Current Balance")
-		}
-
-		//Check we have enough - Pass 1
-		var totalOutgoing int64
-		for _, wt := range payload.WalletTransfers {
-			res := bytes.Compare(wt.AssetID, assetID)
-			if res == 0 {
-				//this is money coming back to self, just ignore it
-				continue
-			}
-			totalOutgoing = totalOutgoing + wt.Amount
-		}
-
-		if totalOutgoing > currentBalance {
-			//println("Eject")
-			return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Outgoing > CurrentBalance")
-		}
-		//We have enough funds, do the database updates for transfer Pass 2
-
-		if deliver == true {
-			//println("Deliver")
-			w.Deliver(rawTX, txHash)
-
-		}
+	previousWallet, err := ReBuildWallet(signedAsset, assetID)
+	if err != nil {
+		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:Invalid Signature:Fail to Build IDDoc")
 	}
+	w.PreviousAsset = previousWallet.CurrentAsset
 	return nil
 }
 
 func (w *Wallet) VerifyWalletUpdate() (err error) {
 
+	assetID := w.Key()
+
 	err = w.ConsensusVerifyAll()
+	if err != nil {
+		return err
+	}
+
+	err = w.LoadPreviousWallet()
 	if err != nil {
 		return err
 	}
@@ -319,6 +294,32 @@ func (w *Wallet) VerifyWalletUpdate() (err error) {
 	err = w.ConsensusVerifyUpdate()
 	if err != nil {
 		return err
+	}
+
+	payload, err := w.Payload()
+	if err != nil {
+		return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
+	}
+
+	currentBalance, assetsError := w.getBalanceKey(assetID)
+	if assetsError != nil {
+		return NewAssetsError(CodeDatabaseFail, "Consensus - Fail to fetch Current Balance")
+	}
+
+	//Check we have enough - Pass 1
+	var totalOutgoing int64
+	for _, wt := range payload.WalletTransfers {
+		res := bytes.Compare(wt.AssetID, assetID)
+		if res == 0 {
+			//this is money coming back to self, just ignore it
+			continue
+		}
+		totalOutgoing = totalOutgoing + wt.Amount
+	}
+
+	if totalOutgoing > currentBalance {
+		//println("Eject")
+		return NewAssetsError(CodeConsensusInsufficientFunds, "Consensus - Outgoing > CurrentBalance")
 	}
 
 	return nil
@@ -330,6 +331,7 @@ func (w *Wallet) VerifyWalletCreate() (err error) {
 	if err != nil {
 		return err
 	}
+
 	err = w.ConsensusVerifyCreate()
 	if err != nil {
 		return err
@@ -348,8 +350,18 @@ func (w *Wallet) VerifyWalletCreate() (err error) {
 	return nil
 }
 
+func (w *Wallet) DeliverWalletCreate(rawTX []byte, txHash []byte) (err error) {
+	//New Wallet Deliver
+	assetsError := w.AddCoreMappings(rawTX, txHash)
+	if assetsError != nil {
+		return NewAssetsError(CodeDatabaseFail, "Fail to Add Core Mappings")
+	}
+	w.setBalanceKey(w.Key(), 0)
+	return nil
+}
+
 //Deliver - the transaction is being committed/dewlivered so update the Consensus Database with changes
-func (w *Wallet) Deliver(rawTX []byte, txHash []byte) (err error) {
+func (w *Wallet) DeliverWalletUpdate(rawTX []byte, txHash []byte) (err error) {
 	assetID := w.Key()
 	payload, err := w.Payload()
 	if err != nil {
