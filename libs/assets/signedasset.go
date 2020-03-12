@@ -439,6 +439,11 @@ func (a *SignedAsset) VerifyAsset(signature []byte, i *IDDoc) (verify bool, err 
 	return Verify(msg, signature, i)
 }
 
+//AddSigner - wrapper for aggregated sign, to permit one at once
+func (a *SignedAsset) AddSigner(iddoc *IDDoc, abbreviation string, signature []byte) {
+	panic("Unfinished")
+}
+
 // AggregatedSign  - Aggregates BLSPubKeys and BLSSignatures from supplied array of SignatureIDs
 // Results are inserted into the object
 // only error is returned
