@@ -24,27 +24,10 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
-	"github.com/qredo/assets/libs/crypto"
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
 )
-
-//ConsensusProcess - this is the  Verification for the Consensus Rules.
-func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	i.DataStore = datasource
-	//Check the IDDoc is valid
-	err := i.VerifyIDDocCreate()
-	if err != nil {
-		return err
-	}
-
-	//Add pointer from AssetID to the txHash of the Object
-	if deliver == true {
-		return i.DeliverIDDocCreate(rawTX, txHash)
-	}
-	return nil
-}
 
 //NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
 func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, err error) {
@@ -143,11 +126,6 @@ func (i *IDDoc) Payload() (*protobuffer.PBIDDoc, error) {
 	return i.CurrentAsset.Asset.GetIddoc(), nil
 }
 
-// func (i *IDDoc) Save() (string, error) {
-// 	print("**** COULD USE CACHE")
-// 	return i.SignedAsset.Save()
-// }
-
 //LoadIDDoc -
 func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 	data, err := store.RawGet(iddocID)
@@ -166,75 +144,4 @@ func LoadIDDoc(store DataSource, iddocID []byte) (i *IDDoc, err error) {
 
 	return iddoc, nil
 
-}
-
-func (i *IDDoc) VerifyIDDocCreate() error {
-
-	assetError := i.ConsensusVerifyImmutableCreate()
-	if assetError != nil {
-		return assetError
-	}
-
-	//Check IDDoc specific Fields
-	payload, _ := i.Payload()
-	if payload.AuthenticationReference == "" {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:AuthenticationReference")
-	}
-	//check 11
-	if payload.BeneficiaryECPublicKey == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:BeneficiaryECPublicKey")
-	}
-	//check 11
-	if payload.SikePublicKey == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:SikePublicKey")
-	}
-	//check 11
-	if payload.BLSPublicKey == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:BLSPublicKey")
-	}
-	//Check 7
-	if i.CurrentAsset.Asset.Index != 1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
-	}
-
-	//Signed Asset Check
-	assetError = i.Verify()
-	if assetError != nil {
-		return assetError
-	}
-
-	return nil
-}
-
-func (i *IDDoc) DeliverIDDocCreate(rawTX []byte, txHash []byte) error {
-	assetsError := i.AddCoreMappings(rawTX, txHash)
-	if assetsError != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
-	}
-	return nil
-}
-
-//Verify - SelfVerify - IDDocs can self verify against their own BLS Public Key
-func (i *IDDoc) Verify() error {
-	if i == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Invalid IDDocs")
-	}
-	if i.CurrentAsset.Signature == nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Signature is Nil")
-	}
-	//Message
-	msg, err := i.SerializeAsset()
-	if err != nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Fail to Serialize Asset")
-	}
-	idDocPayload, err := i.Payload()
-	if err != nil {
-		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:Fail to Parse Payload")
-	}
-	blsPK := idDocPayload.GetBLSPublicKey()
-	rc := crypto.BLSVerify(msg, blsPK, i.CurrentAsset.Signature)
-	if rc == 0 {
-		return nil
-	}
-	return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:BLSVerify fails")
 }

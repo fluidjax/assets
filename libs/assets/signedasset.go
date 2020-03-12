@@ -845,7 +845,7 @@ func (a *SignedAsset) ConsensusVerifyAll() error {
 }
 
 //ConsensusVerifyCreate - consensus rules for a Asset create
-func (a *SignedAsset) ConsensusVerifyImmutableCreate() error {
+func (a *SignedAsset) VerifyImmutableCreate() error {
 	assetID := a.Key()
 
 	assetError := a.ConsensusVerifyAll()
