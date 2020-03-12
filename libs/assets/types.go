@@ -87,7 +87,7 @@ type DataSource interface {
 	RawGet(key []byte) ([]byte, error)           //Get data from underlying commited  database
 	GetAssetbyID(assetID []byte) ([]byte, error) //Get Asset using Asset ID
 
-	CacheSet(key []byte, data []byte) (string, error) //Put the Item in the cache
-	CacheGet(key []byte) ([]byte, error)              //Get the item from the cache
+	CacheSet(key []byte, data []byte) //Put the Item in the cache
+	CacheGet(key []byte) []byte       //Get the item from the cache
 
 }

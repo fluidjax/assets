@@ -12,8 +12,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qredo/assets/libs/assets"
 	"github.com/qredo/assets/libs/protobuffer"
+	"github.com/qredo/assets/libs/ringmap"
 	rpcTypes "github.com/tendermint/tendermint/rpc/lib/types"
 )
+
+var cache *ringmap.RingMap
 
 func (nc *NodeConnector) BatchGet(assetID []byte) ([]byte, error) {
 	return nil, nil
@@ -35,12 +38,18 @@ func (nc *NodeConnector) GetSignedAsset(key []byte) (*protobuffer.PBSignedAsset,
 	return msg, nil
 }
 
-func (nc *NodeConnector) CacheSet(key []byte, data []byte) (string, error) {
-	return "", nil
+func (nc *NodeConnector) CacheSet(key []byte, data []byte) {
+	if cache == nil {
+		cache = ringmap.NewRingMap(5)
+	}
+	cache.Put(string(key), data)
 }
 
-func (nc *NodeConnector) CacheGet(key []byte) ([]byte, error) {
-	return nil, nil
+func (nc *NodeConnector) CacheGet(key []byte) []byte {
+	if cache == nil {
+		return nil
+	}
+	return cache.Get(string(key))
 }
 
 func (nc *NodeConnector) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asset using Asset ID

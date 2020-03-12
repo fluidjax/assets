@@ -545,7 +545,7 @@ The Public Keys for the MPC nodes, the Watcher service, and any other permission
 
 # Crystalization
 
-The values of each  UTXOs once added to the Qredochain do not remain tied to the Wallet they originally fund.  At any point a crystalization process can be performed, mapping UTXOs on an underlying chain to Balances stored in a Qredochain Wallet.
+At any point a crystalization process can be performed, mapping UTXOs on an underlying chain to Balances stored in a Qredochain Wallet.
 The mapping process is deterministic. This means that when any Qredochain Node crystalizes the current UTXOs & Qredochain wallets, it will generate the same mappings/relationships as every other node. 
 
 This is essential to ensure that at any point in time, every user can unambiguously know which underlying BTC UTXOs (or part) belonging to them, or in fact any other users. Although these mappings are transient and will vary as each block is added to the Qredochain, they are fixed and can be absolutely determined at any given block height.

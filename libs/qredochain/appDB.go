@@ -79,12 +79,10 @@ func (app *QredoChain) GetAssetbyID(assetID []byte) ([]byte, error) { //Get Asse
 	return result, nil
 }
 
-
-
-func (app *QredoChain) CacheSet(key []byte, data []byte) (string, error) {
-	return "", nil
+func (app *QredoChain) CacheSet(key []byte, data []byte) {
+	return
 }
 
-func (app *QredoChain) CacheGet(key []byte) ([]byte, error) {
-	return nil, nil
+func (app *QredoChain) CacheGet(key []byte) []byte {
+	return nil
 }

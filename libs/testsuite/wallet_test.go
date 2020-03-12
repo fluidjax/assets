@@ -124,11 +124,9 @@ func Test_Wallet_Create(t *testing.T) {
 	return
 
 }
-
 func Test_TruthTable(t *testing.T) {
 	//Local test of the truth table
 	idP, idT1, idT2, idT3 := SetupIDDocs(t)
-
 	expression := "t1 + t2 + t3 > 1 & p"
 	participants := &map[string][]byte{
 		"p":  idP.Key(),

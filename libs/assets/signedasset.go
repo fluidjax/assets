@@ -44,22 +44,22 @@ func (a *SignedAsset) DeepCopyUpdatePayload() {
 	copier.Copy(a.CurrentAsset.Asset.Payload, a.PreviousAsset.Asset.Payload)
 }
 
-// Sign - this Signs the Asset including the Payload
-func (a *SignedAsset) Sign(iddoc *IDDoc) error {
+// Sign - this Signs the Asset including the Payload as Principal ("P")
+func (a *SignedAsset) Sign(principalIDDoc *IDDoc) error {
 	if a == nil {
 		return errors.New("SignedAsset is nil")
 	}
-	if iddoc == nil {
+	if principalIDDoc == nil {
 		return errors.New("Sign - supplied IDDoc is nil")
 	}
 	msg, err := a.SerializeAsset()
 	if err != nil {
 		return errors.Wrap(err, "Failed to Marshall Asset in Sign")
 	}
-	if iddoc.Seed == nil {
+	if principalIDDoc.Seed == nil {
 		return errors.New("Unable to Sign IDDoc - No Seed")
 	}
-	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.Seed)
+	_, blsSK, err := keystore.GenerateBLSKeys(principalIDDoc.Seed)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	if a.CurrentAsset.Signature == nil {
 		a.CurrentAsset.Signature = signature
 		signers := make(map[string][]byte)
-		signers["P"] = iddoc.Key()
+		signers["P"] = principalIDDoc.Key()
 		a.CurrentAsset.Signers = signers
 	} else {
 		//Add to make a BLS aggregated signature
@@ -81,46 +81,25 @@ func (a *SignedAsset) Sign(iddoc *IDDoc) error {
 	return nil
 }
 
-// // Verify the Signature of the Asset (including the Payload)
-// func (a *SignedAsset) Verify(iddoc *IDDoc) error {
-
-// 	//Check 2
-// 	if a == nil {
-// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Signed Asset is nil")
-// 	}
-// 	if a.CurrentAsset == nil {
-// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Current Asset is nil")
-// 	}
-// 	if a.CurrentAsset.Signature == nil {
-// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
-// 	}
-// 	if iddoc == nil {
-// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:IDDoc is nil")
-// 	}
-// 	msg, err := a.SerializeAsset()
-// 	if err != nil {
-// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Serialize Asset")
-// 	}
-// 	payload, err := iddoc.Payload()
-// 	if err != nil {
-// 		return NewAssetsError(CodeConsensusSignedAssetFailtoVerify, "Consensus:Error:Check:VerifySignedAsset:Fail to Retrieve Payload")
-// 	}
-
-// 	//Check 3
-// 	blsPK := payload.GetBLSPublicKey()
-// 	rc := crypto.BLSVerify(msg, blsPK, a.CurrentAsset.Signature)
-// 	if rc != 0 {
-// 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature")
-// 	}
-// 	return nil
-// }
-
 // Key Return the AssetKey
 func (a *SignedAsset) Key() []byte {
 	if a == nil {
 		return nil
 	}
 	return a.CurrentAsset.Asset.GetID()
+}
+
+func (a *SignedAsset) SaveCache() (string, error) {
+	if a == nil {
+		return "", errors.New("SignedAsset is nil")
+	}
+	store := a.DataStore
+	data, err := a.SerializeSignedAsset()
+	if err != nil {
+		return "", err
+	}
+	store.CacheSet(a.Key(), data)
+	return store.Set(a.Key(), data)
 }
 
 // Save - write the entire Signed Asset to the store
@@ -134,15 +113,24 @@ func (a *SignedAsset) Save() (string, error) {
 		return "", err
 	}
 	return store.Set(a.Key(), data)
-
 }
 
 // Load - read a SignedAsset from the store
-func Load(store DataSource, key []byte) (*protobuffer.PBSignedAsset, error) {
-	val, err := store.RawGet(key)
-	if err != nil {
-		return nil, err
+func Load(store DataSource, key []byte, useCache bool) (*protobuffer.PBSignedAsset, error) {
+	var val []byte
+	var err error
+
+	//try the cache
+	if useCache == true {
+		val = store.CacheGet(key)
 	}
+	if val == nil {
+		val, err = store.GetAssetbyID(key)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if val == nil {
 		return nil, errors.New("Key not found")
 	}
@@ -328,7 +316,7 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	totalParticipants := len(transfer.Participants)
 	var participantArray []TransferParticipant
 	for key, idkey := range transfer.Participants {
-		idsig, err := Load(a.DataStore, idkey)
+		idsig, err := Load(a.DataStore, idkey, true)
 		if err != nil {
 			return nil, errors.New("Failed to load iddoc " + hex.EncodeToString(idkey))
 		}
@@ -369,25 +357,6 @@ func (a *SignedAsset) TruthTable(transferType protobuffer.PBTransferType) ([]str
 	return matchedTrue, nil
 }
 
-// Sign - generic Sign Function
-func Sign(msg []byte, iddoc *IDDoc) (signature []byte, err error) {
-	if iddoc == nil {
-		return nil, errors.New("Sign - supplied IDDoc is nil")
-	}
-	if iddoc.Seed == nil {
-		return nil, errors.New("Unable to Sign IDDoc - No Seed")
-	}
-	_, blsSK, err := keystore.GenerateBLSKeys(iddoc.Seed)
-	if err != nil {
-		return nil, err
-	}
-	rc, signature := crypto.BLSSign(msg, blsSK)
-	if rc != 0 {
-		return nil, errors.New("Failed to Sign Asset")
-	}
-	return signature, nil
-}
-
 // SignAsset - returns the BLS signature of the serialize payload, signed with the BLS Private key of the supplied IDDoc
 // note the IDDoc must contain the seed
 func (a *SignedAsset) SignAsset(i *IDDoc) (s []byte, err error) {
@@ -403,20 +372,6 @@ func (a *SignedAsset) SignAsset(i *IDDoc) (s []byte, err error) {
 	}
 	signature, err := Sign(msg, i)
 	return signature, err
-}
-
-// Verify - generic verify function
-func Verify(msg []byte, signature []byte, iddoc *IDDoc) (bool, error) {
-	idDocPayload, err := iddoc.Payload()
-	if err != nil {
-		return false, err
-	}
-	blsPK := idDocPayload.GetBLSPublicKey()
-	rc := crypto.BLSVerify(msg, blsPK, signature)
-	if rc == 0 {
-		return true, nil
-	}
-	return false, nil
 }
 
 // VerifyAsset - verifies the supplied signature with supplied IDDoc's BLS Public Key
@@ -521,7 +476,7 @@ func buildSigKeys(store *DataSource, signers []string, currentTransfer *protobuf
 	//For each supplied signer re-build a PublicKey
 	for _, abbreviation := range signers {
 		participantID := currentTransfer.Participants[abbreviation]
-		signedAsset, err := Load(*store, participantID)
+		signedAsset, err := Load(*store, participantID, false) //groups aren't cached
 		if err != nil {
 			return nil, nil, errors.New("Failed to retieve IDDoc")
 		}
@@ -566,7 +521,7 @@ func (a *SignedAsset) FullVerify() (bool, error) {
 
 	//For each supplied signer re-build a PublicKey
 	for abbreviation, participantID := range a.CurrentAsset.Signers {
-		signedAsset, err := Load(a.DataStore, participantID)
+		signedAsset, err := Load(a.DataStore, participantID, true)
 		if err != nil {
 			return false, errors.New("Failed to retieve IDDoc")
 		}
@@ -743,6 +698,7 @@ func (a *SignedAsset) addToBalanceKey(assetID []byte, amount int64) error {
 	newBalance := currentBalance + amount
 	return a.setBalanceKey(assetID, newBalance)
 }
+
 func (a *SignedAsset) setBalanceKey(assetID []byte, newBalance int64) error {
 	//Convert new balance to bytes and save for AssetID
 	newBalanceBytes := make([]byte, 8)

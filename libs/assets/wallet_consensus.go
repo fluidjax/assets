@@ -34,7 +34,6 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 		return w.Deliver(rawTX, txHash)
 	}
 	return nil
-
 }
 
 //Verify -

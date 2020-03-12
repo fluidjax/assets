@@ -219,7 +219,6 @@ func LoadWallet(store DataSource, walletID []byte) (w *Wallet, err error) {
 	}
 
 	return wallet, nil
-
 }
 
 func (w *Wallet) LoadPreviousWallet() (err error) {

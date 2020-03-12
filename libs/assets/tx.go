@@ -1,13 +1,9 @@
 package assets
 
 import (
-	"crypto/sha256"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/qredo/assets/libs/protobuffer"
 )
-
-
 
 //BuildAssetFromTX -
 func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte, assetsError error) {
@@ -44,10 +40,4 @@ func BuildAssetFromTX(tx []byte) (txAsset TXAsset, assetID []byte, txHash []byte
 	}
 
 	return txAsset, assetID, txHash, nil
-}
-
-func TxHash(rawTX []byte) []byte {
-	txHashA := sha256.Sum256(rawTX)
-	txHash := txHashA[:]
-	return txHash
 }

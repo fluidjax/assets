@@ -1,6 +1,7 @@
 package testsuite
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/qredo/assets/libs/assets"
@@ -12,7 +13,8 @@ func Test_IDDoc(t *testing.T) {
 
 	//Standard build
 	i := BuildTestIDDoc(t)
-	go StartWait(1)
+	wg := &sync.WaitGroup{}
+	go StartWait(1, wg)
 	txid, err := i.Save()
 	wg.Wait()
 
@@ -29,7 +31,7 @@ func Test_IDDoc(t *testing.T) {
 	txid, err = i.Save()
 	assetError, _ := err.(*assets.AssetsError)
 	assert.NotNil(t, assetError, "Error should not be nil")
-	assert.True(t, assetError.Code() == assets.CodeConsensusSignedAssetFailtoVerify, "Incorrect Error code")
+	assert.True(t, assetError.Code() == assets.CodeConsensusErrorFailtoVerifySignature, "Incorrect Error code - "+assetError.Code().String())
 
 	//Error: AssetID to Nil
 	i = BuildTestIDDoc(t)

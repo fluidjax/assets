@@ -28,7 +28,6 @@ var app *qredochain.QredoChain
 var tnode *node.Node
 var nc *qredochain.NodeConnector
 var out <-chan ctypes.ResultEvent
-var wg sync.WaitGroup
 var subClient *tmclient.HTTP
 
 func ShutDown() {
@@ -44,22 +43,22 @@ func ShutDown() {
 	}
 }
 
-func StartWait(count int) {
+func StartWait(count int, wg *sync.WaitGroup) {
 	incomingCount := 0
 	wg.Add(1)
-	for {
-		select {
-		case _ = <-out:
-			print("Incoming")
-			incomingCount++
-			if incomingCount == count {
-				time.Sleep(3000 * time.Millisecond)
-				wg.Done()
-				return
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case _ = <-out:
+				incomingCount++
+				if incomingCount == count {
+					time.Sleep(1000 * time.Millisecond)
+					wg.Done()
+				}
 			}
-
 		}
-	}
+	}()
 }
 func SubscriptionClient() {
 	var err error

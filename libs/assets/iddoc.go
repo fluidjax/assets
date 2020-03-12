@@ -27,7 +27,10 @@ import (
 	"github.com/qredo/assets/libs/cryptowallet"
 	"github.com/qredo/assets/libs/keystore"
 	"github.com/qredo/assets/libs/protobuffer"
+
 )
+
+
 
 //NewIDDocWithSeed - generate new IDDoc with supplied seed & Auth ref
 func NewIDDocWithSeed(seed []byte, authenticationReference string) (i *IDDoc, err error) {

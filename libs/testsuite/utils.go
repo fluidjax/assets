@@ -11,28 +11,26 @@ import (
 )
 
 func SetupIDDocs(t *testing.T) (*assets.IDDoc, *assets.IDDoc, *assets.IDDoc, *assets.IDDoc) {
-	go StartWait(4)
+
 	idP := BuildTestIDDoc(t)
-	txid, chainErr := nc.PostTx(idP)
+	txid, chainErr := idP.SaveCache()
 	assert.Nil(t, chainErr, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
 
 	idT1 := BuildTestIDDoc(t)
-	txid, chainErr = nc.PostTx(idT1)
+	txid, chainErr = idT1.SaveCache()
 	assert.Nil(t, chainErr, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
 
 	idT2 := BuildTestIDDoc(t)
-	txid, chainErr = nc.PostTx(idT2)
+	txid, chainErr = idT2.SaveCache()
 	assert.Nil(t, chainErr, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
 
 	idT3 := BuildTestIDDoc(t)
-	txid, chainErr = nc.PostTx(idT3)
+	txid, chainErr = idT3.SaveCache()
 	assert.Nil(t, chainErr, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
-
-	wg.Wait()
 
 	return idP, idT1, idT2, idT3
 }
