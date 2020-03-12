@@ -228,13 +228,13 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	w.DataStore = datasource
 	assetID := w.Key()
 
-	//Check 4 - Mutability
-	exists, err := w.Exists(datasource, assetID)
+	//Check if Asset Exists - ie, if update or create
+	walletUpdate, err := w.Exists(datasource, assetID)
 	if err != nil {
 		return NewAssetsError(CodeDatabaseFail, "Fail to access database")
 	}
 
-	if exists == false { //This is a new Wallet - create
+	if walletUpdate == false { //This is a new Wallet - create
 		if deliver == true {
 			//New Wallet Deliver
 			assetsError := w.AddCoreMappings(datasource, rawTX, txHash)
@@ -244,7 +244,7 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 			w.setBalanceKey(datasource, w.Key(), 0)
 		} else {
 			//New Wallet - Check
-			assetError := w.VerifyWallet(datasource)
+			assetError := w.VerifyWalletCreate(datasource)
 			if assetError != nil {
 				return assetError
 			}
@@ -273,7 +273,7 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 			return NewAssetsError(CodeDatabaseFail, "Fail to determine Wallet Payload")
 		}
 
-		assetError := w.VerifyUpdateWallet(datasource)
+		assetError := w.VerifyWalletUpdate(datasource)
 		if assetError != nil {
 			return assetError
 		}
@@ -325,69 +325,34 @@ func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []
 	return nil
 }
 
-func (w *Wallet) VerifyUpdateWallet(datasource DataSource) error {
-	//Check 6
-	assetID := w.Key()
-	if assetID == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
-	}
+func (w *Wallet) VerifyWalletUpdate(datasource DataSource) (err error) {
 
-	//check 9.1
-	payload, err := w.Payload()
+	err = w.ConsensusVerifyAll()
 	if err != nil {
-		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
-	}
-	//check 9
-	if payload == nil {
-		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+		return err
 	}
 
-	//Check Index = previous Index + 1
-	if w.CurrentAsset.Asset.Index != w.PreviousAsset.Asset.Index+1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
-	}
-
-	if w.CurrentAsset.Asset.Transferlist == nil {
-		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
-	}
-	if len(w.CurrentAsset.Asset.Transferlist) == 0 {
-		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
-	}
-
-	//Signed Asset Check
-	transferSigs, assetError := w.VerifyAndGenerateTransferSignatures()
-	if assetError != nil {
-		return assetError
-	}
-
-	//check expression & signatures
-	transferType := w.CurrentAsset.GetAsset().TransferType
-	_, assetError = w.IsValidTransfer(transferType, transferSigs)
-	if assetError != nil {
-		return assetError
+	err = w.ConsensusVerifyUpdate()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (w *Wallet) VerifyWallet(datasource DataSource) error {
+func (w *Wallet) VerifyWalletCreate(datasource DataSource) (err error) {
 
-	//Check 6
-	assetID := w.Key()
-	if assetID == nil {
-		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
-	}
-
-	//check 9.1
-	payload, err := w.Payload()
+	err = w.ConsensusVerifyAll()
 	if err != nil {
-		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+		return err
 	}
-	//check 9
-	if payload == nil {
-		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	err = w.ConsensusVerifyCreate()
+	if err != nil {
+		return err
 	}
+
 	//check 11
+	payload, err := w.Payload()
 	if payload.Currency == 0 {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Currency")
 	}
@@ -396,43 +361,5 @@ func (w *Wallet) VerifyWallet(datasource DataSource) error {
 		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid Madatory Field:Balance Starts at 0")
 	}
 
-	//Check 7
-	if w.CurrentAsset.Asset.Index != 1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
-	}
-
-	if w.CurrentAsset.Asset.Transferlist == nil {
-		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
-	}
-	if len(w.CurrentAsset.Asset.Transferlist) == 0 {
-		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
-	}
-
-	//Signed Asset Check
-	assetError := w.Verify()
-	if assetError != nil {
-		return assetError
-	}
-
 	return nil
-}
-
-func SetupIDDocs(store DataSource) (*IDDoc, *IDDoc, *IDDoc, *IDDoc) {
-	idP, _ := NewIDDoc("Primary")
-	idP.DataStore = store
-	idP.Save()
-
-	idT1, _ := NewIDDoc("1")
-	idT1.DataStore = store
-	idT1.Save()
-
-	idT2, _ := NewIDDoc("2")
-	idT2.DataStore = store
-	idT2.Save()
-
-	idT3, _ := NewIDDoc("3")
-	idT3.DataStore = store
-	idT3.Save()
-
-	return idP, idT1, idT2, idT3
 }

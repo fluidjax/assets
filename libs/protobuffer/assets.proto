@@ -10,7 +10,6 @@ option (gogoproto.stable_marshaler_all) = true;
 
 message PBSignedAsset{
     bytes Signature            = 1;
-    bytes PublicKey            = 2;  //This is assist a verify(), and should not be relied upon (as its not signed)
     map<string, bytes> Signers = 3;  //This is assist a verify(), and should not be relied upon (as its not signed)
     PBAsset Asset              = 4;
 }

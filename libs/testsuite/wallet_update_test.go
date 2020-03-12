@@ -34,14 +34,6 @@ func Test_Wallet_Update(t *testing.T) {
 	assert.NotNil(t, wallet, "Wallet should not be nil")
 }
 
-func SingleSignerWallet(wallet *assets.Wallet, iddoc *assets.IDDoc) {
-	sigP, _ := wallet.SignAsset(iddoc)
-	signatures := []assets.SignatureID{
-		assets.SignatureID{IDDoc: iddoc, Abbreviation: "p", Signature: sigP},
-	}
-	wallet.AggregatedSign(signatures)
-}
-
 func Test_Update(t *testing.T) {
 	idP, idT1, idT2, idT3 := SetupIDDocs(t)
 
@@ -56,8 +48,12 @@ func Test_Update(t *testing.T) {
 	w1, _ := assets.NewWallet(idP, protobuffer.PBCryptoCurrency_BTC)
 	w1.DataStore = idP.DataStore
 	w1.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants, "description")
-	SingleSignerWallet(w1, idP)
-	_, err := w1.Save()
+
+	sigP, _ := w1.SignAsset(idP)
+	err := w1.AddSigner(idP, "p", sigP)
+	assert.Nil(t, err, "Error should be nil")
+
+	_, err = w1.Save()
 	assert.Nil(t, err, "Error should be nil")
 
 	//Create another Wallet based on previous, ie. AnUpdateWallet
@@ -66,7 +62,7 @@ func Test_Update(t *testing.T) {
 	w2.AddTransfer(protobuffer.PBTransferType_TransferPush, expression, participants, "description")
 
 	// //Generate Signatures for each Participant - note they are signing the new Wallet with the TransferType set!
-	sigP, _ := w2.SignAsset(idP)
+	sigP, _ = w2.SignAsset(idP)
 	sigT1, _ := w2.SignAsset(idT1)
 	sigT2, _ := w2.SignAsset(idT2)
 	sigT3, _ := w2.SignAsset(idT3)
@@ -78,7 +74,11 @@ func Test_Update(t *testing.T) {
 	}
 	validTransfer1, _ := w2.IsValidTransfer(protobuffer.PBTransferType_TransferPush, transferSignatures1)
 	assert.False(t, validTransfer1, "Transfer should be invalid - not enough Signatures")
-	err = w2.AggregatedSign(transferSignatures1)
+
+	//Add signers one at a time
+	err = w2.AddSigner(idP, "p", sigP)
+	assert.Nil(t, err, "Error should be nil")
+	err = w2.AddSigner(idT1, "t1", sigT1)
 	assert.Nil(t, err, "Error should be nil")
 
 	txid, err := w2.Save()
@@ -106,7 +106,7 @@ func Test_Update(t *testing.T) {
 	validTransfer1, _ = w2.IsValidTransfer(protobuffer.PBTransferType_TransferPush, transferSignatures1)
 	assert.True(t, validTransfer1, "Transfer should be valid")
 
-	//Sign
+	//Sign all in one go
 	err = w2.AggregatedSign(transferSignatures1)
 	assert.Nil(t, err, "Error should be nil")
 

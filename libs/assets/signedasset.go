@@ -439,9 +439,43 @@ func (a *SignedAsset) VerifyAsset(signature []byte, i *IDDoc) (verify bool, err 
 	return Verify(msg, signature, i)
 }
 
-//AddSigner - wrapper for aggregated sign, to permit one at once
-func (a *SignedAsset) AddSigner(iddoc *IDDoc, abbreviation string, signature []byte) {
-	panic("Unfinished")
+//AddSigner - Add one signer
+func (a *SignedAsset) AddSigner(iddoc *IDDoc, abbreviation string, signature []byte) error {
+	//Add existing state to new signer
+	if a == nil {
+		return errors.New("AddSigner - SignedAsset is nil")
+	}
+	if iddoc == nil {
+		return errors.New("AddSigner - iddoc is nil")
+	}
+	if abbreviation == "" {
+		return errors.New("AddSigner - Invalid abbreviation")
+	}
+	if signature == nil {
+		return errors.New("AddSigner - signature")
+	}
+	signers := a.CurrentAsset.Signers
+	if signers[abbreviation] != nil {
+		return errors.New("AddSigner - abbreviation already exists")
+	}
+
+	if len(a.CurrentAsset.Signers) == 0 {
+		//This is currently the only signer
+		a.CurrentAsset.Signature = signature
+		signers := make(map[string][]byte)
+		signers[abbreviation] = iddoc.Key()
+		a.CurrentAsset.Signers = signers
+		return nil
+	}
+
+	//Add the new sig/signer
+	rc, aggregatedSig := crypto.BLSAddG1(a.CurrentAsset.Signature, signature)
+	if rc != 0 {
+		return errors.New("AddSigner - BLSAddG1 failed")
+	}
+	a.CurrentAsset.Signature = aggregatedSig
+	a.CurrentAsset.Signers[abbreviation] = iddoc.Key()
+	return nil
 }
 
 // AggregatedSign  - Aggregates BLSPubKeys and BLSSignatures from supplied array of SignatureIDs
@@ -459,46 +493,26 @@ func (a *SignedAsset) AggregatedSign(transferSignatures []SignatureID) error {
 	}
 	var aggregatedSig []byte
 	rc := 0
-	var aggregatedPublicKey []byte
 	signers := make(map[string][]byte)
 	for i := 0; i < len(transferSignatures); i++ {
 		sig := transferSignatures[i].Signature
-		pubKey := transferSignatures[i].IDDoc.CurrentAsset.GetAsset().GetIddoc().GetBLSPublicKey()
 		idkey := transferSignatures[i].IDDoc.Key()
 		abbreviation := transferSignatures[i].Abbreviation
 		signers[abbreviation] = idkey
-		if sig == nil || pubKey == nil {
+		if sig == nil {
 			continue
 		}
 		if i == 0 {
 			aggregatedSig = sig
-			aggregatedPublicKey = pubKey
 		} else {
 			rc, aggregatedSig = crypto.BLSAddG1(aggregatedSig, sig)
 			if rc != 0 {
 				return errors.New("BLSAddG1 failed in AggregatedSign")
 			}
-			rc, aggregatedPublicKey = crypto.BLSAddG2(aggregatedPublicKey, pubKey)
-			if rc != 0 {
-				return errors.New("BLSAddG2 failed in AggregatedSign")
-			}
 		}
 	}
-	a.CurrentAsset.PublicKey = aggregatedPublicKey
 	a.CurrentAsset.Signature = aggregatedSig
 	a.CurrentAsset.Signers = signers
-	data, err := a.SerializeAsset()
-	if err != nil {
-		return errors.Wrap(err, "Fail to Aggregated Signatures")
-	}
-	// fmt.Println("DATA:", hex.EncodeToString(data))
-	// fmt.Println("KEY:", hex.EncodeToString(aggregatedPublicKey))
-	// fmt.Println("SIG:", hex.EncodeToString(aggregatedSig))
-
-	rc = crypto.BLSVerify(data, aggregatedPublicKey, aggregatedSig)
-	if rc != 0 {
-		return errors.New("Signature failed to Verify")
-	}
 	return nil
 }
 
@@ -572,10 +586,7 @@ func (a *SignedAsset) FullVerify() (bool, error) {
 
 	//check the one in the object matches the one just created
 	//Todo: We could probably remove the one in the object?
-	res := bytes.Compare(aggregatedPublicKey, a.CurrentAsset.GetPublicKey())
-	if res != 0 {
-		return false, errors.New("Generated Aggregated Public Key doesnt match the one used to sign")
-	}
+
 	//Get Message
 	data, err := a.SerializeAsset()
 	if err != nil {
@@ -810,4 +821,75 @@ func (a *SignedAsset) VerifyAndGenerateTransferSignatures() (transferSignatures 
 		return nil, NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:VerifySignedAsset:Invalid Signature:Verify Fails")
 	}
 	return transferSignatures, nil
+}
+
+//ConsensusVerify - consensus rules for all assets (create & update)
+func (a *SignedAsset) ConsensusVerifyAll() error {
+	//Check 6
+	assetID := a.Key()
+	if assetID == nil {
+		return NewAssetsError(CodeConsensusMissingFields, "Consensus:Error:Check:Invalid/Missing AssetID")
+	}
+
+	//check 9.1
+	payload := a.CurrentAsset.Asset.Payload
+	if payload == nil {
+		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+	}
+	//check 9
+	if payload == nil {
+		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
+	}
+	return nil
+}
+
+//ConsensusVerifyCreate - consensus rules for a Asset create
+func (a *SignedAsset) ConsensusVerifyCreate() error {
+	//Check 7
+	if a.CurrentAsset.Asset.Index != 1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	if a.CurrentAsset.Asset.Transferlist == nil {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+	if len(a.CurrentAsset.Asset.Transferlist) == 0 {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+	//Signed Asset Check
+	assetError := a.Verify()
+	if assetError != nil {
+		return assetError
+	}
+	return nil
+}
+
+//ConsensusVerifyUpdate - consensus rules for a Asset update
+func (a *SignedAsset) ConsensusVerifyUpdate() error {
+	//Check Index = previous Index + 1
+	if a.CurrentAsset.Asset.Index != a.PreviousAsset.Asset.Index+1 {
+		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+	}
+
+	if a.CurrentAsset.Asset.Transferlist == nil {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+	if len(a.CurrentAsset.Asset.Transferlist) == 0 {
+		return NewAssetsError(CodeConsensusWalletNoTransferRules, "Consensus:Error:Check:No Transfers")
+	}
+
+	//Signed Asset Check
+	transferSigs, assetError := a.VerifyAndGenerateTransferSignatures()
+	if assetError != nil {
+		return assetError
+	}
+
+	//check expression & signatures
+	transferType := a.CurrentAsset.GetAsset().TransferType
+	_, assetError = a.IsValidTransfer(transferType, transferSigs)
+	if assetError != nil {
+		return assetError
+	}
+
+	return nil
 }

@@ -73,6 +73,9 @@ func buildTestCreateWallet(t *testing.T, idP *assets.IDDoc, idT1 *assets.IDDoc, 
 	}
 	wallet.AddTransfer(protobuffer.PBTransferType_SettlePush, expression, participants, "description")
 
+	sigP, _ := wallet.SignAsset(idP)
+	err = wallet.AddSigner(idP, "p", sigP)
+
 	//No Error
 	txid, err = nc.PostTx(wallet)
 	assert.Nil(t, err, "Error should not nil")
