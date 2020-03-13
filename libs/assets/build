@@ -1,0 +1,1 @@
+go build golang.org/x/tools/cmd/stringer && stringer -type=TransactionCode

@@ -21,20 +21,7 @@ package assets
 
 import "bytes"
 
-//ConsensusProcess - this is the  Verification for the Consensus Rules.
-//Different rules/processes depending on whether its an Update or Create and tendermint Check_TX or Deliver_TX
-func (w *Wallet) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	w.DataStore = datasource
 
-	err := w.Verify()
-	if err != nil {
-		return err
-	}
-	if deliver == true {
-		return w.Deliver(rawTX, txHash)
-	}
-	return nil
-}
 
 //Verify -
 func (w *Wallet) Verify() error {

@@ -35,7 +35,7 @@ const (
 	CodeConsensusErrorFailtoVerifySignature TransactionCode = 200
 	CodeConsensusErrorEmptyPayload          TransactionCode = 201
 	CodeConsensusMissingFields              TransactionCode = 202
-	CodeConsensusIndexNotZero               TransactionCode = 203
+	CodeConsensusIndexNotOne               TransactionCode = 203
 	CodeConsensusUnderlyingTXExists         TransactionCode = 204
 	CodeConsensusInsufficientFunds          TransactionCode = 205
 	CodeConsensusSignedAssetFailtoVerify    TransactionCode = 206

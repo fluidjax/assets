@@ -81,3 +81,18 @@ func buildTestCreateWallet(t *testing.T, idP *assets.IDDoc, idT1 *assets.IDDoc, 
 
 	return wallet
 }
+
+func SignWallet(wallet *assets.Wallet, idP, idT1, idT2 *assets.IDDoc) {
+	//Sign
+	sigP, _ := wallet.SignAsset(idP)
+	sigT1, _ := wallet.SignAsset(idT1)
+	sigT2, _ := wallet.SignAsset(idT2)
+
+	signatures := []assets.SignatureID{
+		assets.SignatureID{IDDoc: idP, Abbreviation: "p", Signature: sigP},
+		assets.SignatureID{IDDoc: idT1, Abbreviation: "t1", Signature: sigT1},
+		assets.SignatureID{IDDoc: idT2, Abbreviation: "t2", Signature: sigT2},
+	}
+
+	wallet.AggregatedSign(signatures)
+}

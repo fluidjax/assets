@@ -21,28 +21,6 @@ package assets
 
 import "github.com/qredo/assets/libs/crypto"
 
-//ConsensusProcess - this is the  Verification for the Consensus Rules.
-func (i *IDDoc) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	i.DataStore = datasource
-
-	exists, err := i.Exists(i.Key())
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
-	}
-	if exists == true {
-		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
-	}
-
-	err = i.Verify()
-	if err != nil {
-		return err
-	}
-	if deliver == true {
-		return i.Deliver(rawTX, txHash)
-	}
-	return nil
-}
-
 func (i *IDDoc) Verify() error {
 	assetError := i.SignedAsset.VerifyImmutableCreate()
 	if assetError != nil {
@@ -68,7 +46,7 @@ func (i *IDDoc) Verify() error {
 	}
 	//Check 7
 	if i.CurrentAsset.Asset.Index != 1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+		return NewAssetsError(CodeConsensusIndexNotOne, "Consensus:Error:Check:Invalid Index")
 	}
 
 	//Check 7

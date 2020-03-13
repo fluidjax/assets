@@ -236,44 +236,51 @@ func LoadGroup(store DataSource, groupAssetID []byte) (g *Group, err error) {
 
 }
 
-func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	assetID := g.Key()
-	g.DataStore = datasource
-	exists, err := g.Exists(assetID)
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
-	}
-	//Wallet is mutable, if exists allow update
+// func (g *Group) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+// 	assetID := g.Key()
+// 	g.DataStore = datasource
+// 	exists, err := g.Exists(assetID)
+// 	if err != nil {
+// 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+// 	}
+// 	//Wallet is mutable, if exists allow update
 
-	if exists == false {
-		//This is a new Wallet
-		if deliver == true {
-			//Commit
-			err := g.AddCoreMappings(rawTX, txHash)
-			if err != nil {
-				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
-			}
-		} else {
-			//Check
-			err := g.VerifyGroup()
-			if err != nil {
-				return err
-			}
-		}
+// 	if exists == false {
+// 		//This is a new Wallet
+// 		if deliver == true {
+// 			//Commit
+// 			err := g.AddCoreMappings(rawTX, txHash)
+// 			if err != nil {
+// 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+// 			}
+// 		} else {
+// 			//Check
+// 			err := g.VerifyGroup()
+// 			if err != nil {
+// 				return err
+// 			}
+// 		}
 
-	} else {
-		if deliver == true {
-			//Commit
-			err := g.AddCoreMappings(rawTX, txHash)
-			if err != nil {
-				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
-			}
-		}
-	}
-	return nil
-}
+// 	} else {
+// 		if deliver == true {
+// 			//Commit
+// 			err := g.AddCoreMappings(rawTX, txHash)
+// 			if err != nil {
+// 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (g *Group) VerifyGroup() error {
 	//fy, err := g.Verify()
+	return nil
+}
+
+func (g *Group) Verify() (err error) {
+	return nil
+}
+func (g *Group) Deliver(rawTX []byte, txHash []byte) (err error) {
 	return nil
 }

@@ -27,11 +27,16 @@ func _() {
 	_ = x[CodeConsensusErrorFailtoVerifySignature-200]
 	_ = x[CodeConsensusErrorEmptyPayload-201]
 	_ = x[CodeConsensusMissingFields-202]
-	_ = x[CodeConsensusIndexNotZero-203]
+	_ = x[CodeConsensusIndexNotOne-203]
 	_ = x[CodeConsensusUnderlyingTXExists-204]
 	_ = x[CodeConsensusInsufficientFunds-205]
 	_ = x[CodeConsensusSignedAssetFailtoVerify-206]
+	_ = x[CodeConsensusWalletNoTransferRules-207]
+	_ = x[CodeConsensusWalletHasTransferRules-208]
+	_ = x[CodeConsensusTransferRulesFailed-400]
+	_ = x[CodeConsensusFailedToResolveExpression-401]
 	_ = x[CodeConsensusBalanceFailToAddUnderlying-205]
+	_ = x[CodeTypeTendermintInternalError-999]
 	_ = x[CodeCLIError-300]
 	_ = x[CodeTendermintInternalError-999]
 }
@@ -41,16 +46,18 @@ const (
 	_TransactionCode_name_1 = "CodeTypeBadNonceCodeTypeUnauthorizedCodeAlreadyExists"
 	_TransactionCode_name_2 = "CodeFailVerficationCodeTypeHTTPErrorCodeConsensusBalanceErrorCodeConsensusErrorCodeInsufficientFundsCodeSerializationErrorCodeIsNil"
 	_TransactionCode_name_3 = "CodeFailToRebuildAssetCodeDatabaseFailCodeCantUpdateImmutableAssetCodeTypeEncodingErrorCodePayloadEncodingError"
-	_TransactionCode_name_4 = "CodeConsensusErrorFailtoVerifySignatureCodeConsensusErrorEmptyPayloadCodeConsensusMissingFieldsCodeConsensusIndexNotZeroCodeConsensusUnderlyingTXExistsCodeConsensusInsufficientFundsCodeConsensusSignedAssetFailtoVerify"
+	_TransactionCode_name_4 = "CodeConsensusErrorFailtoVerifySignatureCodeConsensusErrorEmptyPayloadCodeConsensusMissingFieldsCodeConsensusIndexNotOneCodeConsensusUnderlyingTXExistsCodeConsensusInsufficientFundsCodeConsensusSignedAssetFailtoVerifyCodeConsensusWalletNoTransferRulesCodeConsensusWalletHasTransferRules"
 	_TransactionCode_name_5 = "CodeCLIError"
-	_TransactionCode_name_6 = "CodeTendermintInternalError"
+	_TransactionCode_name_6 = "CodeConsensusTransferRulesFailedCodeConsensusFailedToResolveExpression"
+	_TransactionCode_name_7 = "CodeTypeTendermintInternalError"
 )
 
 var (
 	_TransactionCode_index_1 = [...]uint8{0, 16, 36, 53}
 	_TransactionCode_index_2 = [...]uint8{0, 19, 36, 61, 79, 100, 122, 131}
 	_TransactionCode_index_3 = [...]uint8{0, 22, 38, 66, 87, 111}
-	_TransactionCode_index_4 = [...]uint8{0, 39, 69, 95, 120, 151, 181, 217}
+	_TransactionCode_index_4 = [...]uint16{0, 39, 69, 95, 119, 150, 180, 216, 250, 285}
+	_TransactionCode_index_6 = [...]uint8{0, 32, 70}
 )
 
 func (i TransactionCode) String() string {
@@ -66,13 +73,16 @@ func (i TransactionCode) String() string {
 	case 100 <= i && i <= 104:
 		i -= 100
 		return _TransactionCode_name_3[_TransactionCode_index_3[i]:_TransactionCode_index_3[i+1]]
-	case 200 <= i && i <= 206:
+	case 200 <= i && i <= 208:
 		i -= 200
 		return _TransactionCode_name_4[_TransactionCode_index_4[i]:_TransactionCode_index_4[i+1]]
 	case i == 300:
 		return _TransactionCode_name_5
+	case 400 <= i && i <= 401:
+		i -= 400
+		return _TransactionCode_name_6[_TransactionCode_index_6[i]:_TransactionCode_index_6[i+1]]
 	case i == 999:
-		return _TransactionCode_name_6
+		return _TransactionCode_name_7
 	default:
 		return "TransactionCode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}

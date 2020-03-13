@@ -39,6 +39,21 @@ import (
 	"github.com/qredo/assets/libs/protobuffer"
 )
 
+//ConsensusProcess - this is the  Verification for the Consensus Rules.
+//Different rules/processes depending on whether its an Update or Create and tendermint Check_TX or Deliver_TX
+func (a *SignedAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool, ass TXAsset) error {
+	a.DataStore = datasource
+
+	err := ass.Verify()
+	if err != nil {
+		return err
+	}
+	if deliver == true {
+		return ass.Deliver(rawTX, txHash)
+	}
+	return nil
+}
+
 func (a *SignedAsset) DeepCopyUpdatePayload() {
 	//Deep copy the old Payload to the new one
 	copier.Copy(a.CurrentAsset.Asset.Payload, a.PreviousAsset.Asset.Payload)
@@ -68,15 +83,15 @@ func (a *SignedAsset) Sign(principalIDDoc *IDDoc) error {
 		return errors.New("Failed to Sign Asset")
 	}
 
-	if a.CurrentAsset.Signature == nil {
-		a.CurrentAsset.Signature = signature
-		signers := make(map[string][]byte)
-		signers["P"] = principalIDDoc.Key()
-		a.CurrentAsset.Signers = signers
-	} else {
-		//Add to make a BLS aggregated signature
-		panic("Not Done")
-	}
+	//clear any existing signature and signers
+	a.CurrentAsset.Signature = nil
+	a.CurrentAsset.Signers = nil
+
+	//Set New sig & signers
+	a.CurrentAsset.Signature = signature
+	signers := make(map[string][]byte)
+	signers["P"] = principalIDDoc.Key()
+	a.CurrentAsset.Signers = signers
 
 	return nil
 }
@@ -793,13 +808,9 @@ func (a *SignedAsset) VerifyAll() error {
 	if payload == nil {
 		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
 	}
-	if payload == nil {
-		return NewAssetsError(CodeConsensusErrorEmptyPayload, "Consensus:Error:Check:Invalid Payload")
-	}
-
+	
 	if a.CurrentAsset.Signature == nil {
 		return NewAssetsError(CodeConsensusErrorFailtoVerifySignature, "Consensus:Error:Check:No Signature")
-
 	}
 
 	return nil
@@ -815,7 +826,7 @@ func (a *SignedAsset) VerifyImmutableCreate() error {
 
 	//Check 7
 	if a.CurrentAsset.Asset.Index != 1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+		return NewAssetsError(CodeConsensusIndexNotOne, "Consensus:Error:Check:Invalid Index")
 	}
 
 	if a.CurrentAsset.Asset.Transferlist != nil {
@@ -835,7 +846,7 @@ func (a *SignedAsset) VerifyMutableCreate() error {
 	}
 
 	if a.CurrentAsset.Asset.Index != 1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+		return NewAssetsError(CodeConsensusIndexNotOne, "Consensus:Error:Check:Invalid Index")
 	}
 
 	if a.CurrentAsset.Asset.Transferlist == nil {
@@ -862,7 +873,7 @@ func (a *SignedAsset) VerifyMutableUpdate() error {
 	}
 
 	if a.CurrentAsset.Asset.Index != a.PreviousAsset.Asset.Index+1 {
-		return NewAssetsError(CodeConsensusIndexNotZero, "Consensus:Error:Check:Invalid Index")
+		return NewAssetsError(CodeConsensusIndexNotOne, "Consensus:Error:Check:Invalid Index")
 	}
 
 	if a.CurrentAsset.Asset.Transferlist == nil {

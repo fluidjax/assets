@@ -78,38 +78,45 @@ func (m *MPC) Payload() (*protobuffer.PBMPC, error) {
 	return m.CurrentAsset.Asset.GetMPC(), nil
 }
 
-func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	m.DataStore = datasource
-	assetID := m.Key()
-	exists, err := m.Exists(assetID)
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
-	}
-	if exists == true {
-		//MPC is immutable so if this AssetID already has a value we can't update it.
-		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
-	}
+// func (m *MPC) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+// 	m.DataStore = datasource
+// 	assetID := m.Key()
+// 	exists, err := m.Exists(assetID)
+// 	if err != nil {
+// 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+// 	}
+// 	if exists == true {
+// 		//MPC is immutable so if this AssetID already has a value we can't update it.
+// 		return NewAssetsError(CodeCantUpdateImmutableAsset, "Consensus:Error:Check:Immutable Asset")
+// 	}
 
-	payload, err := m.Payload()
-	if err != nil {
-		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
-	}
+// 	payload, err := m.Payload()
+// 	if err != nil {
+// 		return NewAssetsError(CodePayloadEncodingError, "Consensus:Error:Check:Invalid Payload Encoding")
+// 	}
 
-	address := payload.Address
-	walletAssetID := payload.AssetID
+// 	address := payload.Address
+// 	walletAssetID := payload.AssetID
 
-	if deliver == true {
-		//Commit
-		err = m.SetWithSuffix(assetID, ".as2ad", address)
-		if err != nil {
-			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
-		}
+// 	if deliver == true {
+// 		//Commit
+// 		err = m.SetWithSuffix(assetID, ".as2ad", address)
+// 		if err != nil {
+// 			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
+// 		}
 
-		err = m.SetWithSuffix(address, ".ad2as", walletAssetID)
-		if err != nil {
-			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
-		}
+// 		err = m.SetWithSuffix(address, ".ad2as", walletAssetID)
+// 		if err != nil {
+// 			return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Add mappings as2ad & ad2as")
+// 		}
 
-	}
+// 	}
+// 	return nil
+// }
+
+func (m *MPC) Verify() (err error) {
+	return nil
+}
+func (m *MPC) Deliver(rawTX []byte, txHash []byte) (err error) {
 	return nil
 }

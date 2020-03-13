@@ -77,8 +77,11 @@ type TransferParticipant struct {
 }
 
 //TXAsset - generic wrapper for All Transactions
+//Implements the core Blockchain funcationality
 type TXAsset interface {
-	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error
+	ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool, asset TXAsset) error
+	Verify() error                             //Check if Transaction is valid
+	Deliver(rawTX []byte, txHash []byte) error //Finalize the Transaction - write fields to DB etc
 }
 
 type DataSource interface {

@@ -15,7 +15,7 @@ func (app *QredoChain) processTX(tx []byte, deliver bool) ([]abcitypes.Event, er
 		return nil, err
 	}
 
-	assetError := txAsset.ConsensusProcess(app, tx, txHash, deliver)
+	assetError := txAsset.ConsensusProcess(app, tx, txHash, deliver, txAsset)
 	return nil, assetError
 }
 

@@ -287,34 +287,41 @@ func (k *KVAsset) PreviousPayload() (*protobuffer.PBKVAsset, error) {
 	return kv, nil
 }
 
-func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
-	k.DataStore = datasource
-	assetID := k.Key()
-	exists, err := k.Exists( assetID)
-	if err != nil {
-		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
-	}
-	//Wallet is mutable, if exists allow update
+// func (k *KVAsset) ConsensusProcess(datasource DataSource, rawTX []byte, txHash []byte, deliver bool) error {
+// 	k.DataStore = datasource
+// 	assetID := k.Key()
+// 	exists, err := k.Exists( assetID)
+// 	if err != nil {
+// 		return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Check:Database Access")
+// 	}
+// 	//Wallet is mutable, if exists allow update
 
-	if exists == false {
-		//This is a new Wallet
-		if deliver == true {
-			//Commit
-			assetsError := k.AddCoreMappings( rawTX, txHash)
-			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
-			}
-		}
+// 	if exists == false {
+// 		//This is a new Wallet
+// 		if deliver == true {
+// 			//Commit
+// 			assetsError := k.AddCoreMappings( rawTX, txHash)
+// 			if assetsError != nil {
+// 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+// 			}
+// 		}
 
-	} else {
-		if deliver == true {
-			//Commit
-			assetsError := k.AddCoreMappings( rawTX, txHash)
-			if assetsError != nil {
-				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
-			}
-		}
+// 	} else {
+// 		if deliver == true {
+// 			//Commit
+// 			assetsError := k.AddCoreMappings( rawTX, txHash)
+// 			if assetsError != nil {
+// 				return NewAssetsError(CodeDatabaseFail, "Consensus:Error:Deliver:Add Core Mapping TxHash:RawTX")
+// 			}
+// 		}
 
-	}
+// 	}
+// 	return nil
+// }
+
+func (k *KVAsset) Verify() (err error) {
+	return nil
+}
+func (k *KVAsset) Deliver(rawTX []byte, txHash []byte) (err error) {
 	return nil
 }
