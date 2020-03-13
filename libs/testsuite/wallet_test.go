@@ -30,8 +30,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
-
 func Test_Wallet_Create(t *testing.T) {
 	idP, idT1, idT2, idT3 := SetupIDDocs(t)
 
@@ -107,8 +105,6 @@ func Test_Wallet_Create(t *testing.T) {
 	assetError, _ = err.(*assets.AssetsError)
 	assert.Nil(t, assetError, "Error should  be nil")
 	assert.False(t, txid == "", "TXID should be empty")
-
-	return
 
 }
 func Test_TruthTable(t *testing.T) {
@@ -216,6 +212,7 @@ func Test_Update(t *testing.T) {
 func TestMain(m *testing.M) {
 	StartTestChain()
 	code := m.Run()
-	ShutDown()
-	os.Exit(code)
+	if code != 0 {
+		os.Exit(code)
+	}
 }

@@ -81,6 +81,16 @@ func (cliTool *CLITool) Monitor() (err error) {
 	return nil
 }
 
+func reset(g *gocui.Gui, _ *gocui.View) error {
+	datalines = nil
+	main, _ := g.View("main")
+	info, _ := g.View("info")
+	main.Clear()
+	info.Clear()
+	showList(g)
+	return nil
+}
+
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	if _, err := g.SetView("main", 0, 0, maxX-1, maxY/2-1); err != nil {
@@ -104,7 +114,7 @@ func layout(g *gocui.Gui) error {
 	// 	main.SetCursor(0, 3)
 	// }
 
-	main.Title = "Transactions "
+	main.Title = "Transactions────(r)eset (q)uit"
 	info.Title = "Detail"
 
 	return nil
@@ -241,6 +251,16 @@ func keybindings(g *gocui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("main", gocui.KeyEnter, gocui.ModNone, displayDetail); err != nil &&
+		err != gocui.ErrUnknownView {
+		return err
+	}
+
+	if err := g.SetKeybinding("", 'r', gocui.ModNone, reset); err != nil &&
+		err != gocui.ErrUnknownView {
+		return err
+	}
+
+	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil &&
 		err != gocui.ErrUnknownView {
 		return err
 	}

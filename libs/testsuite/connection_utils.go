@@ -3,133 +3,31 @@ package testsuite
 //Utilities to help connect to an instance of the Qredochain - tendermint server and run testss
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"flag"
 	"fmt"
-	"os"
 	"reflect"
-	"sync"
 	"time"
 
-	"github.com/dgraph-io/badger"
-	"github.com/ethereum/go-ethereum/node"
 	"github.com/qredo/assets/libs/prettyjson"
 	"github.com/qredo/assets/libs/protobuffer"
 	"github.com/qredo/assets/libs/qredochain"
-	tmclient "github.com/tendermint/tendermint/rpc/client"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 var done chan bool
 var ready chan bool
 var app *qredochain.QredoChain
-var tnode *node.Node
 var nc *qredochain.NodeConnector
-var out <-chan ctypes.ResultEvent
-var subClient *tmclient.HTTP
-
-func ShutDown() {
-	print("Shutdown")
-
-	if tnode != nil {
-		tnode.Stop()
-		tnode.Wait()
-	}
-	if subClient != nil {
-		subClient.Unsubscribe(context.Background(), "test", "tx.height>0")
-
-	}
-}
-
-func StartWait(count int, wg *sync.WaitGroup) {
-	incomingCount := 0
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case _ = <-out:
-				incomingCount++
-				if incomingCount == count {
-					time.Sleep(1000 * time.Millisecond)
-					wg.Done()
-				}
-			}
-		}
-	}()
-}
-func SubscriptionClient() {
-	var err error
-	subClient, err = tmclient.NewHTTP("tcp://localhost:26657", "/websocket")
-	if err != nil {
-		os.Exit(1)
-	}
-	err = subClient.Start()
-	if err != nil {
-		os.Exit(1)
-	}
-
-	out, err = subClient.Subscribe(context.Background(), "test", "tx.height>0", 1000)
-	if err != nil {
-		print("error")
-	}
-}
 
 func StartTestChain() {
-	//Check if there is a Node already running, and use it
 	var err error
 	nc, err = qredochain.NewNodeConnector("127.0.0.1:26657", "NODEID", nil, nil)
 	if err == nil {
-		SubscriptionClient()
-
 		defer func() {
+			nc.Stop()
 		}()
 		return
 	}
-	//If no running Node start one
-	go InitiateChain()
-	ready = make(chan bool, 1)
-	<-ready //wait for server to come up
-}
-
-func InitiateChain() {
-	//Make Database
-	db, err := badger.Open(badger.DefaultOptions("/tmp/badger"))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to open badger db: %v", err)
-		os.Exit(1)
-	}
-	defer db.Close()
-	app = qredochain.NewQredoChain(db)
-
-	flag.Parse()
-
-	//Start Qredochain
-	tnode, err := qredochain.NewTendermint(app, "/tmp/example/config/config.toml")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(2)
-	}
-
-	tnode.Start()
-
-	//Make Connector
-	nc, err = qredochain.NewNodeConnector("127.0.0.1:26657", "NODEID", nil, nil)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(2)
-	}
-	defer func() {
-		nc.Stop()
-		db.Close()
-		tnode.Stop()
-		tnode.Wait()
-	}()
-	done = make(chan bool, 1)
-	ready <- true //notify the server is up
-	<-done        //wait
 
 }
 

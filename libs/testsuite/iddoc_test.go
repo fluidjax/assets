@@ -1,7 +1,6 @@
 package testsuite
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/qredo/assets/libs/assets"
@@ -19,14 +18,10 @@ func checkIDDoc(t *testing.T, i *assets.IDDoc, code assets.TransactionCode) {
 }
 
 func Test_IDDoc(t *testing.T) {
-	StartTestChain()
 
 	//Standard build
 	i := BuildTestIDDoc(t)
-	wg := &sync.WaitGroup{}
-	go StartWait(1, wg)
 	txid, err := i.Save()
-	wg.Wait()
 
 	assert.Nil(t, err, "Error should be nil")
 	assert.NotEqual(t, txid, "", "TxID should not be empty")
